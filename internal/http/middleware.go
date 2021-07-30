@@ -10,6 +10,14 @@ import (
 	"github.com/situmorangbastian/skyros"
 )
 
+var (
+	AllowPathWithoutAuth = []string{
+		"/register/buyer",
+		"/register/seller",
+		"/login",
+	}
+)
+
 // ErrorMiddleware is a function to generate http status code.
 func ErrorMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
