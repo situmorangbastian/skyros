@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -68,14 +67,11 @@ func main() {
 
 	tokenSecretKey := skyros.GetEnv("SECRET_KEY")
 
-	endpoint := skyros.GetEnv("ENDPOINT_WITHOUT_AUTH")
-	whitelistEndpoints := strings.Split(endpoint, ",")
-
 	e := echo.New()
 	e.Use(
 		middleware.JWTWithConfig(middleware.JWTConfig{
 			Skipper: func(c echo.Context) bool {
-				for _, path := range whitelistEndpoints {
+				for _, path := range handler.AllowPathWithoutAuth {
 					if c.Request().URL.Path == path {
 						return true
 					}
