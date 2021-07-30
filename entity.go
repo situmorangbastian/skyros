@@ -7,10 +7,10 @@ import (
 
 type User struct {
 	ID       string `json:"-"`
-	Email    string `json:"email"`
-	Name     string `json:"name"`
-	Address  string `json:"address"`
-	Password string `json:"password"`
+	Email    string `json:"email" validate:"required,email"`
+	Name     string `json:"name" validate:"required"`
+	Address  string `json:"address" validate:"required"`
+	Password string `json:"password" validate:"required"`
 	Type     string `json:"-"`
 }
 

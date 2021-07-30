@@ -32,9 +32,7 @@ func (cv CustomValidator) Validate(data interface{}) error {
 			default:
 				return skyros.ConstraintError(strings.ToLower(err.Field()) + " " + err.ActualTag())
 			}
-
 		}
-
 	}
 
 	return nil
