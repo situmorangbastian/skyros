@@ -32,7 +32,7 @@ func TestService_Login(t *testing.T) {
 			passedPassword: "password123#",
 			repository: testdata.FuncCall{
 				Called: true,
-				Input:  []interface{}{mock.Anything, "email"},
+				Input:  []interface{}{mock.Anything, "user@example.com"},
 				Output: []interface{}{mockUser, nil},
 			},
 			expectedResult: mockUser,
@@ -44,7 +44,7 @@ func TestService_Login(t *testing.T) {
 			passedPassword: "password",
 			repository: testdata.FuncCall{
 				Called: true,
-				Input:  []interface{}{mock.Anything, "email"},
+				Input:  []interface{}{mock.Anything, "user@example.com"},
 				Output: []interface{}{mockUser, nil},
 			},
 			expectedError: skyros.ErrorNotFound("user not found"),
@@ -55,7 +55,7 @@ func TestService_Login(t *testing.T) {
 			passedPassword: "password123#",
 			repository: testdata.FuncCall{
 				Called: true,
-				Input:  []interface{}{mock.Anything, "email"},
+				Input:  []interface{}{mock.Anything, "user@example.com"},
 				Output: []interface{}{mockUser, errors.New("unexpected error")},
 			},
 			expectedError: errors.New("unexpected error"),

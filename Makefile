@@ -12,3 +12,12 @@ lint-prepare:
 .PHONY: lint
 lint:
 	golangci-lint run ./...
+
+# Testing
+.PHONY: unittest
+unittest: vendor
+	GO111MODULE=on go test -short $(TEST_OPTS) ./...
+
+.PHONY: test
+test: vendor
+	GO111MODULE=on go test $(TEST_OPTS) ./...
