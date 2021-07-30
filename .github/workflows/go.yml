@@ -40,3 +40,6 @@ jobs:
 
     - name: Unit Test
       run: make unittest
+
+    - name: Integration Test
+      run: make test
