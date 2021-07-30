@@ -60,6 +60,10 @@ func (h userHandler) registerSeller(c echo.Context) error {
 
 	user.Type = "seller"
 
+	if err := c.Validate(&user); err != nil {
+		return err
+	}
+
 	res, err := h.service.Register(c.Request().Context(), user)
 	if err != nil {
 		return err
@@ -82,6 +86,10 @@ func (h userHandler) registerBuyer(c echo.Context) error {
 	}
 
 	user.Type = "buyer"
+
+	if err := c.Validate(&user); err != nil {
+		return err
+	}
 
 	res, err := h.service.Register(c.Request().Context(), user)
 	if err != nil {

@@ -17,6 +17,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/situmorangbastian/skyros"
+	"github.com/situmorangbastian/skyros/internal"
 	handler "github.com/situmorangbastian/skyros/internal/http"
 	mysqlRepo "github.com/situmorangbastian/skyros/internal/mysql"
 	"github.com/situmorangbastian/skyros/user"
@@ -81,6 +82,7 @@ func main() {
 		}),
 		handler.ErrorMiddleware(),
 	)
+	e.Validator = internal.NewValidator()
 
 	// Init Handler
 	handler.NewUserHandler(e, userService, tokenSecretKey)
