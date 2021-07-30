@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/situmorangbastian/skyros"
+	"github.com/situmorangbastian/skyros/internal"
 	handler "github.com/situmorangbastian/skyros/internal/http"
 	"github.com/situmorangbastian/skyros/mocks"
 	"github.com/situmorangbastian/skyros/testdata"
@@ -147,6 +148,7 @@ func TestUserHTTP_Register_Seller(t *testing.T) {
 
 	e := echo.New()
 	e.Use(handler.ErrorMiddleware())
+	e.Validator = internal.NewValidator()
 
 	for _, test := range tests {
 		t.Run(test.testName, func(t *testing.T) {
@@ -227,6 +229,7 @@ func TestUserHTTP_Register_Buyer(t *testing.T) {
 
 	e := echo.New()
 	e.Use(handler.ErrorMiddleware())
+	e.Validator = internal.NewValidator()
 
 	for _, test := range tests {
 		t.Run(test.testName, func(t *testing.T) {
