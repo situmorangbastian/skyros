@@ -21,7 +21,7 @@ type TestSuite struct {
 
 var (
 	mysqlDriver      = `mysql`
-	mysqlHost        = `mysql`
+	mysqlHost        = `127.0.0.1`
 	mysqlExposedPort = `3306`
 	mysqlUser        = `root`
 	mysqlPassword    = `root`
