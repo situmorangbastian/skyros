@@ -8,7 +8,7 @@ on:
 
 jobs:
 
-  build:
+  test:
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -26,7 +26,8 @@ jobs:
       DB_USER: root
       DB_PASSWORD: root
     steps:
-    - uses: actions/checkout@v2
+    - name: Set up Action
+      uses: actions/checkout@v2
 
     - name: Set up Go
       uses: actions/setup-go@v2
@@ -38,8 +39,5 @@ jobs:
         sudo /etc/init.d/mysql start
         mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};' -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }}
 
-    - name: Unit Test
-      run: make unittest
-
-    - name: Integration Test
+    - name: Run Test
       run: make test
