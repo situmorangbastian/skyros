@@ -22,11 +22,11 @@ type TestSuite struct {
 
 var (
 	mysqlDriver   = "mysql"
-	mysqlHost     = os.Getenv("MYSQL_HOST")
-	mysqlPort     = os.Getenv("MYSQL_PORT")
-	mysqlUser     = os.Getenv("MYSQL_USER")
-	mysqlPassword = os.Getenv("MYSQL_PASSWORD")
-	mysqlDatabase = os.Getenv("MYSQL_DATABASE")
+	mysqlHost     = os.Getenv("TEST_MYSQL_HOST")
+	mysqlPort     = os.Getenv("TEST_MYSQL_PORT")
+	mysqlUser     = os.Getenv("TEST_MYSQL_USER")
+	mysqlPassword = os.Getenv("TEST_MYSQL_PASS")
+	mysqlDatabase = os.Getenv("TEST_MYSQL_DBNAME")
 )
 
 // SetupSuite is method for setup the test suite
