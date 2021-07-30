@@ -1,7 +1,7 @@
 {
     "id": "user-id",
     "name": "User Name",
-    "email": "email",
+    "email": "user@example.com",
     "password": "$2a$04$8mW.H03EsVEp/LhUeaGfjuEqFs4/86xxOJCL5lFRd8vxha9rRPDxC",
     "address": "address"
 }

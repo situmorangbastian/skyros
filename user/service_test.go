@@ -28,7 +28,7 @@ func TestService_Login(t *testing.T) {
 	}{
 		{
 			testName:       "success",
-			passedEmail:    "email",
+			passedEmail:    "user@example.com",
 			passedPassword: "password123#",
 			repository: testdata.FuncCall{
 				Called: true,
@@ -40,7 +40,7 @@ func TestService_Login(t *testing.T) {
 		},
 		{
 			testName:       "error invalid password",
-			passedEmail:    "email",
+			passedEmail:    "user@example.com",
 			passedPassword: "password",
 			repository: testdata.FuncCall{
 				Called: true,
@@ -51,7 +51,7 @@ func TestService_Login(t *testing.T) {
 		},
 		{
 			testName:       "with unexpected error from user repository",
-			passedEmail:    "email",
+			passedEmail:    "user@example.com",
 			passedPassword: "password123#",
 			repository: testdata.FuncCall{
 				Called: true,
