@@ -22,9 +22,11 @@ jobs:
         ports:
           - 3306:3306
     env:
-      DB_DATABASE: skyros
-      DB_USER: root
-      DB_PASSWORD: root
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: skyros
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
     steps:
     - name: Set up Action
       uses: actions/checkout@v2
@@ -37,7 +39,7 @@ jobs:
     - name: Set up MySQL
       run: |
         sudo /etc/init.d/mysql start
-        mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};' -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }}
+        mysql -e 'CREATE DATABASE ${{ env.MYSQL_DATABASE }};' -u${{ env.MYSQL_USER }} -p${{ env.MYSQL_PASSWORD }}
 
     - name: Run Test
       run: make test
