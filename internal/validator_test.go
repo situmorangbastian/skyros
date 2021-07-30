@@ -3,10 +3,11 @@ package internal_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/situmorangbastian/skyros"
 	"github.com/situmorangbastian/skyros/internal"
 	"github.com/situmorangbastian/skyros/testdata"
-	"github.com/stretchr/testify/require"
 )
 
 func TestValidate_User(t *testing.T) {
