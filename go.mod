@@ -4,9 +4,9 @@ go 1.16
 
 require (
 	github.com/Masterminds/squirrel v1.5.0
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-playground/validator/v10 v10.8.0
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/labstack/echo/v4 v4.4.0
