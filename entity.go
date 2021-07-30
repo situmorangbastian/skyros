@@ -39,3 +39,10 @@ type Product struct {
 	CreatedTime time.Time `json:"created_time"`
 	UpdatedTime time.Time `json:"updated_time"`
 }
+
+type Filter struct {
+	Cursor   string
+	Num      int
+	Search   string
+	SellerID string
+}
