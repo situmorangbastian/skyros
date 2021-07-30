@@ -29,7 +29,7 @@ func main() {
 	dbHost := skyros.GetEnv("MYSQL_HOST")
 	dbPort := skyros.GetEnv("MYSQL_PORT")
 	dbUser := skyros.GetEnv("MYSQL_USER")
-	dbPass := skyros.GetEnv("MYSQL_PASSWORD")
+	dbPass := skyros.GetEnv("MYSQL_PASS")
 	dbName := skyros.GetEnv("MYSQL_NAME")
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
 	dbConn, err := sql.Open(`mysql`, dsn)
