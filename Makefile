@@ -1,3 +1,7 @@
+SOURCES := $(shell find . -name '*.go' -type f -not -path './vendor/*'  -not -path '*/mocks/*')
+
+IMAGE_NAME = skyros
+
 # Dependency Management
 .PHONY: vendor
 vendor: go.mod go.sum
@@ -21,3 +25,8 @@ unittest: vendor
 .PHONY: test
 test: vendor
 	GO111MODULE=on go test $(TEST_OPTS) ./...
+
+# Build
+.PHONY: docker
+docker: vendor $(SOURCES)
+	@docker build -t $(IMAGE_NAME) .
