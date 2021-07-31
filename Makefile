@@ -20,11 +20,11 @@ lint:
 # Testing
 .PHONY: unittest
 unittest: vendor
-	GO111MODULE=on go test -short $(TEST_OPTS) ./...
+	GO111MODULE=on go test -short -covermode=atomic ./...
 
 .PHONY: test
 test: vendor
-	GO111MODULE=on go test $(TEST_OPTS) ./...
+	GO111MODULE=on go test -covermode=atomic ./...
 
 # Build
 .PHONY: docker
