@@ -1,5 +1,4 @@
 SOURCES := $(shell find . -name '*.go' -type f -not -path './vendor/*'  -not -path '*/mocks/*')
-TEST_OPTS := -covermode=atomic $(TEST_OPTS)
 
 IMAGE_NAME = skyros
 
@@ -21,11 +20,11 @@ lint:
 # Testing
 .PHONY: unittest
 unittest: vendor
-	GO111MODULE=on go test -short $(TEST_OPTS) ./...
+	GO111MODULE=on go test -short -covermode=atomic ./...
 
 .PHONY: test
 test: vendor
-	GO111MODULE=on go test $(TEST_OPTS) ./...
+	GO111MODULE=on go test -covermode=atomic ./...
 
 # Build
 .PHONY: docker
