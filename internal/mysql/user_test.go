@@ -51,7 +51,8 @@ func (s *userTestSuite) TestUser_Register() {
 		userRepo := mysql.NewUserRepository(s.DBConn)
 		user, err := userRepo.Register(context.TODO(), mockUser)
 		require.NoError(t, err)
-		require.Equal(t, mockUser, user)
+		require.Equal(t, mockUser.Name, user.Name)
+		require.Equal(t, mockUser.Email, user.Email)
 	})
 }
 
