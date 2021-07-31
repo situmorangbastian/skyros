@@ -2,7 +2,6 @@ package mysql_test
 
 import (
 	"database/sql"
-	"os"
 
 	// enabling file source for migration
 	_ "github.com/golang-migrate/migrate/source/file"
@@ -21,25 +20,30 @@ type TestSuite struct {
 }
 
 var (
-	mysqlDriver   = "mysql"
-	mysqlHost     = os.Getenv("TEST_MYSQL_HOST")
-	mysqlPort     = os.Getenv("TEST_MYSQL_PORT")
-	mysqlUser     = os.Getenv("TEST_MYSQL_USER")
-	mysqlPassword = os.Getenv("TEST_MYSQL_PASS")
-	mysqlDatabase = os.Getenv("TEST_MYSQL_DBNAME")
+	mysqlDriver = "mysql"
+	// mysqlHost     = os.Getenv("TEST_MYSQL_HOST")
+	// mysqlPort     = os.Getenv("TEST_MYSQL_PORT")
+	// mysqlUser     = os.Getenv("TEST_MYSQL_USER")
+	// mysqlPassword = os.Getenv("TEST_MYSQL_PASS")
+	// mysqlDatabase = os.Getenv("TEST_MYSQL_DBNAME")
+	mysqlHost     = "127.0.0.1"
+	mysqlPort     = "3306"
+	mysqlUser     = "root"
+	mysqlPassword = "1234"
+	mysqlDatabase = "skyros"
 )
 
 // SetupSuite is method for setup the test suite
 func (s *TestSuite) SetupSuite() {
 	var err error
 	s.DSN = mysqlUser + `:` + mysqlPassword + `@tcp(` + mysqlHost + `:` + mysqlPort + `)/` + mysqlDatabase
-	s.DBConn, err = sql.Open(mysqlDriver, s.DSN+`?parseTime=true&loc=Asia%2FJakarta`)
+	s.DBConn, err = sql.Open(mysqlDriver, s.DSN+`?parseTime=true`)
 	require.NoError(s.T(), err)
 
 	err = s.DBConn.Ping()
 	require.NoError(s.T(), err)
 
-	s.M, err = RunMigration(s.DSN + `?parseTime=true&loc=Asia%2FJakarta`)
+	s.M, err = RunMigration(s.DSN + `?parseTime=true`)
 	require.NoError(s.T(), err)
 
 	log.Info("Starting to Migrate Up Data")
