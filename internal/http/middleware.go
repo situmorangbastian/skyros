@@ -11,10 +11,11 @@ import (
 )
 
 var (
-	AllowPathWithoutAuth = []string{
-		"/register/buyer",
-		"/register/seller",
-		"/login",
+	AllowEndpointWithoutAuth = map[string]bool{
+		"POST /register/buyer":  true,
+		"POST /register/seller": true,
+		"POST /login":           true,
+		"GET /product":          true,
 	}
 )
 
