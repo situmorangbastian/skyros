@@ -20,6 +20,7 @@ import (
 	"github.com/situmorangbastian/skyros/internal"
 	handler "github.com/situmorangbastian/skyros/internal/http"
 	mysqlRepo "github.com/situmorangbastian/skyros/internal/mysql"
+	"github.com/situmorangbastian/skyros/product"
 	"github.com/situmorangbastian/skyros/user"
 )
 
@@ -65,6 +66,10 @@ func main() {
 	userRepo := mysqlRepo.NewUserRepository(dbConn)
 	userService := user.NewService(userRepo)
 
+	// Init Product
+	productRepo := mysqlRepo.NewProductRepository(dbConn)
+	productService := product.NewService(productRepo)
+
 	tokenSecretKey := skyros.GetEnv("SECRET_KEY")
 
 	e := echo.New()
@@ -86,6 +91,7 @@ func main() {
 
 	// Init Handler
 	handler.NewUserHandler(e, userService, tokenSecretKey)
+	handler.NewProductHandler(e, productService)
 
 	// Start server
 	serverAddress := skyros.GetEnv("SERVER_ADDRESS")
