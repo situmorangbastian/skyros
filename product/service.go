@@ -44,12 +44,10 @@ func (s service) Get(ctx context.Context, ID string) (skyros.Product, error) {
 
 func (s service) Fetch(ctx context.Context, filter skyros.Filter) ([]skyros.Product, string, error) {
 	customCtx, ok := ctx.(skyros.CustomContext)
-	if !ok {
-		return make([]skyros.Product, 0), "", errors.Wrap(errors.New("invalid context"), "product.service.fetch: parse custom context")
-	}
-
-	if customCtx.User().Type == "seller" {
-		filter.SellerID = customCtx.User().ID
+	if ok {
+		if customCtx.User().Type == "seller" {
+			filter.SellerID = customCtx.User().ID
+		}
 	}
 
 	result, nextCursor, err := s.repo.Fetch(ctx, filter)

@@ -198,14 +198,6 @@ func TestService_Fetch(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
-			testName:       "error parse custom context",
-			passedFilter:   passedFilterSeller,
-			passedContext:  context.Background(),
-			expectedResult: []skyros.Product{},
-			expectedCursor: "",
-			expectedError:  errors.New("invalid context"),
-		},
-		{
 			testName:      "unexpected error from repository",
 			passedFilter:  passedFilterBuyer,
 			passedContext: skyros.NewCustomContext(context.Background(), mockUser),
