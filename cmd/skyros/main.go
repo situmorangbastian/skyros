@@ -25,6 +25,14 @@ import (
 )
 
 func main() {
+	os.Setenv("MYSQL_HOST", "127.0.0.1")
+	os.Setenv("MYSQL_PORT", "3306")
+	os.Setenv("MYSQL_USER", "root")
+	os.Setenv("MYSQL_PASS", "1234")
+	os.Setenv("MYSQL_NAME", "skyros")
+	os.Setenv("SECRET_KEY", "skyros-secret")
+	os.Setenv("SERVER_ADDRESS", ":4221")
+
 	// Init Mysql Connection
 	dbHost := skyros.GetEnv("MYSQL_HOST")
 	dbPort := skyros.GetEnv("MYSQL_PORT")
@@ -76,12 +84,8 @@ func main() {
 	e.Use(
 		middleware.JWTWithConfig(middleware.JWTConfig{
 			Skipper: func(c echo.Context) bool {
-				for _, path := range handler.AllowPathWithoutAuth {
-					if c.Request().URL.Path == path {
-						return true
-					}
-				}
-				return false
+				methodWithPath := c.Request().Method + " " + c.Request().URL.Path
+				return handler.AllowEndpointWithoutAuth[methodWithPath]
 			},
 			SigningKey: tokenSecretKey,
 		}),
