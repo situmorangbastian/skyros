@@ -6,6 +6,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
 
 	"github.com/situmorangbastian/skyros"
 )
@@ -23,6 +24,8 @@ func NewUserRepository(db *sql.DB) skyros.UserRepository {
 
 func (r userRepository) Register(ctx context.Context, user skyros.User) (skyros.User, error) {
 	timeNow := time.Now()
+
+	user.ID = uuid.New().String()
 
 	query, args, err := sq.Insert("user").
 		Columns("id", "email", "name", "address", "password", "type", "created_time", "updated_time").

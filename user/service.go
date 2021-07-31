@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 
@@ -53,7 +52,6 @@ func (s service) Register(ctx context.Context, user skyros.User) (skyros.User, e
 		return skyros.User{}, errors.Wrap(err, "user.service.register: hash password")
 	}
 
-	user.ID = uuid.New().String()
 	user.Password = string(hashPassword)
 
 	result, err := s.repo.Register(ctx, user)
