@@ -33,13 +33,13 @@ var (
 func (s *TestSuite) SetupSuite() {
 	var err error
 	s.DSN = mysqlUser + `:` + mysqlPassword + `@tcp(` + mysqlHost + `:` + mysqlPort + `)/` + mysqlDatabase
-	s.DBConn, err = sql.Open(mysqlDriver, s.DSN+`?parseTime=true&loc=Asia%2FJakarta`)
+	s.DBConn, err = sql.Open(mysqlDriver, s.DSN+`?parseTime=true`)
 	require.NoError(s.T(), err)
 
 	err = s.DBConn.Ping()
 	require.NoError(s.T(), err)
 
-	s.M, err = RunMigration(s.DSN + `?parseTime=true&loc=Asia%2FJakarta`)
+	s.M, err = RunMigration(s.DSN + `?parseTime=true`)
 	require.NoError(s.T(), err)
 
 	log.Info("Starting to Migrate Up Data")
