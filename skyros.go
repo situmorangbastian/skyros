@@ -28,11 +28,11 @@ type OrderService interface {
 	Store(ctx context.Context, order Order) (Order, error)
 	Get(ctx context.Context, ID string) (Order, error)
 	Fetch(ctx context.Context, filter Filter) ([]Order, string, error)
-	Accept(ctx context.Context, ID string) error
+	PatchStatus(ctx context.Context, ID string, status int) error
 }
 
 type OrderRepository interface {
 	Store(ctx context.Context, order Order) (Order, error)
 	Fetch(ctx context.Context, filter Filter) ([]Order, string, error)
-	Accept(ctx context.Context, ID string) error
+	PatchStatus(ctx context.Context, ID string, status int) error
 }

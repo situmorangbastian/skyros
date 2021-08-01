@@ -360,7 +360,7 @@ func TestService_Fetch(t *testing.T) {
 	}
 }
 
-func TestService_Accept(t *testing.T) {
+func TestService_PatchStatus(t *testing.T) {
 	var mockUser skyros.User
 	testdata.GoldenJSONUnmarshal(t, "user", &mockUser)
 	mockUser.Type = skyros.UserSellerType
@@ -381,7 +381,7 @@ func TestService_Accept(t *testing.T) {
 			passedContext: skyros.NewCustomContext(context.Background(), mockUser),
 			repository: testdata.FuncCall{
 				Called: true,
-				Input:  []interface{}{mock.Anything, "order-id"},
+				Input:  []interface{}{mock.Anything, "order-id", 1},
 				Output: []interface{}{nil},
 			},
 			expectedError: nil,
@@ -405,13 +405,13 @@ func TestService_Accept(t *testing.T) {
 			repoMock := new(mocks.OrderRepository)
 
 			if test.repository.Called {
-				repoMock.On("Accept", test.repository.Input...).
+				repoMock.On("PatchStatus", test.repository.Input...).
 					Return(test.repository.Output...).Once()
 			}
 
 			service := order.NewService(repoMock, nil)
 
-			err := service.Accept(test.passedContext, "order-id")
+			err := service.PatchStatus(test.passedContext, "order-id", 1)
 			repoMock.AssertExpectations(t)
 
 			if err != nil {
