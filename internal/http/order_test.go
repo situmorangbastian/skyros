@@ -217,7 +217,7 @@ func TestOrderHTTP_PatchStatus(t *testing.T) {
 			testName: "success",
 			orderService: testdata.FuncCall{
 				Called: true,
-				Input:  []interface{}{mock.Anything, "order-id"},
+				Input:  []interface{}{mock.Anything, "order-id", 1},
 				Output: []interface{}{nil},
 			},
 			input:          []byte(`{"status": "accept"}`),
@@ -232,7 +232,7 @@ func TestOrderHTTP_PatchStatus(t *testing.T) {
 			testName: "unexpected error from service",
 			orderService: testdata.FuncCall{
 				Called: true,
-				Input:  []interface{}{mock.Anything, "order-id"},
+				Input:  []interface{}{mock.Anything, "order-id", 1},
 				Output: []interface{}{errors.New("unexpected error")},
 			},
 			input:          []byte(`{"status": "accept"}`),
@@ -248,7 +248,7 @@ func TestOrderHTTP_PatchStatus(t *testing.T) {
 		t.Run(test.testName, func(t *testing.T) {
 			mockOrderService := new(mocks.OrderService)
 			if test.orderService.Called {
-				mockOrderService.On("Accept", test.orderService.Input...).
+				mockOrderService.On("PatchStatus", test.orderService.Input...).
 					Return(test.orderService.Output...).Once()
 			}
 			handler.NewOrderHandler(e, mockOrderService)

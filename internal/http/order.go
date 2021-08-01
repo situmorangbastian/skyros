@@ -8,6 +8,10 @@ import (
 	"github.com/situmorangbastian/skyros"
 )
 
+const (
+	orderStatusAccept = iota + 1
+)
+
 type orderHandler struct {
 	service skyros.OrderService
 }
@@ -98,7 +102,7 @@ func (h orderHandler) patchStatus(c echo.Context) error {
 		return skyros.ConstraintError("unsupported status")
 	}
 
-	err := h.service.Accept(c.Request().Context(), c.Param("id"))
+	err := h.service.PatchStatus(c.Request().Context(), c.Param("id"), orderStatusAccept)
 	if err != nil {
 		return err
 	}

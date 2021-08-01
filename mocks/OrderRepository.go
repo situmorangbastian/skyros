@@ -14,20 +14,6 @@ type OrderRepository struct {
 	mock.Mock
 }
 
-// Accept provides a mock function with given fields: ctx, ID
-func (_m *OrderRepository) Accept(ctx context.Context, ID string) error {
-	ret := _m.Called(ctx, ID)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, ID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // Fetch provides a mock function with given fields: ctx, filter
 func (_m *OrderRepository) Fetch(ctx context.Context, filter skyros.Filter) ([]skyros.Order, string, error) {
 	ret := _m.Called(ctx, filter)
@@ -56,6 +42,20 @@ func (_m *OrderRepository) Fetch(ctx context.Context, filter skyros.Filter) ([]s
 	}
 
 	return r0, r1, r2
+}
+
+// PatchStatus provides a mock function with given fields: ctx, ID, status
+func (_m *OrderRepository) PatchStatus(ctx context.Context, ID string, status int) error {
+	ret := _m.Called(ctx, ID, status)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, int) error); ok {
+		r0 = rf(ctx, ID, status)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // Store provides a mock function with given fields: ctx, order

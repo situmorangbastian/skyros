@@ -117,7 +117,7 @@ func (s service) Fetch(ctx context.Context, filter skyros.Filter) ([]skyros.Orde
 	return result, cursor, nil
 }
 
-func (s service) Accept(ctx context.Context, ID string) error {
+func (s service) PatchStatus(ctx context.Context, ID string, status int) error {
 	customCtx, ok := ctx.(skyros.CustomContext)
 	if !ok {
 		return errors.Wrap(errors.New("invalid context"), "order.service.accept: parse custom context")
@@ -127,5 +127,5 @@ func (s service) Accept(ctx context.Context, ID string) error {
 		return skyros.ErrorNotFound("not found")
 	}
 
-	return s.orderRepo.Accept(ctx, ID)
+	return s.orderRepo.PatchStatus(ctx, ID, status)
 }
