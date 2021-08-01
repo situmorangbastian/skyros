@@ -58,7 +58,7 @@ type Order struct {
 }
 
 type OrderProduct struct {
-	Product   Product `json:"-" validate:"-"`
+	Product   Product `json:"product" validate:"-"`
 	ProductID string  `json:"product_id" validate:"required"`
 	Quantity  int64   `json:"quantity" validate:"min=1"`
 }
