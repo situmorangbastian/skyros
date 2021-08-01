@@ -4,16 +4,20 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/situmorangbastian/skyros"
 )
 
 type service struct {
-	repo skyros.OrderRepository
+	orderRepo   skyros.OrderRepository
+	productRepo skyros.ProductRepository
 }
 
-func NewService(repo skyros.OrderRepository) skyros.OrderService {
+func NewService(orderRepo skyros.OrderRepository, productRepo skyros.ProductRepository) skyros.OrderService {
 	return service{
-		repo: repo,
+		orderRepo:   orderRepo,
+		productRepo: productRepo,
 	}
 }
 
@@ -29,12 +33,29 @@ func (s service) Store(ctx context.Context, order skyros.Order) (skyros.Order, e
 
 	order.Buyer = customCtx.User()
 
+	errGroup := errgroup.Group{}
+
 	order.TotalPrice = 0
-	for _, orderItem := range order.Items {
-		order.TotalPrice += orderItem.Product.Price * orderItem.Quantity
+	for index, orderItem := range order.Items {
+		index, orderItem := index, orderItem
+
+		errGroup.Go(func() error {
+			productDetail, err := s.productRepo.Get(ctx, orderItem.ProductID)
+			if err != nil {
+				return errors.Wrap(err, "get detail product id: "+orderItem.ProductID)
+			}
+
+			order.Items[index].Product = productDetail
+			order.TotalPrice += order.Items[index].Product.Price * order.Items[index].Quantity
+			return nil
+		})
 	}
 
-	result, err := s.repo.Store(ctx, order)
+	if err := errGroup.Wait(); err != nil {
+		return skyros.Order{}, errors.Wrap(err, "resolve product detail on order item")
+	}
+
+	result, err := s.orderRepo.Store(ctx, order)
 	if err != nil {
 		return skyros.Order{}, errors.Wrap(err, "order.service.store: store from repository")
 	}
@@ -61,7 +82,7 @@ func (s service) Get(ctx context.Context, ID string) (skyros.Order, error) {
 		return skyros.Order{}, skyros.ErrorNotFound("not found")
 	}
 
-	result, _, err := s.repo.Fetch(ctx, filter)
+	result, _, err := s.orderRepo.Fetch(ctx, filter)
 	if err != nil {
 		return skyros.Order{}, errors.Wrap(err, "order.service.get: fetch from repository")
 	}
@@ -88,7 +109,7 @@ func (s service) Fetch(ctx context.Context, filter skyros.Filter) ([]skyros.Orde
 		return []skyros.Order{}, "", skyros.ErrorNotFound("not found")
 	}
 
-	result, cursor, err := s.repo.Fetch(ctx, filter)
+	result, cursor, err := s.orderRepo.Fetch(ctx, filter)
 	if err != nil {
 		return []skyros.Order{}, "", errors.Wrap(err, "order.service.fetch: fetch from repository")
 	}
@@ -106,5 +127,5 @@ func (s service) Accept(ctx context.Context, ID string) error {
 		return skyros.ErrorNotFound("not found")
 	}
 
-	return s.repo.Accept(ctx, ID)
+	return s.orderRepo.Accept(ctx, ID)
 }

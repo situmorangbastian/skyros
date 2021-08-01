@@ -8,11 +8,11 @@
 			"id": "product-id",
 			"name": "Minyak",
 			"description": "",
-			"price": 5000
+			"price": 40000
 		},
 		"product_id": "product-id",
 		"quantity": 1
 	}],
-	"total_price": 5000,
+	"total_price": 40000,
 	"status": 0
 }

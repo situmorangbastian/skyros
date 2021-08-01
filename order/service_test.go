@@ -20,27 +20,38 @@ func TestService_Store(t *testing.T) {
 	mockUser.Type = skyros.UserBuyerType
 	mockUser.Password = ""
 
+	var mockProduct skyros.Product
+	testdata.GoldenJSONUnmarshal(t, "product", &mockProduct)
+
 	var mockOrder skyros.Order
 	testdata.GoldenJSONUnmarshal(t, "order", &mockOrder)
-
 	mockOrder.Buyer = mockUser
+	mockOrder.Items[0].Product = mockProduct
 
 	mockUserSeller := mockUser
 	mockUserSeller.Type = skyros.UserSellerType
 
 	tests := []struct {
-		testName       string
-		passeOrder     skyros.Order
-		passedContext  context.Context
-		repository     testdata.FuncCall
-		expectedResult skyros.Order
-		expectedError  error
+		testName          string
+		passeOrder        skyros.Order
+		passedContext     context.Context
+		productRepository []testdata.FuncCall
+		orderRepository   testdata.FuncCall
+		expectedResult    skyros.Order
+		expectedError     error
 	}{
 		{
 			testName:      "success",
 			passeOrder:    mockOrder,
 			passedContext: skyros.NewCustomContext(context.Background(), mockUser),
-			repository: testdata.FuncCall{
+			productRepository: []testdata.FuncCall{
+				{
+					Called: true,
+					Input:  []interface{}{mock.Anything, mockProduct.ID},
+					Output: []interface{}{mockProduct, nil},
+				},
+			},
+			orderRepository: testdata.FuncCall{
 				Called: true,
 				Input:  []interface{}{mock.Anything, mockOrder},
 				Output: []interface{}{mockOrder, nil},
@@ -65,7 +76,14 @@ func TestService_Store(t *testing.T) {
 			testName:      "error from repository",
 			passeOrder:    mockOrder,
 			passedContext: skyros.NewCustomContext(context.Background(), mockUser),
-			repository: testdata.FuncCall{
+			productRepository: []testdata.FuncCall{
+				{
+					Called: true,
+					Input:  []interface{}{mock.Anything, mockProduct.ID},
+					Output: []interface{}{mockProduct, nil},
+				},
+			},
+			orderRepository: testdata.FuncCall{
 				Called: true,
 				Input:  []interface{}{mock.Anything, mockOrder},
 				Output: []interface{}{skyros.Order{}, errors.New("unexpected error")},
@@ -77,17 +95,26 @@ func TestService_Store(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.testName, func(t *testing.T) {
-			repoMock := new(mocks.OrderRepository)
+			orderRepoMock := new(mocks.OrderRepository)
+			productRepoMock := new(mocks.ProductRepository)
 
-			if test.repository.Called {
-				repoMock.On("Store", test.repository.Input...).
-					Return(test.repository.Output...).Once()
+			if test.orderRepository.Called {
+				orderRepoMock.On("Store", test.orderRepository.Input...).
+					Return(test.orderRepository.Output...).Once()
 			}
 
-			service := order.NewService(repoMock)
+			for _, productRepo := range test.productRepository {
+				if productRepo.Called {
+					productRepoMock.On("Get", productRepo.Input...).
+						Return(productRepo.Output...).Once()
+				}
+			}
+
+			service := order.NewService(orderRepoMock, productRepoMock)
 
 			res, err := service.Store(test.passedContext, test.passeOrder)
-			repoMock.AssertExpectations(t)
+			orderRepoMock.AssertExpectations(t)
+			productRepoMock.AssertExpectations(t)
 
 			if err != nil {
 				require.EqualError(t, errors.Cause(err), test.expectedError.Error())
@@ -104,10 +131,13 @@ func TestService_Get(t *testing.T) {
 	mockUser.Type = skyros.UserBuyerType
 	mockUser.Password = ""
 
+	var mockProduct skyros.Product
+	testdata.GoldenJSONUnmarshal(t, "product", &mockProduct)
+
 	var mockOrder skyros.Order
 	testdata.GoldenJSONUnmarshal(t, "order", &mockOrder)
-
 	mockOrder.Buyer = mockUser
+	mockOrder.Items[0].Product = mockProduct
 
 	mockUserSeller := mockUser
 	mockUserSeller.Type = skyros.UserSellerType
@@ -201,7 +231,7 @@ func TestService_Get(t *testing.T) {
 					Return(test.repository.Output...).Once()
 			}
 
-			service := order.NewService(repoMock)
+			service := order.NewService(repoMock, nil)
 
 			res, err := service.Get(test.passedContext, mockOrder.ID)
 			repoMock.AssertExpectations(t)
@@ -221,10 +251,13 @@ func TestService_Fetch(t *testing.T) {
 	mockUser.Type = skyros.UserBuyerType
 	mockUser.Password = ""
 
+	var mockProduct skyros.Product
+	testdata.GoldenJSONUnmarshal(t, "product", &mockProduct)
+
 	var mockOrder skyros.Order
 	testdata.GoldenJSONUnmarshal(t, "order", &mockOrder)
-
 	mockOrder.Buyer = mockUser
+	mockOrder.Items[0].Product = mockProduct
 
 	mockUserSeller := mockUser
 	mockUserSeller.Type = skyros.UserSellerType
@@ -312,7 +345,7 @@ func TestService_Fetch(t *testing.T) {
 					Return(test.repository.Output...).Once()
 			}
 
-			service := order.NewService(repoMock)
+			service := order.NewService(repoMock, nil)
 
 			res, cursor, err := service.Fetch(test.passedContext, test.passedFilter)
 			repoMock.AssertExpectations(t)
@@ -376,7 +409,7 @@ func TestService_Accept(t *testing.T) {
 					Return(test.repository.Output...).Once()
 			}
 
-			service := order.NewService(repoMock)
+			service := order.NewService(repoMock, nil)
 
 			err := service.Accept(test.passedContext, "order-id")
 			repoMock.AssertExpectations(t)
