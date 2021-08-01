@@ -21,6 +21,7 @@ Simple Ecommerce Service
 ├── .env.example            # Config file example. Rename this to .env to use on your machine
 ├── context.go              # Code which held custom context with user
 ├── entity.go               # Code which held all structs declaration
+├── error.go                # Code which held all error type
 ├── helper.go               # Code which held helper for get config from env
 └── skyros.go               # Code which held all interface
 ```
