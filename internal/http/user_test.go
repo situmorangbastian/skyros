@@ -101,7 +101,7 @@ func TestUserHTTP_Register_Seller(t *testing.T) {
 	var mockUser skyros.User
 	testdata.GoldenJSONUnmarshal(t, "user", &mockUser)
 
-	mockUser.Type = "seller"
+	mockUser.Type = skyros.UserSellerType
 
 	tests := []struct {
 		testName       string
@@ -182,7 +182,7 @@ func TestUserHTTP_Register_Buyer(t *testing.T) {
 	var mockUser skyros.User
 	testdata.GoldenJSONUnmarshal(t, "user", &mockUser)
 
-	mockUser.Type = "buyer"
+	mockUser.Type = skyros.UserBuyerType
 
 	tests := []struct {
 		testName       string

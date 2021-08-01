@@ -23,7 +23,7 @@ func (s service) Store(ctx context.Context, order skyros.Order) (skyros.Order, e
 		return skyros.Order{}, errors.Wrap(errors.New("invalid context"), "order.service.store: parse custom context")
 	}
 
-	if customCtx.User().Type != "buyer" {
+	if customCtx.User().Type != skyros.UserBuyerType {
 		return skyros.Order{}, skyros.ErrorNotFound("not found")
 	}
 
@@ -53,9 +53,9 @@ func (s service) Get(ctx context.Context, ID string) (skyros.Order, error) {
 	}
 
 	switch customCtx.User().Type {
-	case "buyer":
+	case skyros.UserBuyerType:
 		filter.BuyerID = customCtx.User().ID
-	case "seller":
+	case skyros.UserSellerType:
 		filter.SellerID = customCtx.User().ID
 	default:
 		return skyros.Order{}, skyros.ErrorNotFound("not found")
@@ -80,9 +80,9 @@ func (s service) Fetch(ctx context.Context, filter skyros.Filter) ([]skyros.Orde
 	}
 
 	switch customCtx.User().Type {
-	case "buyer":
+	case skyros.UserBuyerType:
 		filter.BuyerID = customCtx.User().ID
-	case "seller":
+	case skyros.UserSellerType:
 		filter.SellerID = customCtx.User().ID
 	default:
 		return []skyros.Order{}, "", skyros.ErrorNotFound("not found")
@@ -102,7 +102,7 @@ func (s service) Accept(ctx context.Context, ID string) error {
 		return errors.Wrap(errors.New("invalid context"), "order.service.accept: parse custom context")
 	}
 
-	if customCtx.User().Type != "seller" {
+	if customCtx.User().Type != skyros.UserSellerType {
 		return skyros.ErrorNotFound("not found")
 	}
 

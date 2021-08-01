@@ -58,7 +58,7 @@ func (h userHandler) registerSeller(c echo.Context) error {
 		return skyros.ConstraintError("invalid request body")
 	}
 
-	user.Type = "seller"
+	user.Type = skyros.UserSellerType
 
 	if err := c.Validate(&user); err != nil {
 		return err
@@ -85,7 +85,7 @@ func (h userHandler) registerBuyer(c echo.Context) error {
 		return skyros.ConstraintError("invalid request body")
 	}
 
-	user.Type = "buyer"
+	user.Type = skyros.UserBuyerType
 
 	if err := c.Validate(&user); err != nil {
 		return err

@@ -17,7 +17,7 @@ import (
 func TestService_Store(t *testing.T) {
 	var mockUser skyros.User
 	testdata.GoldenJSONUnmarshal(t, "user", &mockUser)
-	mockUser.Type = "buyer"
+	mockUser.Type = skyros.UserBuyerType
 	mockUser.Password = ""
 
 	var mockOrder skyros.Order
@@ -26,7 +26,7 @@ func TestService_Store(t *testing.T) {
 	mockOrder.Buyer = mockUser
 
 	mockUserSeller := mockUser
-	mockUserSeller.Type = "seller"
+	mockUserSeller.Type = skyros.UserSellerType
 
 	tests := []struct {
 		testName       string
@@ -101,7 +101,7 @@ func TestService_Store(t *testing.T) {
 func TestService_Get(t *testing.T) {
 	var mockUser skyros.User
 	testdata.GoldenJSONUnmarshal(t, "user", &mockUser)
-	mockUser.Type = "buyer"
+	mockUser.Type = skyros.UserBuyerType
 	mockUser.Password = ""
 
 	var mockOrder skyros.Order
@@ -110,7 +110,7 @@ func TestService_Get(t *testing.T) {
 	mockOrder.Buyer = mockUser
 
 	mockUserSeller := mockUser
-	mockUserSeller.Type = "seller"
+	mockUserSeller.Type = skyros.UserSellerType
 
 	unsupportedUser := mockUser
 	unsupportedUser.Type = ""
@@ -218,7 +218,7 @@ func TestService_Get(t *testing.T) {
 func TestService_Fetch(t *testing.T) {
 	var mockUser skyros.User
 	testdata.GoldenJSONUnmarshal(t, "user", &mockUser)
-	mockUser.Type = "buyer"
+	mockUser.Type = skyros.UserBuyerType
 	mockUser.Password = ""
 
 	var mockOrder skyros.Order
@@ -227,7 +227,7 @@ func TestService_Fetch(t *testing.T) {
 	mockOrder.Buyer = mockUser
 
 	mockUserSeller := mockUser
-	mockUserSeller.Type = "seller"
+	mockUserSeller.Type = skyros.UserSellerType
 
 	unsupportedUser := mockUser
 	unsupportedUser.Type = ""
@@ -330,11 +330,11 @@ func TestService_Fetch(t *testing.T) {
 func TestService_Accept(t *testing.T) {
 	var mockUser skyros.User
 	testdata.GoldenJSONUnmarshal(t, "user", &mockUser)
-	mockUser.Type = "seller"
+	mockUser.Type = skyros.UserSellerType
 	mockUser.Password = ""
 
 	mockUserBuyer := mockUser
-	mockUserBuyer.Type = "buyer"
+	mockUserBuyer.Type = skyros.UserBuyerType
 
 	tests := []struct {
 		testName       string

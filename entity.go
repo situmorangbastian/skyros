@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+const (
+	UserSellerType = "seller"
+	UserBuyerType  = "buyer"
+)
+
 type User struct {
 	ID       string `json:"-"`
 	Email    string `json:"email" validate:"required,email"`
