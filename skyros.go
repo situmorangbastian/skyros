@@ -33,7 +33,6 @@ type OrderService interface {
 
 type OrderRepository interface {
 	Store(ctx context.Context, order Order) (Order, error)
-	Get(ctx context.Context, ID string) (Order, error)
 	Fetch(ctx context.Context, filter Filter) ([]Order, string, error)
 	Accept(ctx context.Context, ID string) error
 }
