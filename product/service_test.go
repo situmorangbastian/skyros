@@ -21,7 +21,7 @@ func TestService_Store(t *testing.T) {
 	var mockUser skyros.User
 	testdata.GoldenJSONUnmarshal(t, "user", &mockUser)
 
-	mockUser.Type = "seller"
+	mockUser.Type = skyros.UserSellerType
 	mockProduct.Seller = mockUser
 
 	tests := []struct {
@@ -148,7 +148,7 @@ func TestService_Fetch(t *testing.T) {
 	var mockUser skyros.User
 	testdata.GoldenJSONUnmarshal(t, "user", &mockUser)
 
-	mockUser.Type = "buyer"
+	mockUser.Type = skyros.UserBuyerType
 	mockProduct.Seller = mockUser
 
 	passedFilterBuyer := skyros.Filter{
@@ -160,7 +160,7 @@ func TestService_Fetch(t *testing.T) {
 	passedFilterSeller.SellerID = mockUser.ID
 
 	mockUserSeller := mockUser
-	mockUserSeller.Type = "seller"
+	mockUserSeller.Type = skyros.UserSellerType
 
 	tests := []struct {
 		testName       string
