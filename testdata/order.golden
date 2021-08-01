@@ -1,0 +1,17 @@
+{
+	"id": "order-id",
+	"description": "order description",
+	"source_address": "seller address",
+	"destination_address": "buyer address",
+	"items": [{
+		"product": {
+			"id": "product-id",
+			"name": "Minyak",
+			"description": "",
+			"price": 5000
+		},
+		"quantity": 1
+	}],
+	"total_price": 5000,
+	"status": 0
+}

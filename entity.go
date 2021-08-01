@@ -45,7 +45,6 @@ type Order struct {
 	Buyer              User           `json:"buyer"`
 	Seller             User           `json:"seller"`
 	Description        string         `json:"description"`
-	Price              float64        `json:"price"`
 	SourceAddress      string         `json:"source_address"`
 	DestinationAddress string         `json:"destination_address"`
 	Items              []OrderProduct `json:"items"`
@@ -56,7 +55,6 @@ type Order struct {
 type OrderProduct struct {
 	Product  Product `json:"product"`
 	Quantity int64   `json:"quantity"`
-	Price    int64   `json:"price"`
 }
 
 type Filter struct {
@@ -64,4 +62,6 @@ type Filter struct {
 	Num      int
 	Search   string
 	SellerID string
+	BuyerID  string
+	OrderID  string
 }
