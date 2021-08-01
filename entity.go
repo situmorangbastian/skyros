@@ -47,19 +47,30 @@ type Product struct {
 
 type Order struct {
 	ID                 string         `json:"id"`
-	Buyer              User           `json:"buyer"`
-	Seller             User           `json:"seller"`
+	Buyer              User           `json:"buyer" validate:"-"`
+	Seller             User           `json:"seller" validate:"-"`
 	Description        string         `json:"description"`
 	SourceAddress      string         `json:"source_address"`
-	DestinationAddress string         `json:"destination_address"`
-	Items              []OrderProduct `json:"items"`
+	DestinationAddress string         `json:"destination_address" validate:"required"`
+	Items              []OrderProduct `json:"items" validate:"required,min=1"`
 	TotalPrice         int64          `json:"total_price"`
 	Status             int            `json:"status"`
 }
 
 type OrderProduct struct {
-	Product  Product `json:"product"`
-	Quantity int64   `json:"quantity"`
+	Product   Product `json:"-" validate:"-"`
+	ProductID string  `json:"product_id" validate:"required"`
+	Quantity  int64   `json:"quantity" validate:"min=1"`
+}
+
+func (op OrderProduct) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Product  Product `json:"product"`
+		Quantity int64   `json:"quantity"`
+	}{
+		Product:  op.Product,
+		Quantity: op.Quantity,
+	})
 }
 
 type Filter struct {
