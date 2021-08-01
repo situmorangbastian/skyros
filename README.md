@@ -10,9 +10,10 @@ Simple Ecommerce Service
 ### Project Structure
 ```
 ├── cmd/skyros              # Code for application init
-├── internal                # Internal code which cannot be exported
+├── internal                # Internal code which cannot be exported to another application
 │     ├── http              # Code for delivery layer. Mainly use HTTP as delivery layer
-│     └── mysql             # Code for repository layer source layer using mysql
+      ├── mysql             # Code for repository layer source layer using mysql
+│     └── validator.go      # Code for custom validation for all structs
 ├── mocks                   # auto generated file which mock existing interface. Use mockery package to generate this
 ├── order                   # Code for usecase layer which implemented order service interface
 ├── product                 # Code for usecase layer which implemented product service interface
