@@ -40,6 +40,25 @@ type Product struct {
 	UpdatedTime time.Time `json:"updated_time"`
 }
 
+type Order struct {
+	ID                 string         `json:"id"`
+	Buyer              User           `json:"buyer"`
+	Seller             User           `json:"seller"`
+	Description        string         `json:"description"`
+	Price              float64        `json:"price"`
+	SourceAddress      string         `json:"source_address"`
+	DestinationAddress string         `json:"destination_address"`
+	Items              []OrderProduct `json:"items"`
+	TotalPrice         int64          `json:"total_price"`
+	Status             int            `json:"status"`
+}
+
+type OrderProduct struct {
+	Product  Product `json:"product"`
+	Quantity int64   `json:"quantity"`
+	Price    int64   `json:"price"`
+}
+
 type Filter struct {
 	Cursor   string
 	Num      int
