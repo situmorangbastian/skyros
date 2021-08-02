@@ -134,8 +134,7 @@ func (r orderRepository) Fetch(ctx context.Context, filter skyros.Filter) ([]sky
 			&order.UpdatedTime,
 		)
 		if err != nil {
-			log.Error(err)
-			continue
+			return []skyros.Order{}, "", err
 		}
 
 		orders = append(orders, order)

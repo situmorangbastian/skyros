@@ -11,7 +11,6 @@ import (
 	"github.com/Masterminds/squirrel"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/situmorangbastian/skyros"
 )
@@ -129,8 +128,7 @@ func (r productRepository) Fetch(ctx context.Context, filter skyros.Filter) ([]s
 			&product.UpdatedTime,
 		)
 		if err != nil {
-			log.Error(err)
-			continue
+			return []skyros.Product{}, "", err
 		}
 
 		products = append(products, product)
