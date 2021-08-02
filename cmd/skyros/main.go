@@ -62,7 +62,7 @@ func main() {
 
 	// Init Order
 	orderRepo := mysqlRepo.NewOrderRepository(dbConn)
-	orderService := order.NewService(orderRepo, productService)
+	orderService := order.NewService(orderRepo, productService, userRepo)
 
 	tokenSecretKey := skyros.GetEnv("SECRET_KEY")
 
