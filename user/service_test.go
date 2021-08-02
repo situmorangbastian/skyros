@@ -66,7 +66,7 @@ func TestService_Login(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.testName, func(t *testing.T) {
 			if test.repository.Called {
-				repoMock.On("GetUserByEmail", test.repository.Input...).
+				repoMock.On("GetUser", test.repository.Input...).
 					Return(test.repository.Output...).Once()
 			}
 
@@ -93,15 +93,15 @@ func TestService_Register(t *testing.T) {
 	passedUser.Password = "password123#"
 
 	tests := []struct {
-		testName           string
-		repoGetUserByEmail testdata.FuncCall
-		repoRegister       testdata.FuncCall
-		expectedResult     skyros.User
-		expectedError      error
+		testName       string
+		repoGetUser    testdata.FuncCall
+		repoRegister   testdata.FuncCall
+		expectedResult skyros.User
+		expectedError  error
 	}{
 		{
 			testName: "success",
-			repoGetUserByEmail: testdata.FuncCall{
+			repoGetUser: testdata.FuncCall{
 				Called: true,
 				Input:  []interface{}{mock.Anything, mockUser.Email},
 				Output: []interface{}{skyros.User{}, skyros.ErrorNotFound("user not found")},
@@ -116,7 +116,7 @@ func TestService_Register(t *testing.T) {
 		},
 		{
 			testName: "error email already exist",
-			repoGetUserByEmail: testdata.FuncCall{
+			repoGetUser: testdata.FuncCall{
 				Called: true,
 				Input:  []interface{}{mock.Anything, mockUser.Email},
 				Output: []interface{}{mockUser, nil},
@@ -125,7 +125,7 @@ func TestService_Register(t *testing.T) {
 		},
 		{
 			testName: "error get user by email",
-			repoGetUserByEmail: testdata.FuncCall{
+			repoGetUser: testdata.FuncCall{
 				Called: true,
 				Input:  []interface{}{mock.Anything, mockUser.Email},
 				Output: []interface{}{mockUser, errors.New("unexpected error")},
@@ -134,7 +134,7 @@ func TestService_Register(t *testing.T) {
 		},
 		{
 			testName: "unexpected error",
-			repoGetUserByEmail: testdata.FuncCall{
+			repoGetUser: testdata.FuncCall{
 				Called: true,
 				Input:  []interface{}{mock.Anything, mockUser.Email},
 				Output: []interface{}{skyros.User{}, skyros.ErrorNotFound("user not found")},
@@ -151,9 +151,9 @@ func TestService_Register(t *testing.T) {
 	repoMock := new(mocks.UserRepository)
 	for _, test := range tests {
 		t.Run(test.testName, func(t *testing.T) {
-			if test.repoGetUserByEmail.Called {
-				repoMock.On("GetUserByEmail", test.repoGetUserByEmail.Input...).
-					Return(test.repoGetUserByEmail.Output...).Once()
+			if test.repoGetUser.Called {
+				repoMock.On("GetUser", test.repoGetUser.Input...).
+					Return(test.repoGetUser.Output...).Once()
 			}
 
 			if test.repoRegister.Called {

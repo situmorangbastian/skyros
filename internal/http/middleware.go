@@ -54,14 +54,18 @@ func Authentication() echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusUnauthorized, "token invalid/expired/required")
 			}
 			claims := user.Claims.(jwt.MapClaims)
+			id := claims["id"].(string)
+			address := claims["address"].(string)
 			name := claims["name"].(string)
 			email := claims["email"].(string)
 			type_ := claims["type"].(string)
 
 			validUser := skyros.User{
-				Name:  name,
-				Email: email,
-				Type:  type_,
+				ID:      id,
+				Address: address,
+				Name:    name,
+				Email:   email,
+				Type:    type_,
 			}
 
 			c.SetRequest(c.Request().WithContext(skyros.NewCustomContext(c.Request().Context(), validUser)))

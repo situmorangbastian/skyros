@@ -20,7 +20,7 @@ func NewService(repo skyros.UserRepository) skyros.UserService {
 }
 
 func (s service) Login(ctx context.Context, email, password string) (skyros.User, error) {
-	user, err := s.repo.GetUserByEmail(ctx, email)
+	user, err := s.repo.GetUser(ctx, email)
 	if err != nil {
 		return skyros.User{}, errors.Wrap(err, "user.service.login: get user by email repo")
 	}
@@ -34,7 +34,7 @@ func (s service) Login(ctx context.Context, email, password string) (skyros.User
 }
 
 func (s service) Register(ctx context.Context, user skyros.User) (skyros.User, error) {
-	currentUser, err := s.repo.GetUserByEmail(ctx, user.Email)
+	currentUser, err := s.repo.GetUser(ctx, user.Email)
 	if err != nil {
 		switch errors.Cause(err).(type) {
 		case skyros.ErrorNotFound:

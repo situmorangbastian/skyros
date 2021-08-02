@@ -74,11 +74,11 @@ func main() {
 
 	// Init Product
 	productRepo := mysqlRepo.NewProductRepository(dbConn)
-	productService := product.NewService(productRepo)
+	productService := product.NewService(productRepo, userRepo)
 
 	// Init Order
 	orderRepo := mysqlRepo.NewOrderRepository(dbConn)
-	orderService := order.NewService(orderRepo, productRepo)
+	orderService := order.NewService(orderRepo, productService)
 
 	tokenSecretKey := skyros.GetEnv("SECRET_KEY")
 
