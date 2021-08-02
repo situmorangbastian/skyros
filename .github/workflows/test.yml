@@ -24,9 +24,9 @@ jobs:
     env:
       MYSQL_HOST: 127.0.0.1
       MYSQL_PORT: 3306
-      MYSQL_USER: skyros
+      MYSQL_DBNAME: skyros
+      MYSQL_USER: root
       MYSQL_PASS: root
-      MYSQL_DBNAME: root
     steps:
     - name: Set up Action
       uses: actions/checkout@v2
