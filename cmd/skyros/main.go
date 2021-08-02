@@ -11,8 +11,6 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/golang-migrate/migrate"
-	"github.com/golang-migrate/migrate/database/mysql"
 	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -32,7 +30,7 @@ func main() {
 	dbPort := skyros.GetEnv("MYSQL_PORT")
 	dbUser := skyros.GetEnv("MYSQL_USER")
 	dbPass := skyros.GetEnv("MYSQL_PASS")
-	dbName := skyros.GetEnv("MYSQL_NAME")
+	dbName := skyros.GetEnv("MYSQL_DBNAME")
 	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
 	val := url.Values{}
 	val.Add("parseTime", "1")
@@ -53,20 +51,6 @@ func main() {
 			log.Fatal(err)
 		}
 	}()
-
-	// Migration
-	driver, err := mysql.WithInstance(dbConn, &mysql.Config{})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	m, err := migrate.NewWithDatabaseInstance(
-		"file://internal/mysql/migrations",
-		"mysql", driver)
-	if err != nil {
-		log.Fatal(err)
-	}
-	_ = m.Up()
 
 	// Init User
 	userRepo := mysqlRepo.NewUserRepository(dbConn)

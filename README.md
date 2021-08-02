@@ -26,3 +26,22 @@ Simple Ecommerce Service
 ├── helper.go               # Code which held helper for get config from env
 └── skyros.go               # Code which held all interface
 ```
+
+### Running
+
+Make sure to set the .env file (see: .env.example).
+
+Run migration first.
+
+```bash
+make mysql-up
+make migrate-up
+```
+
+To start and stop the API, run:
+
+```bash
+make docker
+make run
+make stop
+```
