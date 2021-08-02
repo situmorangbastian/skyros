@@ -33,10 +33,12 @@ func (r orderRepository) Store(ctx context.Context, order skyros.Order) (skyros.
 
 	timeNow := time.Now()
 	order.ID = uuid.New().String()
+	order.CreatedTime = timeNow
+	order.UpdatedTime = timeNow
 
 	query, args, err := sq.Insert("orders").
 		Columns("id", "buyer_id", "seller_id", "description", "source_address", "destination_address", "total_price", "status", "created_time", "updated_time").
-		Values(order.ID, order.Buyer.ID, order.Seller.ID, order.Description, order.SourceAddress, order.DestinationAddress, order.TotalPrice, order.Status, timeNow, timeNow).ToSql()
+		Values(order.ID, order.Buyer.ID, order.Seller.ID, order.Description, order.SourceAddress, order.DestinationAddress, order.TotalPrice, order.Status, order.CreatedTime, order.UpdatedTime).ToSql()
 	if err != nil {
 		return skyros.Order{}, err
 	}
@@ -88,7 +90,7 @@ func (r orderRepository) Store(ctx context.Context, order skyros.Order) (skyros.
 }
 
 func (r orderRepository) Fetch(ctx context.Context, filter skyros.Filter) ([]skyros.Order, string, error) {
-	qBuilder := sq.Select("id", "buyer_id", "seller_id", "description", "source_address", "destination_address", "total_price", "created_time", "updated_time").
+	qBuilder := sq.Select("id", "buyer_id", "seller_id", "description", "source_address", "destination_address", "total_price", "status", "created_time", "updated_time").
 		From("orders").
 		Where("deleted_time IS NULL").
 		OrderBy("created_time DESC")
@@ -130,6 +132,7 @@ func (r orderRepository) Fetch(ctx context.Context, filter skyros.Filter) ([]sky
 			&order.SourceAddress,
 			&order.DestinationAddress,
 			&order.TotalPrice,
+			&order.Status,
 			&order.CreatedTime,
 			&order.UpdatedTime,
 		)

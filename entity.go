@@ -59,6 +59,39 @@ type Order struct {
 	UpdatedTime        time.Time      `json:"updated_time"`
 }
 
+func (o Order) MarshalJSON() ([]byte, error) {
+	status := "pending"
+	if o.Status == 1 {
+		status = "accepted"
+	}
+
+	return json.Marshal(&struct {
+		ID                 string         `json:"id"`
+		Buyer              User           `json:"buyer" validate:"-"`
+		Seller             User           `json:"seller" validate:"-"`
+		Description        string         `json:"description"`
+		SourceAddress      string         `json:"source_address"`
+		DestinationAddress string         `json:"destination_address" validate:"required"`
+		Items              []OrderProduct `json:"items" validate:"required,min=1"`
+		TotalPrice         int64          `json:"total_price"`
+		Status             string         `json:"status"`
+		CreatedTime        time.Time      `json:"created_time"`
+		UpdatedTime        time.Time      `json:"updated_time"`
+	}{
+		ID:                 o.ID,
+		Buyer:              o.Buyer,
+		Seller:             o.Seller,
+		Description:        o.Description,
+		SourceAddress:      o.SourceAddress,
+		DestinationAddress: o.DestinationAddress,
+		Items:              o.Items,
+		TotalPrice:         o.TotalPrice,
+		Status:             status,
+		CreatedTime:        o.CreatedTime,
+		UpdatedTime:        o.UpdatedTime,
+	})
+}
+
 type OrderProduct struct {
 	Product   Product `json:"-" validate:"-"`
 	ProductID string  `json:"product_id" validate:"required"`

@@ -30,10 +30,12 @@ func (r productRepository) Store(ctx context.Context, product skyros.Product) (s
 	timeNow := time.Now()
 
 	product.ID = uuid.New().String()
+	product.CreatedTime = timeNow
+	product.UpdatedTime = timeNow
 
 	query, args, err := sq.Insert("product").
 		Columns("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
-		Values(product.ID, product.Name, product.Description, product.Price, product.Seller.ID, timeNow, timeNow).ToSql()
+		Values(product.ID, product.Name, product.Description, product.Price, product.Seller.ID, product.CreatedTime, product.UpdatedTime).ToSql()
 	if err != nil {
 		return skyros.Product{}, err
 	}
