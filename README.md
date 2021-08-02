@@ -27,6 +27,25 @@ Simple Ecommerce Service
 └── skyros.go               # Code which held all interface
 ```
 
+### Testing
+
+There are two kind of tests: unit and integration.
+
+#### Unit Tests
+
+```bash
+make unittest
+```
+
+#### Integration Tests
+
+Before running integration tests, make sure you have the right state `make migrate-up`
+
+```bash
+make mysql-up
+make test
+```
+
 ### Running
 
 Make sure to set the .env file (see: .env.example).
@@ -35,6 +54,7 @@ Run migration first.
 
 ```bash
 make mysql-up
+make migrate-prepare
 make migrate-up
 ```
 
