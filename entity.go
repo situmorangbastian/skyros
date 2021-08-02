@@ -55,6 +55,8 @@ type Order struct {
 	Items              []OrderProduct `json:"items" validate:"required,min=1"`
 	TotalPrice         int64          `json:"total_price"`
 	Status             int            `json:"status"`
+	CreatedTime        time.Time      `json:"created_time"`
+	UpdatedTime        time.Time      `json:"updated_time"`
 }
 
 type OrderProduct struct {
