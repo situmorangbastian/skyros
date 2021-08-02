@@ -39,7 +39,7 @@ func (m *Migration) Down() ([]error, bool) {
 func RunMigration(dbURI string) (*Migration, error) {
 	_, filename, _, _ := runtime.Caller(0)
 
-	migrationPath := path.Join(path.Dir(filename), "migrations")
+	migrationPath := path.Join(path.Dir(filename), "migrations_test")
 
 	var dataPath []string
 	dataPath = append(dataPath, "file://")
