@@ -39,7 +39,7 @@ jobs:
     - name: Set up MySQL
       run: |
         sudo /etc/init.d/mysql start
-        mysql -e 'CREATE DATABASE ${{ env.TEST_MYSQL_DBNAME }};' -u${{ env.TEST_MYSQL_USER }} -p${{ env.TEST_MYSQL_PASS }}
+        mysql -e 'CREATE DATABASE ${{ env.MYSQL_DBNAME }};' -u${{ env.MYSQL_USER }} -p${{ env.MYSQL_PASS }}
 
     - name: Run Test
       run: make test
