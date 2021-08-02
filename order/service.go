@@ -12,12 +12,14 @@ import (
 type service struct {
 	orderRepo      skyros.OrderRepository
 	productService skyros.ProductService
+	userRepo       skyros.UserRepository
 }
 
-func NewService(orderRepo skyros.OrderRepository, productService skyros.ProductService) skyros.OrderService {
+func NewService(orderRepo skyros.OrderRepository, productService skyros.ProductService, userRepo skyros.UserRepository) skyros.OrderService {
 	return service{
 		orderRepo:      orderRepo,
 		productService: productService,
+		userRepo:       userRepo,
 	}
 }
 
@@ -92,6 +94,20 @@ func (s service) Get(ctx context.Context, ID string) (skyros.Order, error) {
 		return skyros.Order{}, skyros.ErrorNotFound("not found")
 	}
 
+	detailBuyer, err := s.userRepo.GetUser(ctx, result[0].Buyer.ID)
+	if err != nil {
+		return skyros.Order{}, errors.Wrap(err, "order.service.get: resolve detail buyer")
+	}
+
+	result[0].Buyer = detailBuyer
+
+	detailSeller, err := s.userRepo.GetUser(ctx, result[0].Seller.ID)
+	if err != nil {
+		return skyros.Order{}, errors.Wrap(err, "order.service.get: resolve detail seller")
+	}
+
+	result[0].Seller = detailSeller
+
 	errGroup := errgroup.Group{}
 
 	for index, orderItem := range result[0].Items {
@@ -135,13 +151,34 @@ func (s service) Fetch(ctx context.Context, filter skyros.Filter) ([]skyros.Orde
 		return []skyros.Order{}, "", errors.Wrap(err, "order.service.fetch: fetch from repository")
 	}
 
-	for index := range result {
-		errGroup := errgroup.Group{}
+	errGroup := errgroup.Group{}
+
+	for index, order := range result {
+		index, order := index, order
+
+		errGroup.Go(func() error {
+			detailBuyer, err := s.userRepo.GetUser(ctx, order.Buyer.ID)
+			if err != nil {
+				return errors.Wrap(err, "order.service.fetch: resolve detail buyer")
+			}
+
+			result[0].Buyer = detailBuyer
+
+			detailSeller, err := s.userRepo.GetUser(ctx, order.Seller.ID)
+			if err != nil {
+				return errors.Wrap(err, "order.service.fetch: resolve detail buyer")
+			}
+
+			result[0].Seller = detailSeller
+			return nil
+		})
+
+		errGroupChild := errgroup.Group{}
 
 		for index, orderItem := range result[index].Items {
 			index, orderItem := index, orderItem
 
-			errGroup.Go(func() error {
+			errGroupChild.Go(func() error {
 				productDetail, err := s.productService.Get(ctx, orderItem.ProductID)
 				if err != nil {
 					return errors.Wrap(err, "get detail product id: "+orderItem.ProductID)
@@ -152,9 +189,13 @@ func (s service) Fetch(ctx context.Context, filter skyros.Filter) ([]skyros.Orde
 			})
 		}
 
-		if err := errGroup.Wait(); err != nil {
+		if err := errGroupChild.Wait(); err != nil {
 			return []skyros.Order{}, "", errors.Wrap(err, "resolve product detail on order item")
 		}
+	}
+
+	if err := errGroup.Wait(); err != nil {
+		return []skyros.Order{}, "", errors.Wrap(err, "resolve seller and buyer detail")
 	}
 
 	return result, cursor, nil
