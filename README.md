@@ -31,6 +31,11 @@ On this link [documentation](https://app.swaggerhub.com/apis-docs/situmorangbast
 └── skyros.go               # Code which held all interface
 ```
 
+### Database Migrations
+Using CLI version of https://github.com/golang-migrate/migrate
+
+* [Installation](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
+
 ### Running
 
 Make sure to set the .env file (see: .env.example).
@@ -39,7 +44,6 @@ Run migration first.
 
 ```bash
 make mysql-up
-make migrate-prepare
 make migrate-up
 ```
 
