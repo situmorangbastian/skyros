@@ -17,19 +17,19 @@ type orderHandler struct {
 }
 
 // NewOrderHandler init the order handler
-func NewOrderHandler(e *echo.Echo, service skyros.OrderService) {
+func NewOrderHandler(g *echo.Group, service skyros.OrderService) {
 	if service == nil {
 		panic("http: nil product service")
 	}
 
 	handler := &orderHandler{service}
 
-	e.POST("/order", handler.store)
+	g.POST("/order", handler.store)
 
-	e.GET("/order/:id", handler.get)
-	e.GET("/order", handler.fetch)
+	g.GET("/order/:id", handler.get)
+	g.GET("/order", handler.fetch)
 
-	e.PATCH("/order/:id", handler.patchStatus)
+	g.PATCH("/order/:id", handler.patchStatus)
 }
 
 func (h orderHandler) store(c echo.Context) error {

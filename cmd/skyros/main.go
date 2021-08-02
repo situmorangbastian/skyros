@@ -79,21 +79,20 @@ func main() {
 
 	e := echo.New()
 	e.Use(
-		middleware.JWTWithConfig(middleware.JWTConfig{
-			Skipper: func(c echo.Context) bool {
-				methodWithPath := c.Request().Method + " " + c.Request().URL.Path
-				return handler.AllowEndpointWithoutAuth[methodWithPath]
-			},
-			SigningKey: tokenSecretKey,
-		}),
 		handler.ErrorMiddleware(),
 	)
 	e.Validator = internal.NewValidator()
 
+	g := e.Group("")
+	g.Use(
+		middleware.JWT([]byte(tokenSecretKey)),
+		handler.Authentication(),
+	)
+
 	// Init Handler
 	handler.NewUserHandler(e, userService, tokenSecretKey)
-	handler.NewProductHandler(e, productService)
-	handler.NewOrderHandler(e, orderService)
+	handler.NewProductHandler(e, g, productService)
+	handler.NewOrderHandler(g, orderService)
 
 	// Start server
 	serverAddress := skyros.GetEnv("SERVER_ADDRESS")

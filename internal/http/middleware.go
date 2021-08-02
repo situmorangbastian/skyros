@@ -3,20 +3,12 @@ package http
 import (
 	"net/http"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/situmorangbastian/skyros"
-)
-
-var (
-	AllowEndpointWithoutAuth = map[string]bool{
-		"POST /register/buyer":  true,
-		"POST /register/seller": true,
-		"POST /login":           true,
-		"GET /product":          true,
-	}
 )
 
 // ErrorMiddleware is a function to generate http status code.
@@ -30,8 +22,6 @@ func ErrorMiddleware() echo.MiddlewareFunc {
 
 			if e, ok := err.(*echo.HTTPError); ok {
 				switch e.Code {
-				case http.StatusUnauthorized:
-					e.Message = "token invalid/expired"
 				case http.StatusInternalServerError:
 					log.Error(e.Message)
 					e.Message = "internal server error"
@@ -51,6 +41,32 @@ func ErrorMiddleware() echo.MiddlewareFunc {
 
 			log.Errorln(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
+		}
+	}
+}
+
+// Authentication is a middleware that validate request for Authentication.
+func Authentication() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			user, ok := c.Get("user").(*jwt.Token)
+			if !ok {
+				return echo.NewHTTPError(http.StatusUnauthorized, "token invalid/expired/required")
+			}
+			claims := user.Claims.(jwt.MapClaims)
+			name := claims["name"].(string)
+			email := claims["email"].(string)
+			type_ := claims["type"].(string)
+
+			validUser := skyros.User{
+				Name:  name,
+				Email: email,
+				Type:  type_,
+			}
+
+			c.SetRequest(c.Request().WithContext(skyros.NewCustomContext(c.Request().Context(), validUser)))
+
+			return next(c)
 		}
 	}
 }
