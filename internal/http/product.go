@@ -3,7 +3,9 @@ package http
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 
 	"github.com/situmorangbastian/skyros"
@@ -55,6 +57,32 @@ func (h productHandler) get(c echo.Context) error {
 }
 
 func (h productHandler) fetch(c echo.Context) error {
+	tokenString := c.Request().Header.Get("Authorization")
+
+	if tokenString != "" {
+		tokenString = strings.Replace(tokenString, "Bearer ", "", -1)
+		token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			return "skyros-secret", nil
+		})
+
+		claims := token.Claims.(jwt.MapClaims)
+		id := claims["id"].(string)
+		address := claims["address"].(string)
+		name := claims["name"].(string)
+		email := claims["email"].(string)
+		type_ := claims["type"].(string)
+
+		validUser := skyros.User{
+			ID:      id,
+			Address: address,
+			Name:    name,
+			Email:   email,
+			Type:    type_,
+		}
+
+		c.SetRequest(c.Request().WithContext(skyros.NewCustomContext(c.Request().Context(), validUser)))
+	}
+
 	filter := skyros.Filter{
 		Cursor: c.QueryParam("cursor"),
 		Search: c.QueryParam("search"),
