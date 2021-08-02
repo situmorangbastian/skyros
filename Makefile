@@ -29,4 +29,4 @@ test: vendor
 # Build
 .PHONY: docker
 docker: vendor $(SOURCES)
-	@docker build -t $(IMAGE_NAME) .
+	@docker build -t $(IMAGE_NAME):latest .
