@@ -57,8 +57,11 @@ make stop
 
 ### Dummy User
 
+
+
 User Seller
 ```bash
+POST /login
 {
   "email": "user-seller@example.com",
   "password": "password"
@@ -67,6 +70,7 @@ User Seller
 
 User Buyer
 ```bash
+POST /login
 {
   "email": "user-buyer@example.com",
   "password": "password"
