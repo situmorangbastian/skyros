@@ -91,6 +91,26 @@ func (s service) Get(ctx context.Context, ID string) (skyros.Order, error) {
 		return skyros.Order{}, skyros.ErrorNotFound("not found")
 	}
 
+	errGroup := errgroup.Group{}
+
+	for index, orderItem := range result[0].Items {
+		index, orderItem := index, orderItem
+
+		errGroup.Go(func() error {
+			productDetail, err := s.productRepo.Get(ctx, orderItem.ProductID)
+			if err != nil {
+				return errors.Wrap(err, "get detail product id: "+orderItem.ProductID)
+			}
+
+			result[0].Items[index].Product = productDetail
+			return nil
+		})
+	}
+
+	if err := errGroup.Wait(); err != nil {
+		return skyros.Order{}, errors.Wrap(err, "resolve product detail on order item")
+	}
+
 	return result[0], nil
 }
 
@@ -112,6 +132,28 @@ func (s service) Fetch(ctx context.Context, filter skyros.Filter) ([]skyros.Orde
 	result, cursor, err := s.orderRepo.Fetch(ctx, filter)
 	if err != nil {
 		return []skyros.Order{}, "", errors.Wrap(err, "order.service.fetch: fetch from repository")
+	}
+
+	for index := range result {
+		errGroup := errgroup.Group{}
+
+		for index, orderItem := range result[index].Items {
+			index, orderItem := index, orderItem
+
+			errGroup.Go(func() error {
+				productDetail, err := s.productRepo.Get(ctx, orderItem.ProductID)
+				if err != nil {
+					return errors.Wrap(err, "get detail product id: "+orderItem.ProductID)
+				}
+
+				result[index].Items[index].Product = productDetail
+				return nil
+			})
+		}
+
+		if err := errGroup.Wait(); err != nil {
+			return []skyros.Order{}, "", errors.Wrap(err, "resolve product detail on order item")
+		}
 	}
 
 	return result, cursor, nil
