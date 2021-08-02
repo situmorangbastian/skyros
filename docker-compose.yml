@@ -39,8 +39,6 @@ services:
       - MYSQL_DBNAME=${MYSQL_DBNAME}
       - SECRET_KEY=${SECRET_KEY}
       - SERVER_ADDRESS=${SERVER_ADDRESS}
-    depends_on:
-      - skyros.mysql
     networks:
       - backend
 
