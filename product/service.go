@@ -4,17 +4,20 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/situmorangbastian/skyros"
 )
 
 type service struct {
-	repo skyros.ProductRepository
+	productRepo skyros.ProductRepository
+	userRepo    skyros.UserRepository
 }
 
-func NewService(repo skyros.ProductRepository) skyros.ProductService {
+func NewService(productRepo skyros.ProductRepository, userRepo skyros.UserRepository) skyros.ProductService {
 	return service{
-		repo: repo,
+		productRepo: productRepo,
+		userRepo:    userRepo,
 	}
 }
 
@@ -30,7 +33,7 @@ func (s service) Store(ctx context.Context, product skyros.Product) (skyros.Prod
 
 	product.Seller = customCtx.User()
 
-	result, err := s.repo.Store(ctx, product)
+	result, err := s.productRepo.Store(ctx, product)
 	if err != nil {
 		return skyros.Product{}, errors.Wrap(err, "product.service.store: store from repository")
 	}
@@ -39,10 +42,17 @@ func (s service) Store(ctx context.Context, product skyros.Product) (skyros.Prod
 }
 
 func (s service) Get(ctx context.Context, ID string) (skyros.Product, error) {
-	result, err := s.repo.Get(ctx, ID)
+	result, err := s.productRepo.Get(ctx, ID)
 	if err != nil {
 		return skyros.Product{}, errors.Wrap(err, "product.service.get: get from repository")
 	}
+
+	detailSeller, err := s.userRepo.GetUser(ctx, result.Seller.ID)
+	if err != nil {
+		return skyros.Product{}, errors.Wrap(err, "product.service.get: get user from repository")
+	}
+
+	result.Seller = detailSeller
 
 	return result, nil
 }
@@ -55,9 +65,29 @@ func (s service) Fetch(ctx context.Context, filter skyros.Filter) ([]skyros.Prod
 		}
 	}
 
-	result, nextCursor, err := s.repo.Fetch(ctx, filter)
+	result, nextCursor, err := s.productRepo.Fetch(ctx, filter)
 	if err != nil {
 		return make([]skyros.Product, 0), "", errors.Wrap(err, "product.service.fetch: fetch from repository")
+	}
+
+	errGroup := errgroup.Group{}
+	for index, product := range result {
+		index, product := index, product
+
+		errGroup.Go(func() error {
+			detailSeller, err := s.userRepo.GetUser(ctx, product.Seller.ID)
+			if err != nil {
+				return errors.Wrap(err, "product.service.fetch: get user from repository")
+			}
+
+			result[index].Seller = detailSeller
+			return nil
+		})
+
+	}
+
+	if err := errGroup.Wait(); err != nil {
+		return []skyros.Product{}, "", errors.Wrap(err, "resolve seller detail on product")
 	}
 
 	return result, nextCursor, nil

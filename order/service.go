@@ -10,14 +10,14 @@ import (
 )
 
 type service struct {
-	orderRepo   skyros.OrderRepository
-	productRepo skyros.ProductRepository
+	orderRepo      skyros.OrderRepository
+	productService skyros.ProductService
 }
 
-func NewService(orderRepo skyros.OrderRepository, productRepo skyros.ProductRepository) skyros.OrderService {
+func NewService(orderRepo skyros.OrderRepository, productService skyros.ProductService) skyros.OrderService {
 	return service{
-		orderRepo:   orderRepo,
-		productRepo: productRepo,
+		orderRepo:      orderRepo,
+		productService: productService,
 	}
 }
 
@@ -40,12 +40,13 @@ func (s service) Store(ctx context.Context, order skyros.Order) (skyros.Order, e
 		index, orderItem := index, orderItem
 
 		errGroup.Go(func() error {
-			productDetail, err := s.productRepo.Get(ctx, orderItem.ProductID)
+			productDetail, err := s.productService.Get(ctx, orderItem.ProductID)
 			if err != nil {
 				return errors.Wrap(err, "get detail product id: "+orderItem.ProductID)
 			}
 
 			order.Items[index].Product = productDetail
+			order.Seller = productDetail.Seller
 			order.TotalPrice += order.Items[index].Product.Price * order.Items[index].Quantity
 			return nil
 		})
@@ -97,7 +98,7 @@ func (s service) Get(ctx context.Context, ID string) (skyros.Order, error) {
 		index, orderItem := index, orderItem
 
 		errGroup.Go(func() error {
-			productDetail, err := s.productRepo.Get(ctx, orderItem.ProductID)
+			productDetail, err := s.productService.Get(ctx, orderItem.ProductID)
 			if err != nil {
 				return errors.Wrap(err, "get detail product id: "+orderItem.ProductID)
 			}
@@ -141,7 +142,7 @@ func (s service) Fetch(ctx context.Context, filter skyros.Filter) ([]skyros.Orde
 			index, orderItem := index, orderItem
 
 			errGroup.Go(func() error {
-				productDetail, err := s.productRepo.Get(ctx, orderItem.ProductID)
+				productDetail, err := s.productService.Get(ctx, orderItem.ProductID)
 				if err != nil {
 					return errors.Wrap(err, "get detail product id: "+orderItem.ProductID)
 				}

@@ -32,19 +32,19 @@ func TestService_Store(t *testing.T) {
 	mockUserSeller.Type = skyros.UserSellerType
 
 	tests := []struct {
-		testName          string
-		passeOrder        skyros.Order
-		passedContext     context.Context
-		productRepository []testdata.FuncCall
-		orderRepository   testdata.FuncCall
-		expectedResult    skyros.Order
-		expectedError     error
+		testName        string
+		passeOrder      skyros.Order
+		passedContext   context.Context
+		productService  []testdata.FuncCall
+		orderRepository testdata.FuncCall
+		expectedResult  skyros.Order
+		expectedError   error
 	}{
 		{
 			testName:      "success",
 			passeOrder:    mockOrder,
 			passedContext: skyros.NewCustomContext(context.Background(), mockUser),
-			productRepository: []testdata.FuncCall{
+			productService: []testdata.FuncCall{
 				{
 					Called: true,
 					Input:  []interface{}{mock.Anything, mockProduct.ID},
@@ -76,7 +76,7 @@ func TestService_Store(t *testing.T) {
 			testName:      "error from repository",
 			passeOrder:    mockOrder,
 			passedContext: skyros.NewCustomContext(context.Background(), mockUser),
-			productRepository: []testdata.FuncCall{
+			productService: []testdata.FuncCall{
 				{
 					Called: true,
 					Input:  []interface{}{mock.Anything, mockProduct.ID},
@@ -96,25 +96,25 @@ func TestService_Store(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.testName, func(t *testing.T) {
 			orderRepoMock := new(mocks.OrderRepository)
-			productRepoMock := new(mocks.ProductRepository)
+			productServiceMock := new(mocks.ProductService)
 
 			if test.orderRepository.Called {
 				orderRepoMock.On("Store", test.orderRepository.Input...).
 					Return(test.orderRepository.Output...).Once()
 			}
 
-			for _, productRepo := range test.productRepository {
-				if productRepo.Called {
-					productRepoMock.On("Get", productRepo.Input...).
-						Return(productRepo.Output...).Once()
+			for _, productService := range test.productService {
+				if productService.Called {
+					productServiceMock.On("Get", productService.Input...).
+						Return(productService.Output...).Once()
 				}
 			}
 
-			service := order.NewService(orderRepoMock, productRepoMock)
+			service := order.NewService(orderRepoMock, productServiceMock)
 
 			res, err := service.Store(test.passedContext, test.passeOrder)
 			orderRepoMock.AssertExpectations(t)
-			productRepoMock.AssertExpectations(t)
+			productServiceMock.AssertExpectations(t)
 
 			if err != nil {
 				require.EqualError(t, errors.Cause(err), test.expectedError.Error())
@@ -146,12 +146,12 @@ func TestService_Get(t *testing.T) {
 	unsupportedUser.Type = ""
 
 	tests := []struct {
-		testName          string
-		passedContext     context.Context
-		orderRepository   testdata.FuncCall
-		productRepository []testdata.FuncCall
-		expectedResult    skyros.Order
-		expectedError     error
+		testName        string
+		passedContext   context.Context
+		orderRepository testdata.FuncCall
+		productService  []testdata.FuncCall
+		expectedResult  skyros.Order
+		expectedError   error
 	}{
 		{
 			testName:      "success with user buyer",
@@ -164,7 +164,7 @@ func TestService_Get(t *testing.T) {
 				}},
 				Output: []interface{}{[]skyros.Order{mockOrder}, "", nil},
 			},
-			productRepository: []testdata.FuncCall{
+			productService: []testdata.FuncCall{
 				{
 					Called: true,
 					Input:  []interface{}{mock.Anything, mockProduct.ID},
@@ -191,7 +191,7 @@ func TestService_Get(t *testing.T) {
 				}},
 				Output: []interface{}{[]skyros.Order{mockOrder}, "", nil},
 			},
-			productRepository: []testdata.FuncCall{
+			productService: []testdata.FuncCall{
 				{
 					Called: true,
 					Input:  []interface{}{mock.Anything, mockProduct.ID},
@@ -240,25 +240,25 @@ func TestService_Get(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.testName, func(t *testing.T) {
 			orderRepoMock := new(mocks.OrderRepository)
-			productRepoMock := new(mocks.ProductRepository)
+			productServiceMock := new(mocks.ProductService)
 
 			if test.orderRepository.Called {
 				orderRepoMock.On("Fetch", test.orderRepository.Input...).
 					Return(test.orderRepository.Output...).Once()
 			}
 
-			for _, productRepo := range test.productRepository {
-				if productRepo.Called {
-					productRepoMock.On("Get", productRepo.Input...).
-						Return(productRepo.Output...).Once()
+			for _, productService := range test.productService {
+				if productService.Called {
+					productServiceMock.On("Get", productService.Input...).
+						Return(productService.Output...).Once()
 				}
 			}
 
-			service := order.NewService(orderRepoMock, productRepoMock)
+			service := order.NewService(orderRepoMock, productServiceMock)
 
 			res, err := service.Get(test.passedContext, mockOrder.ID)
 			orderRepoMock.AssertExpectations(t)
-			productRepoMock.AssertExpectations(t)
+			productServiceMock.AssertExpectations(t)
 
 			if err != nil {
 				require.EqualError(t, errors.Cause(err), test.expectedError.Error())
@@ -304,7 +304,7 @@ func TestService_Fetch(t *testing.T) {
 		passedContext      context.Context
 		passedFilter       skyros.Filter
 		orderRepository    testdata.FuncCall
-		productRepository  []testdata.FuncCall
+		productService     []testdata.FuncCall
 		expectedResult     []skyros.Order
 		expectedNextCursor string
 		expectedError      error
@@ -317,7 +317,7 @@ func TestService_Fetch(t *testing.T) {
 				Input:  []interface{}{mock.Anything, filterForUserBuyer},
 				Output: []interface{}{[]skyros.Order{mockOrder}, "next-cursor", nil},
 			},
-			productRepository: []testdata.FuncCall{
+			productService: []testdata.FuncCall{
 				{
 					Called: true,
 					Input:  []interface{}{mock.Anything, mockProduct.ID},
@@ -337,7 +337,7 @@ func TestService_Fetch(t *testing.T) {
 				Input:  []interface{}{mock.Anything, filterForUserSeller},
 				Output: []interface{}{[]skyros.Order{mockOrder}, "next-cursor", nil},
 			},
-			productRepository: []testdata.FuncCall{
+			productService: []testdata.FuncCall{
 				{
 					Called: true,
 					Input:  []interface{}{mock.Anything, mockProduct.ID},
@@ -378,25 +378,25 @@ func TestService_Fetch(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.testName, func(t *testing.T) {
 			orderRepoMock := new(mocks.OrderRepository)
-			productRepoMock := new(mocks.ProductRepository)
+			productServiceMock := new(mocks.ProductService)
 
 			if test.orderRepository.Called {
 				orderRepoMock.On("Fetch", test.orderRepository.Input...).
 					Return(test.orderRepository.Output...).Once()
 			}
 
-			for _, productRepo := range test.productRepository {
-				if productRepo.Called {
-					productRepoMock.On("Get", productRepo.Input...).
-						Return(productRepo.Output...).Once()
+			for _, productService := range test.productService {
+				if productService.Called {
+					productServiceMock.On("Get", productService.Input...).
+						Return(productService.Output...).Once()
 				}
 			}
 
-			service := order.NewService(orderRepoMock, productRepoMock)
+			service := order.NewService(orderRepoMock, productServiceMock)
 
 			res, cursor, err := service.Fetch(test.passedContext, test.passedFilter)
 			orderRepoMock.AssertExpectations(t)
-			productRepoMock.AssertExpectations(t)
+			productServiceMock.AssertExpectations(t)
 
 			if err != nil {
 				require.EqualError(t, errors.Cause(err), test.expectedError.Error())

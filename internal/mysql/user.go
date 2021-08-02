@@ -42,10 +42,13 @@ func (r userRepository) Register(ctx context.Context, user skyros.User) (skyros.
 	return user, nil
 }
 
-func (r userRepository) GetUserByEmail(ctx context.Context, email string) (skyros.User, error) {
+func (r userRepository) GetUser(ctx context.Context, identifier string) (skyros.User, error) {
 	query, args, err := sq.Select("id", "name", "email", "password", "address", "type").
 		From("user").
-		Where(sq.Eq{"email": email}).ToSql()
+		Where(sq.Or{
+			sq.Eq{"email": identifier},
+			sq.Eq{"id": identifier},
+		}).ToSql()
 	if err != nil {
 		return skyros.User{}, err
 	}

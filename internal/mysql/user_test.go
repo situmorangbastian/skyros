@@ -56,7 +56,7 @@ func (s *userTestSuite) TestUser_Register() {
 	})
 }
 
-func (s *userTestSuite) TestUser_GetUserByEmail() {
+func (s *userTestSuite) TestUser_GetUser() {
 	var mockUser skyros.User
 	testdata.GoldenJSONUnmarshal(s.T(), "user", &mockUser)
 
@@ -64,14 +64,14 @@ func (s *userTestSuite) TestUser_GetUserByEmail() {
 
 	s.T().Run("success", func(t *testing.T) {
 		userRepo := mysql.NewUserRepository(s.DBConn)
-		user, err := userRepo.GetUserByEmail(context.TODO(), mockUser.Email)
+		user, err := userRepo.GetUser(context.TODO(), mockUser.Email)
 		require.NoError(t, err)
 		require.Equal(t, mockUser, user)
 	})
 
 	s.T().Run("user not found", func(t *testing.T) {
 		userRepo := mysql.NewUserRepository(s.DBConn)
-		user, err := userRepo.GetUserByEmail(context.TODO(), "notfound@user.com")
+		user, err := userRepo.GetUser(context.TODO(), "notfound@user.com")
 		require.Error(t, err)
 		require.Empty(t, user)
 	})

@@ -9,7 +9,7 @@ type UserService interface {
 
 type UserRepository interface {
 	Register(ctx context.Context, user User) (User, error)
-	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUser(ctx context.Context, identifier string) (User, error)
 }
 
 type ProductService interface {

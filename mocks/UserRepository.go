@@ -14,20 +14,20 @@ type UserRepository struct {
 	mock.Mock
 }
 
-// GetUserByEmail provides a mock function with given fields: ctx, email
-func (_m *UserRepository) GetUserByEmail(ctx context.Context, email string) (skyros.User, error) {
-	ret := _m.Called(ctx, email)
+// GetUser provides a mock function with given fields: ctx, identifier
+func (_m *UserRepository) GetUser(ctx context.Context, identifier string) (skyros.User, error) {
+	ret := _m.Called(ctx, identifier)
 
 	var r0 skyros.User
 	if rf, ok := ret.Get(0).(func(context.Context, string) skyros.User); ok {
-		r0 = rf(ctx, email)
+		r0 = rf(ctx, identifier)
 	} else {
 		r0 = ret.Get(0).(skyros.User)
 	}
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, email)
+		r1 = rf(ctx, identifier)
 	} else {
 		r1 = ret.Error(1)
 	}
