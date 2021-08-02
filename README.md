@@ -39,8 +39,6 @@ make unittest
 
 #### Integration Tests
 
-Before running integration tests, make sure you have the right state `make migrate-up`
-
 ```bash
 make mysql-up
 make test
