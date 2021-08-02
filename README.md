@@ -50,3 +50,21 @@ make docker
 make run
 make stop
 ```
+
+### Dummy User
+
+User Seller
+```bash
+{
+  "email": "user-seller@example.com",
+  "password": "password"
+}
+```
+
+User Buyer
+```bash
+{
+  "email": "user-buyer@example.com",
+  "password": "password"
+}
+```
