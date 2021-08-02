@@ -1,0 +1,48 @@
+version: "3"
+
+networks:
+  backend:
+    driver: bridge
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: skyros.mysql
+    ports: 
+      - 3306:33060
+    environment: 
+      - MYSQL_ROOT_HOST=${MYSQL_HOST} 
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASS}
+      - MYSQL_DATABASE=${MYSQL_DBNAME}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASS}
+    volumes:
+      - database_mysql:/var/lib/mysql
+    networks:
+      - backend
+
+  skyros:
+    image: skyros:latest
+    container_name: skyros.svc
+    build: .
+    command: /app/skyros
+    ports:
+      - 4221:4221
+    volumes:
+      - api:/usr/src/app/
+    environment: 
+      - MYSQL_HOST=${MYSQL_HOST} 
+      - MYSQL_PORT=${MYSQL_PORT}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASS=${MYSQL_PASS}
+      - MYSQL_DBNAME=${MYSQL_DBNAME}
+      - SECRET_KEY=${SECRET_KEY}
+      - SERVER_ADDRESS=${SERVER_ADDRESS}
+    depends_on:
+      - skyros.mysql
+    networks:
+      - backend
+
+volumes:
+  api:
+  database_mysql: 
