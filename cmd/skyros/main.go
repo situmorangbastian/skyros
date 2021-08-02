@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"os/signal"
 	"time"
@@ -32,7 +33,11 @@ func main() {
 	dbUser := skyros.GetEnv("MYSQL_USER")
 	dbPass := skyros.GetEnv("MYSQL_PASS")
 	dbName := skyros.GetEnv("MYSQL_NAME")
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
+	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
+	val := url.Values{}
+	val.Add("parseTime", "1")
+	val.Add("loc", "Asia/Jakarta")
+	dsn := fmt.Sprintf("%s?%s", connection, val.Encode())
 	dbConn, err := sql.Open(`mysql`, dsn)
 	if err != nil {
 		log.Fatal(err)
