@@ -22,11 +22,11 @@ jobs:
         ports:
           - 3306:3306
     env:
-      TEST_MYSQL_HOST: 127.0.0.1
-      TEST_MYSQL_PORT: 3306
-      TEST_MYSQL_DBNAME: skyros
-      TEST_MYSQL_USER: root
-      TEST_MYSQL_PASS: root
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: 3306
+      MYSQL_USER: skyros
+      MYSQL_PASS: root
+      MYSQL_DBNAME: root
     steps:
     - name: Set up Action
       uses: actions/checkout@v2
