@@ -35,6 +35,7 @@ Run migration first.
 
 ```bash
 make mysql-up
+make migrate-prepare
 make migrate-up
 ```
 
