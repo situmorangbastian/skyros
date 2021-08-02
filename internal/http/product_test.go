@@ -67,7 +67,7 @@ func TestProductHTTP_Store(t *testing.T) {
 				mockProductService.On("Store", test.productService.Input...).
 					Return(test.productService.Output...).Once()
 			}
-			handler.NewProductHandler(e, mockProductService)
+			handler.NewProductHandler(e, e.Group(""), mockProductService)
 
 			req := httptest.NewRequest(echo.POST, "/product", strings.NewReader(string(test.input)))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -126,7 +126,7 @@ func TestProductHTTP_Get(t *testing.T) {
 				mockProductService.On("Get", test.productService.Input...).
 					Return(test.productService.Output...).Once()
 			}
-			handler.NewProductHandler(e, mockProductService)
+			handler.NewProductHandler(e, e.Group(""), mockProductService)
 
 			req := httptest.NewRequest(echo.GET, "/product/"+mockProduct.ID, nil)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -199,7 +199,7 @@ func TestProductHTTP_Fetch(t *testing.T) {
 				mockProductService.On("Fetch", test.productService.Input...).
 					Return(test.productService.Output...).Once()
 			}
-			handler.NewProductHandler(e, mockProductService)
+			handler.NewProductHandler(e, e.Group(""), mockProductService)
 
 			req := httptest.NewRequest(echo.GET, test.expectedTarget, nil)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)

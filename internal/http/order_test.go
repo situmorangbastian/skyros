@@ -66,7 +66,7 @@ func TestOrderHTTP_Store(t *testing.T) {
 				mockOrderService.On("Store", test.orderService.Input...).
 					Return(test.orderService.Output...).Once()
 			}
-			handler.NewOrderHandler(e, mockOrderService)
+			handler.NewOrderHandler(e.Group(""), mockOrderService)
 
 			req := httptest.NewRequest(echo.POST, "/order", strings.NewReader(string(test.input)))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -119,7 +119,7 @@ func TestOrderHTTP_Get(t *testing.T) {
 				mockOrderService.On("Get", test.orderService.Input...).
 					Return(test.orderService.Output...).Once()
 			}
-			handler.NewOrderHandler(e, mockOrderService)
+			handler.NewOrderHandler(e.Group(""), mockOrderService)
 
 			req := httptest.NewRequest(echo.GET, "/order/"+mockOrder.ID, nil)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -192,7 +192,7 @@ func TestOrderHTTP_Fetch(t *testing.T) {
 				mockOrderService.On("Fetch", test.orderService.Input...).
 					Return(test.orderService.Output...).Once()
 			}
-			handler.NewOrderHandler(e, mockOrderService)
+			handler.NewOrderHandler(e.Group(""), mockOrderService)
 
 			req := httptest.NewRequest(echo.GET, test.requestURL, nil)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -251,7 +251,7 @@ func TestOrderHTTP_PatchStatus(t *testing.T) {
 				mockOrderService.On("PatchStatus", test.orderService.Input...).
 					Return(test.orderService.Output...).Once()
 			}
-			handler.NewOrderHandler(e, mockOrderService)
+			handler.NewOrderHandler(e.Group(""), mockOrderService)
 
 			req := httptest.NewRequest(echo.PATCH, "/order/order-id", strings.NewReader(string(test.input)))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)

@@ -14,14 +14,14 @@ type productHandler struct {
 }
 
 // NewProductHandler init the product handler
-func NewProductHandler(e *echo.Echo, service skyros.ProductService) {
+func NewProductHandler(e *echo.Echo, r *echo.Group, service skyros.ProductService) {
 	if service == nil {
 		panic("http: nil product service")
 	}
 
 	handler := &productHandler{service}
 
-	e.POST("/product", handler.store)
+	r.POST("/product", handler.store)
 
 	e.GET("/product/:id", handler.get)
 	e.GET("/product", handler.fetch)

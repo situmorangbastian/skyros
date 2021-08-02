@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -51,6 +52,37 @@ func ErrorMiddleware() echo.MiddlewareFunc {
 
 			log.Errorln(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
+		}
+	}
+}
+
+// Authentication is a middleware that validate request for Authentication.
+func Authentication() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			methodWithPath := c.Request().Method + " " + c.Request().URL.Path
+			if AllowEndpointWithoutAuth[methodWithPath] {
+				return next(c)
+			}
+
+			user, ok := c.Get("user").(*jwt.Token)
+			if !ok {
+				return echo.NewHTTPError(http.StatusBadRequest, "token invalid/expired/required")
+			}
+			claims := user.Claims.(jwt.MapClaims)
+			name := claims["name"].(string)
+			email := claims["email"].(string)
+			type_ := claims["type"].(string)
+
+			validUser := skyros.User{
+				Name:  name,
+				Email: email,
+				Type:  type_,
+			}
+
+			c.SetRequest(c.Request().WithContext(skyros.NewCustomContext(c.Request().Context(), validUser)))
+
+			return next(c)
 		}
 	}
 }
