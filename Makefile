@@ -30,3 +30,31 @@ test: vendor
 .PHONY: docker
 docker: vendor $(SOURCES)
 	@docker build -t $(IMAGE_NAME):latest .
+
+.PHONY: run
+run:
+	@docker-compose up -d
+
+.PHONY: stop
+stop:
+	@docker-compose down
+
+# Database Migration
+.PHONY: migrate-prepare
+migrate-prepare:
+	@GO111MODULE=off go get -tags 'mysql' -u github.com/golang-migrate/migrate/cmd/migrate
+
+.PHONY: migrate-up
+migrate-up:
+	@migrate -database "mysql://root:root@tcp(127.0.0.1:33060)/skyros" \
+	-path=internal/mysql/migrations up
+
+
+# Docker
+.PHONY: mysql-up
+mysql-up:
+	@docker-compose up -d mysql
+
+.PHONY: mysql-down
+mysql-down:
+	@docker stop skyros.mysql

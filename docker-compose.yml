@@ -9,13 +9,14 @@ services:
     image: mysql:5.7
     container_name: skyros.mysql
     ports: 
-      - 3306:33060
+      - 33060:33060
     environment: 
       - MYSQL_ROOT_HOST=${MYSQL_HOST} 
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASS}
       - MYSQL_DATABASE=${MYSQL_DBNAME}
       - MYSQL_ROOT_PASSWORD=${MYSQL_PASS}
+      - MYSQL_TCP_PORT=${MYSQL_PORT}
     volumes:
       - database_mysql:/var/lib/mysql
     networks:
