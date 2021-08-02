@@ -36,7 +36,7 @@ migrate-prepare:
 
 .PHONY: migrate-up
 migrate-up:
-	@migrate -database "mysql://root:root@tcp(127.0.0.1:33060)/skyros" \
+	@migrate -database "mysql://root:root@tcp(127.0.0.1:3306)/skyros" \
 	-path=internal/mysql/migrations up
 
 

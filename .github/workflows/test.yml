@@ -22,11 +22,11 @@ jobs:
         ports:
           - 3306:3306
     env:
-      TEST_MYSQL_HOST: 127.0.0.1
-      TEST_MYSQL_PORT: 3306
-      TEST_MYSQL_DBNAME: skyros
-      TEST_MYSQL_USER: root
-      TEST_MYSQL_PASS: root
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: 3306
+      MYSQL_DBNAME: skyros
+      MYSQL_USER: root
+      MYSQL_PASS: root
     steps:
     - name: Set up Action
       uses: actions/checkout@v2
@@ -39,7 +39,7 @@ jobs:
     - name: Set up MySQL
       run: |
         sudo /etc/init.d/mysql start
-        mysql -e 'CREATE DATABASE ${{ env.TEST_MYSQL_DBNAME }};' -u${{ env.TEST_MYSQL_USER }} -p${{ env.TEST_MYSQL_PASS }}
+        mysql -e 'CREATE DATABASE ${{ env.MYSQL_DBNAME }};' -u${{ env.MYSQL_USER }} -p${{ env.MYSQL_PASS }}
 
     - name: Run Test
       run: make test
