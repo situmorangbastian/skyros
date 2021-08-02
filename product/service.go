@@ -23,6 +23,11 @@ func (s service) Store(ctx context.Context, product skyros.Product) (skyros.Prod
 	if !ok {
 		return skyros.Product{}, errors.Wrap(errors.New("invalid context"), "product.service.store: parse custom context")
 	}
+
+	if customCtx.User().Type != skyros.UserSellerType {
+		return skyros.Product{}, skyros.ErrorNotFound("not found")
+	}
+
 	product.Seller = customCtx.User()
 
 	result, err := s.repo.Store(ctx, product)
