@@ -11,15 +11,6 @@ import (
 	"github.com/situmorangbastian/skyros"
 )
 
-var (
-	AllowEndpointWithoutAuth = map[string]bool{
-		"POST /register/buyer":  true,
-		"POST /register/seller": true,
-		"POST /login":           true,
-		"GET /product":          true,
-	}
-)
-
 // ErrorMiddleware is a function to generate http status code.
 func ErrorMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -31,8 +22,6 @@ func ErrorMiddleware() echo.MiddlewareFunc {
 
 			if e, ok := err.(*echo.HTTPError); ok {
 				switch e.Code {
-				case http.StatusUnauthorized:
-					e.Message = "token invalid/expired"
 				case http.StatusInternalServerError:
 					log.Error(e.Message)
 					e.Message = "internal server error"
@@ -60,14 +49,9 @@ func ErrorMiddleware() echo.MiddlewareFunc {
 func Authentication() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			methodWithPath := c.Request().Method + " " + c.Request().URL.Path
-			if AllowEndpointWithoutAuth[methodWithPath] {
-				return next(c)
-			}
-
 			user, ok := c.Get("user").(*jwt.Token)
 			if !ok {
-				return echo.NewHTTPError(http.StatusBadRequest, "token invalid/expired/required")
+				return echo.NewHTTPError(http.StatusUnauthorized, "token invalid/expired/required")
 			}
 			claims := user.Claims.(jwt.MapClaims)
 			name := claims["name"].(string)
