@@ -110,6 +110,7 @@ func main() {
 			log.Fatal(err)
 		}
 	}()
+	wg.Wait()
 
 	// Wait for interrupt signal to gracefully shutdown the server with
 	// a timeout of 10 seconds.
