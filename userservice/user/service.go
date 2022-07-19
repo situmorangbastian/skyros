@@ -61,3 +61,12 @@ func (s service) Register(ctx context.Context, user userservice.User) (userservi
 
 	return result, nil
 }
+
+func (s service) FetchUsersByIDs(ctx context.Context, ids []string) (map[string]userservice.User, error) {
+	users, err := s.repo.FetchUsersByIDs(ctx, ids)
+	if err != nil {
+		return map[string]userservice.User{}, errors.Wrap(err, "user.service.fetch: get users by ids")
+	}
+
+	return users, nil
+}

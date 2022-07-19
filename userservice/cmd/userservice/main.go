@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -16,6 +17,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/situmorangbastian/skyros/userservice"
+	"github.com/situmorangbastian/skyros/userservice/cmd"
 	"github.com/situmorangbastian/skyros/userservice/internal"
 	handler "github.com/situmorangbastian/skyros/userservice/internal/http"
 	mysqlRepo "github.com/situmorangbastian/skyros/userservice/internal/mysql"
@@ -72,11 +74,19 @@ func main() {
 	handler.NewUserHandler(e, userService, tokenSecretKey)
 
 	// Start server
+	wg := sync.WaitGroup{}
+	wg.Add(2)
 	serverAddress := userservice.GetEnv("SERVER_ADDRESS")
 	go func() {
+		defer wg.Done()
 		if err := e.Start(serverAddress); err != nil {
 			e.Logger.Info("shutting down the server...")
 		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		cmd.GRPCServer(userService)
 	}()
 
 	// Wait for interrupt signal to gracefully shutdown the server with

@@ -7,8 +7,8 @@ mysql-up:
 mysql-down:
 	@docker stop skyros.mysql.database
 
-.PHONY: userservice-up
-userservice-up:
+.PHONY: service-up
+service-up:
 	@docker-compose up -d skyros.userservice
 
 # Database Migration
@@ -16,8 +16,8 @@ userservice-up:
 migrate-prepare:
 	@GO111MODULE=off go get -tags 'mysql' -u github.com/golang-migrate/migrate/cmd/migrate
 
-.PHONY: userservice-migrate-up
-userservice-migrate-up:
+.PHONY: service-migrate-up
+service-migrate-up:
 	@migrate -database "mysql://root:password@tcp(127.0.0.1:3306)/userservice" \
 	-path=userservice/internal/mysql/migrations up
 

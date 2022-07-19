@@ -33,6 +33,7 @@ services:
       - MYSQL_DBNAME=userservice
       - SECRET_KEY=userservice-secret-key
       - SERVER_ADDRESS=:4001
+      - GRPC_SERVER_ADDRESS=4011
     depends_on:
       - skyros.mysql
     networks:

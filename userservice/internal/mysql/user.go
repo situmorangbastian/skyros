@@ -72,3 +72,39 @@ func (r userRepository) GetUser(ctx context.Context, identifier string) (userser
 
 	return user, nil
 }
+
+func (r userRepository) FetchUsersByIDs(ctx context.Context, ids []string) (map[string]userservice.User, error) {
+	query, args, err := sq.Select("id", "name", "email", "address", "type").
+		From("user").
+		Where(sq.Or{
+			sq.Eq{"email": ids},
+			sq.Eq{"id": ids},
+		}).ToSql()
+	if err != nil {
+		return map[string]userservice.User{}, err
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return map[string]userservice.User{}, err
+	}
+
+	users := map[string]userservice.User{}
+	for rows.Next() {
+		user := userservice.User{}
+		err = rows.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Email,
+			&user.Address,
+			&user.Type,
+		)
+		if err != nil {
+			return map[string]userservice.User{}, err
+		}
+
+		users[user.ID] = user
+	}
+
+	return users, nil
+}
