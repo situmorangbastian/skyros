@@ -9,12 +9,14 @@ import (
 )
 
 type service struct {
-	productRepo productservice.ProductRepository
+	productRepo     productservice.ProductRepository
+	userServiceGrpc productservice.UserServiceGrpc
 }
 
-func NewService(productRepo productservice.ProductRepository) productservice.ProductService {
+func NewService(productRepo productservice.ProductRepository, userServiceGrpc productservice.UserServiceGrpc) productservice.ProductService {
 	return service{
-		productRepo: productRepo,
+		productRepo:     productRepo,
+		userServiceGrpc: userServiceGrpc,
 	}
 }
 
@@ -44,12 +46,12 @@ func (s service) Get(ctx context.Context, ID string) (productservice.Product, er
 		return productservice.Product{}, errors.Wrap(err, "product.service.get: get from repository")
 	}
 
-	// detailSeller, err := s.userRepo.GetUser(ctx, result.Seller.ID)
-	// if err != nil {
-	// 	return productservice.Product{}, errors.Wrap(err, "product.service.get: get user from repository")
-	// }
+	users, err := s.userServiceGrpc.FetchByIDs(ctx, []string{result.Seller.ID})
+	if err != nil {
+		return productservice.Product{}, errors.Wrap(err, "product.service.get: get user from userservice grpc")
+	}
 
-	// result.Seller = detailSeller
+	result.Seller = users[result.Seller.ID]
 
 	return result, nil
 }
@@ -67,25 +69,19 @@ func (s service) Fetch(ctx context.Context, filter productservice.Filter) ([]pro
 		return make([]productservice.Product, 0), "", errors.Wrap(err, "product.service.fetch: fetch from repository")
 	}
 
-	// errGroup := errgroup.Group{}
-	// for index, product := range result {
-	// 	index, product := index, product
+	userIDs := []string{}
+	for _, product := range result {
+		userIDs = append(userIDs, product.Seller.ID)
+	}
 
-	// 	errGroup.Go(func() error {
-	// 		detailSeller, err := s.userRepo.GetUser(ctx, product.Seller.ID)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "product.service.fetch: get user from repository")
-	// 		}
+	users, err := s.userServiceGrpc.FetchByIDs(ctx, userIDs)
+	if err != nil {
+		return make([]productservice.Product, 0), "", errors.Wrap(err, "product.service.get: get user from userservice grpc")
+	}
 
-	// 		result[index].Seller = detailSeller
-	// 		return nil
-	// 	})
-
-	// }
-
-	// if err := errGroup.Wait(); err != nil {
-	// 	return []productservice.Product{}, "", errors.Wrap(err, "resolve seller detail on product")
-	// }
+	for index := range result {
+		result[index].Seller = users[result[index].Seller.ID]
+	}
 
 	return result, nextCursor, nil
 }

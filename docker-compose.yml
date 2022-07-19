@@ -38,3 +38,25 @@ services:
       - skyros.mysql
     networks:
       - default
+
+  skyros.productservice:
+    image: skyros-product-service:latest
+    container_name: skyros.productservice.svc
+    command: /app/skyros-product-service
+    ports:
+      - '4002:4002'
+    restart: always
+    environment:
+      - MYSQL_HOST=skyros.mysql.database
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASS=password
+      - MYSQL_DBNAME=productservice
+      - SECRET_KEY=userservice-secret-key
+      - SERVER_ADDRESS=:4002
+      - USER_SERVICE_GRPC=skyros.userservice.svc:4011
+    depends_on:
+      - skyros.mysql
+      - skyros.userservice
+    networks:
+      - default

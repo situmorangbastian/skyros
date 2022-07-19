@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/squirrel"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 
@@ -99,7 +98,7 @@ func (r productRepository) Fetch(ctx context.Context, filter productservice.Filt
 	if filter.Search != "" {
 		keywords := strings.Split(filter.Search, ",")
 		for _, keyword := range keywords {
-			qBuilder = qBuilder.Where(squirrel.Like{"name": fmt.Sprintf("%%%v%%", regexp.QuoteMeta(keyword))})
+			qBuilder = qBuilder.Where(sq.Like{"name": fmt.Sprintf("%%%v%%", regexp.QuoteMeta(keyword))})
 		}
 	}
 

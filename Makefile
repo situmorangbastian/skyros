@@ -1,3 +1,5 @@
+GITHUB_TOKEN=
+
 # Docker
 .PHONY: mysql-up
 mysql-up:
@@ -10,6 +12,7 @@ mysql-down:
 .PHONY: service-up
 service-up:
 	@docker-compose up -d skyros.userservice
+	@docker-compose up -d skyros.productservice
 
 # Database Migration
 .PHONY: migrate-prepare
@@ -20,8 +23,11 @@ migrate-prepare:
 service-migrate-up:
 	@migrate -database "mysql://root:password@tcp(127.0.0.1:3306)/userservice" \
 	-path=userservice/internal/mysql/migrations up
+	@migrate -database "mysql://root:password@tcp(127.0.0.1:3306)/productservice" \
+	-path=productservice/internal/mysql/migrations up
 
 # Build Docker Services
 .PHONY: service-docker
 service-docker:
 	@docker build --build-arg GITHUB_TOKEN=$(GITHUB_TOKEN) -f Dockerfile-userservice -t skyros-user-service:latest .
+	@docker build --build-arg GITHUB_TOKEN=$(GITHUB_TOKEN) -f Dockerfile-productservice -t skyros-product-service:latest .

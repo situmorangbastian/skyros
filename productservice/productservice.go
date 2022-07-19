@@ -13,3 +13,7 @@ type ProductRepository interface {
 	Get(ctx context.Context, ID string) (Product, error)
 	Fetch(ctx context.Context, filter Filter) ([]Product, string, error)
 }
+
+type UserServiceGrpc interface {
+	FetchByIDs(ctx context.Context, ids []string) (map[string]User, error)
+}

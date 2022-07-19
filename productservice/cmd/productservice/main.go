@@ -14,9 +14,12 @@ import (
 	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/situmorangbastian/skyros/productservice"
 	"github.com/situmorangbastian/skyros/productservice/internal"
+	grpcService "github.com/situmorangbastian/skyros/productservice/internal/grpc"
 	handler "github.com/situmorangbastian/skyros/productservice/internal/http"
 	mysqlRepo "github.com/situmorangbastian/skyros/productservice/internal/mysql"
 	"github.com/situmorangbastian/skyros/productservice/product"
@@ -50,9 +53,16 @@ func main() {
 		}
 	}()
 
+	// Grpc Client
+	userServiceGrpcConn, err := grpc.Dial(productservice.GetEnv("USER_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(err)
+	}
+	userServiceGrpc := grpcService.NewUserService(userServiceGrpcConn)
+
 	// Init Product
 	productRepo := mysqlRepo.NewProductRepository(dbConn)
-	productService := product.NewService(productRepo)
+	productService := product.NewService(productRepo, userServiceGrpc)
 
 	tokenSecretKey := productservice.GetEnv("SECRET_KEY")
 

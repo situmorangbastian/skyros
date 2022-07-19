@@ -11,27 +11,22 @@ const (
 )
 
 type User struct {
-	ID       string `json:"-"`
-	Email    string `json:"email" validate:"required,email"`
-	Name     string `json:"name" validate:"required"`
-	Address  string `json:"address" validate:"required"`
-	Password string `json:"password" validate:"required"`
-	Type     string `json:"-"`
+	ID      string `json:"id"`
+	Email   string `json:"email" validate:"required,email"`
+	Name    string `json:"name" validate:"required"`
+	Address string `json:"address" validate:"required"`
+	Type    string `json:"type"`
 }
 
 func (u User) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		ID      string `json:"id"`
 		Email   string `json:"email"`
 		Name    string `json:"name"`
 		Address string `json:"address"`
-		Type    string `json:"type"`
 	}{
-		ID:      u.ID,
 		Email:   u.Email,
 		Name:    u.Name,
 		Address: u.Address,
-		Type:    u.Type,
 	})
 }
 
@@ -43,69 +38,6 @@ type Product struct {
 	Seller      User      `json:"seller" validate:"-"`
 	CreatedTime time.Time `json:"created_time"`
 	UpdatedTime time.Time `json:"updated_time"`
-}
-
-type Order struct {
-	ID                 string         `json:"id"`
-	Buyer              User           `json:"buyer" validate:"-"`
-	Seller             User           `json:"seller" validate:"-"`
-	Description        string         `json:"description"`
-	SourceAddress      string         `json:"source_address"`
-	DestinationAddress string         `json:"destination_address" validate:"required"`
-	Items              []OrderProduct `json:"items" validate:"required,min=1"`
-	TotalPrice         int64          `json:"total_price"`
-	Status             int            `json:"status"`
-	CreatedTime        time.Time      `json:"created_time"`
-	UpdatedTime        time.Time      `json:"updated_time"`
-}
-
-func (o Order) MarshalJSON() ([]byte, error) {
-	status := "pending"
-	if o.Status == 1 {
-		status = "accepted"
-	}
-
-	return json.Marshal(&struct {
-		ID                 string         `json:"id"`
-		Buyer              User           `json:"buyer" validate:"-"`
-		Seller             User           `json:"seller" validate:"-"`
-		Description        string         `json:"description"`
-		SourceAddress      string         `json:"source_address"`
-		DestinationAddress string         `json:"destination_address" validate:"required"`
-		Items              []OrderProduct `json:"items" validate:"required,min=1"`
-		TotalPrice         int64          `json:"total_price"`
-		Status             string         `json:"status"`
-		CreatedTime        time.Time      `json:"created_time"`
-		UpdatedTime        time.Time      `json:"updated_time"`
-	}{
-		ID:                 o.ID,
-		Buyer:              o.Buyer,
-		Seller:             o.Seller,
-		Description:        o.Description,
-		SourceAddress:      o.SourceAddress,
-		DestinationAddress: o.DestinationAddress,
-		Items:              o.Items,
-		TotalPrice:         o.TotalPrice,
-		Status:             status,
-		CreatedTime:        o.CreatedTime,
-		UpdatedTime:        o.UpdatedTime,
-	})
-}
-
-type OrderProduct struct {
-	Product   Product `json:"-" validate:"-"`
-	ProductID string  `json:"product_id" validate:"required"`
-	Quantity  int64   `json:"quantity" validate:"min=1"`
-}
-
-func (op OrderProduct) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		Product  Product `json:"product"`
-		Quantity int64   `json:"quantity"`
-	}{
-		Product:  op.Product,
-		Quantity: op.Quantity,
-	})
 }
 
 type Filter struct {
