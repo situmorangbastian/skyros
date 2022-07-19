@@ -1,0 +1,1 @@
+TRUNCATE orders_product
