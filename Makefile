@@ -14,6 +14,13 @@ service-up:
 	@docker-compose up -d skyros.userservice
 	@docker-compose up -d skyros.productservice
 
+.PHONY: service-down
+service-down:
+	@docker stop skyros.userservice.svc
+	@docker stop skyros.productservice.svc
+	@docker rm skyros.userservice.svc
+	@docker rm skyros.productservice.svc
+
 # Database Migration
 .PHONY: migrate-prepare
 migrate-prepare:
