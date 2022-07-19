@@ -24,4 +24,4 @@ service-migrate-up:
 # Build Docker Services
 .PHONY: service-docker
 service-docker:
-	@docker build -f Dockerfile-userservice -t skyros-user-service:latest .
+	@docker build --build-arg GITHUB_TOKEN=$(GITHUB_TOKEN) -f Dockerfile-userservice -t skyros-user-service:latest .

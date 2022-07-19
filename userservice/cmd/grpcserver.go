@@ -8,8 +8,8 @@ import (
 	"strconv"
 
 	"github.com/situmorangbastian/skyros/userservice"
-	grpcUser "github.com/situmorangbastian/skyros/userservice/grpc"
 	grpcHandler "github.com/situmorangbastian/skyros/userservice/internal/grpc"
+	grpcUser "github.com/situmorangbastian/skyrosgrpc"
 	"google.golang.org/grpc"
 )
 
