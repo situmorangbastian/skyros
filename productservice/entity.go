@@ -45,6 +45,5 @@ type Filter struct {
 	Num      int
 	Search   string
 	SellerID string
-	BuyerID  string
 	OrderID  string
 }

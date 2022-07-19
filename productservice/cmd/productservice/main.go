@@ -3,11 +3,15 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
+	"sync"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -19,10 +23,11 @@ import (
 
 	"github.com/situmorangbastian/skyros/productservice"
 	"github.com/situmorangbastian/skyros/productservice/internal"
-	grpcService "github.com/situmorangbastian/skyros/productservice/internal/grpc"
+	grpcHandler "github.com/situmorangbastian/skyros/productservice/internal/grpc"
 	handler "github.com/situmorangbastian/skyros/productservice/internal/http"
 	mysqlRepo "github.com/situmorangbastian/skyros/productservice/internal/mysql"
 	"github.com/situmorangbastian/skyros/productservice/product"
+	"github.com/situmorangbastian/skyrosgrpc"
 )
 
 func main() {
@@ -58,7 +63,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	userServiceGrpc := grpcService.NewUserService(userServiceGrpcConn)
+	userServiceGrpc := grpcHandler.NewUserService(userServiceGrpcConn)
 
 	// Init Product
 	productRepo := mysqlRepo.NewProductRepository(dbConn)
@@ -82,12 +87,38 @@ func main() {
 	handler.NewProductHandler(e, g, productService)
 
 	// Start server
+	wg := sync.WaitGroup{}
+	wg.Add(2)
 	serverAddress := productservice.GetEnv("SERVER_ADDRESS")
 	go func() {
+		defer wg.Done()
 		if err := e.Start(serverAddress); err != nil {
 			e.Logger.Info("shutting down the server...")
 		}
 	}()
+
+	grpcServer := grpc.NewServer()
+	grpcProductService := grpcHandler.NewProductGrpcServer(productService)
+	skyrosgrpc.RegisterProductServiceServer(grpcServer, grpcProductService)
+
+	go func() {
+		defer wg.Done()
+		port, err := strconv.Atoi(productservice.GetEnv("GRPC_SERVER_ADDRESS"))
+		if err != nil {
+			log.Fatal(errors.New("invalid grpc server port"))
+		}
+
+		listen, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println("GRPC Server Running on Port: ", port)
+		if err := grpcServer.Serve(listen); err != nil {
+			log.Fatal(err)
+		}
+	}()
+	wg.Wait()
 
 	// Wait for interrupt signal to gracefully shutdown the server with
 	// a timeout of 10 seconds.
@@ -99,4 +130,5 @@ func main() {
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
 	}
+	grpcServer.GracefulStop()
 }

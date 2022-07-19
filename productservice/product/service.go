@@ -85,3 +85,27 @@ func (s service) Fetch(ctx context.Context, filter productservice.Filter) ([]pro
 
 	return result, nextCursor, nil
 }
+
+func (s service) FetchByIds(ctx context.Context, ids []string) (map[string]productservice.Product, error) {
+	result, err := s.productRepo.FetchByIds(ctx, ids)
+	if err != nil {
+		return map[string]productservice.Product{}, errors.Wrap(err, "product.service.fetch: fetch from repository")
+	}
+
+	userIDs := []string{}
+	for _, product := range result {
+		userIDs = append(userIDs, product.Seller.ID)
+	}
+
+	users, err := s.userServiceGrpc.FetchByIDs(ctx, userIDs)
+	if err != nil {
+		return map[string]productservice.Product{}, errors.Wrap(err, "product.service.get: get user from userservice grpc")
+	}
+
+	for index, product := range result {
+		product.Seller = users[product.Seller.ID]
+		result[index] = product
+	}
+
+	return result, nil
+}

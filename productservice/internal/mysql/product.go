@@ -142,3 +142,40 @@ func (r productRepository) Fetch(ctx context.Context, filter productservice.Filt
 
 	return products, nextCursor, nil
 }
+
+func (r productRepository) FetchByIds(ctx context.Context, ids []string) (map[string]productservice.Product, error) {
+	qBuilder := sq.Select("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
+		From("product").
+		Where(sq.Eq{"id": ids})
+
+	query, args, err := qBuilder.ToSql()
+	if err != nil {
+		return map[string]productservice.Product{}, err
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return map[string]productservice.Product{}, err
+	}
+
+	products := map[string]productservice.Product{}
+	for rows.Next() {
+		product := productservice.Product{}
+		err = rows.Scan(
+			&product.ID,
+			&product.Name,
+			&product.Description,
+			&product.Price,
+			&product.Seller.ID,
+			&product.CreatedTime,
+			&product.UpdatedTime,
+		)
+		if err != nil {
+			return map[string]productservice.Product{}, err
+		}
+
+		products[product.ID] = product
+	}
+
+	return products, nil
+}
