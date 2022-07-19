@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"time"
 
@@ -15,13 +18,15 @@ import (
 	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"google.golang.org/grpc"
 
 	"github.com/situmorangbastian/skyros/userservice"
-	"github.com/situmorangbastian/skyros/userservice/cmd"
 	"github.com/situmorangbastian/skyros/userservice/internal"
+	grpcHandler "github.com/situmorangbastian/skyros/userservice/internal/grpc"
 	handler "github.com/situmorangbastian/skyros/userservice/internal/http"
 	mysqlRepo "github.com/situmorangbastian/skyros/userservice/internal/mysql"
 	"github.com/situmorangbastian/skyros/userservice/user"
+	"github.com/situmorangbastian/skyrosgrpc"
 )
 
 func main() {
@@ -84,9 +89,26 @@ func main() {
 		}
 	}()
 
+	grpcServer := grpc.NewServer()
+	grpcUserService := grpcHandler.NewUserGrpcServer(userService)
+	skyrosgrpc.RegisterUserServiceServer(grpcServer, grpcUserService)
+
 	go func() {
 		defer wg.Done()
-		cmd.GRPCServer(userService)
+		port, err := strconv.Atoi(userservice.GetEnv("GRPC_SERVER_ADDRESS"))
+		if err != nil {
+			log.Fatal(errors.New("invalid grpc server port"))
+		}
+
+		listen, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println("GRPC Server Running on Port: ", port)
+		if err := grpcServer.Serve(listen); err != nil {
+			log.Fatal(err)
+		}
 	}()
 
 	// Wait for interrupt signal to gracefully shutdown the server with
@@ -99,4 +121,5 @@ func main() {
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
 	}
+	grpcServer.GracefulStop()
 }
