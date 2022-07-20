@@ -54,9 +54,34 @@ services:
       - MYSQL_DBNAME=productservice
       - SECRET_KEY=userservice-secret-key
       - SERVER_ADDRESS=:4002
+      - GRPC_SERVER_ADDRESS=4012
       - USER_SERVICE_GRPC=skyros.userservice.svc:4011
     depends_on:
       - skyros.mysql
       - skyros.userservice
+    networks:
+      - default
+
+  skyros.orderservice:
+    image: skyros-order-service:latest
+    container_name: skyros.orderservice.svc
+    command: /app/skyros-order-service
+    ports:
+      - '4003:4003'
+    restart: always
+    environment:
+      - MYSQL_HOST=skyros.mysql.database
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASS=password
+      - MYSQL_DBNAME=orderservice
+      - SECRET_KEY=userservice-secret-key
+      - SERVER_ADDRESS=:4003
+      - USER_SERVICE_GRPC=skyros.userservice.svc:4011
+      - PRODUCT_SERVICE_GRPC=skyros.productservice.svc:4012
+    depends_on:
+      - skyros.mysql
+      - skyros.userservice
+      - skyros.productservice
     networks:
       - default

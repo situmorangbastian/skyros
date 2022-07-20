@@ -4,16 +4,24 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+
 	"github.com/situmorangbastian/skyros/orderservice"
 )
 
 type service struct {
-	orderRepo orderservice.OrderRepository
+	orderRepo      orderservice.OrderRepository
+	userService    orderservice.UserServiceGrpc
+	productService orderservice.ProductServiceGrpc
 }
 
-func NewService(orderRepo orderservice.OrderRepository) orderservice.OrderService {
+func NewService(
+	orderRepo orderservice.OrderRepository,
+	userService orderservice.UserServiceGrpc,
+	productService orderservice.ProductServiceGrpc) orderservice.OrderService {
 	return service{
-		orderRepo: orderRepo,
+		orderRepo:      orderRepo,
+		userService:    userService,
+		productService: productService,
 	}
 }
 
@@ -29,28 +37,26 @@ func (s service) Store(ctx context.Context, order orderservice.Order) (orderserv
 
 	order.Buyer = customCtx.User()
 
-	// errGroup := errgroup.Group{}
-
 	order.TotalPrice = 0
-	// for index, orderItem := range order.Items {
-	// 	index, orderItem := index, orderItem
+	productIds := []string{}
+	for _, item := range order.Items {
+		productIds = append(productIds, item.Product.ID)
+	}
 
-	// 	errGroup.Go(func() error {
-	// 		productDetail, err := s.productService.Get(ctx, orderItem.ProductID)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "get detail product id: "+orderItem.ProductID)
-	// 		}
+	products, err := s.productService.FetchByIDs(ctx, productIds)
+	if err != nil {
+		return orderservice.Order{}, errors.Wrap(err, "order.service.store: fetch product")
+	}
 
-	// 		order.Items[index].Product = productDetail
-	// 		order.Seller = productDetail.Seller
-	// 		order.TotalPrice += order.Items[index].Product.Price * order.Items[index].Quantity
-	// 		return nil
-	// 	})
-	// }
-
-	// if err := errGroup.Wait(); err != nil {
-	// 	return orderservice.Order{}, errors.Wrap(err, "resolve product detail on order item")
-	// }
+	for index := range order.Items {
+		order.Items[index].Product = products[order.Items[index].Product.ID]
+		if order.Items[index].Product.Name == "" {
+			return orderservice.Order{}, errors.Wrap(orderservice.ErrorNotFound("product not found"),
+				"order.service.store: fetch product")
+		}
+		order.Seller = order.Items[index].Product.Seller
+		order.TotalPrice += order.Items[index].Product.Price * order.Items[index].Quantity
+	}
 
 	result, err := s.orderRepo.Store(ctx, order)
 	if err != nil {
@@ -88,39 +94,32 @@ func (s service) Get(ctx context.Context, ID string) (orderservice.Order, error)
 		return orderservice.Order{}, orderservice.ErrorNotFound("not found")
 	}
 
-	// detailBuyer, err := s.userRepo.GetUser(ctx, result[0].Buyer.ID)
-	// if err != nil {
-	// 	return orderservice.Order{}, errors.Wrap(err, "order.service.get: resolve detail buyer")
-	// }
+	users, err := s.userService.FetchByIDs(ctx, []string{result[0].Seller.ID, result[0].Buyer.ID})
+	if err != nil {
+		return orderservice.Order{}, errors.Wrap(err, "order.service.get: fetch users")
+	}
 
-	// result[0].Buyer = detailBuyer
+	result[0].Buyer = users[result[0].Buyer.ID]
+	result[0].Seller = users[result[0].Seller.ID]
 
-	// detailSeller, err := s.userRepo.GetUser(ctx, result[0].Seller.ID)
-	// if err != nil {
-	// 	return orderservice.Order{}, errors.Wrap(err, "order.service.get: resolve detail seller")
-	// }
+	productIds := []string{}
+	for _, order := range result {
+		for _, item := range order.Items {
+			productIds = append(productIds, item.ProductID)
+		}
+	}
 
-	// result[0].Seller = detailSeller
+	products, err := s.productService.FetchByIDs(ctx, productIds)
+	if err != nil {
+		return orderservice.Order{}, errors.Wrap(err, "order.service.get: fetch product")
+	}
 
-	// errGroup := errgroup.Group{}
-
-	// for index, orderItem := range result[0].Items {
-	// 	index, orderItem := index, orderItem
-
-	// 	errGroup.Go(func() error {
-	// 		productDetail, err := s.productService.Get(ctx, orderItem.ProductID)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "get detail product id: "+orderItem.ProductID)
-	// 		}
-
-	// 		result[0].Items[index].Product = productDetail
-	// 		return nil
-	// 	})
-	// }
-
-	// if err := errGroup.Wait(); err != nil {
-	// 	return orderservice.Order{}, errors.Wrap(err, "resolve product detail on order item")
-	// }
+	for index, order := range result {
+		for index := range order.Items {
+			order.Items[index].Product = products[order.Items[index].ProductID]
+		}
+		result[index].Items = order.Items
+	}
 
 	return result[0], nil
 }
@@ -145,52 +144,33 @@ func (s service) Fetch(ctx context.Context, filter orderservice.Filter) ([]order
 		return []orderservice.Order{}, "", errors.Wrap(err, "order.service.fetch: fetch from repository")
 	}
 
-	// errGroup := errgroup.Group{}
+	userIds := []string{}
+	productIds := []string{}
+	for _, order := range result {
+		userIds = append(userIds, order.Buyer.ID, order.Seller.ID)
+		for _, item := range order.Items {
+			productIds = append(productIds, item.ProductID)
+		}
+	}
 
-	// for index, order := range result {
-	// 	index, order := index, order
+	users, err := s.userService.FetchByIDs(ctx, userIds)
+	if err != nil {
+		return []orderservice.Order{}, "", errors.Wrap(err, "order.service.fetch: fetch users")
+	}
 
-	// 	errGroup.Go(func() error {
-	// 		detailBuyer, err := s.userRepo.GetUser(ctx, order.Buyer.ID)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "order.service.fetch: resolve detail buyer")
-	// 		}
+	products, err := s.productService.FetchByIDs(ctx, productIds)
+	if err != nil {
+		return []orderservice.Order{}, "", errors.Wrap(err, "order.service.fetch: fetch products")
+	}
 
-	// 		result[0].Buyer = detailBuyer
-
-	// 		detailSeller, err := s.userRepo.GetUser(ctx, order.Seller.ID)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "order.service.fetch: resolve detail buyer")
-	// 		}
-
-	// 		result[0].Seller = detailSeller
-	// 		return nil
-	// 	})
-
-	// 	errGroupChild := errgroup.Group{}
-
-	// 	for index, orderItem := range result[index].Items {
-	// 		index, orderItem := index, orderItem
-
-	// 		errGroupChild.Go(func() error {
-	// 			productDetail, err := s.productService.Get(ctx, orderItem.ProductID)
-	// 			if err != nil {
-	// 				return errors.Wrap(err, "get detail product id: "+orderItem.ProductID)
-	// 			}
-
-	// 			result[index].Items[index].Product = productDetail
-	// 			return nil
-	// 		})
-	// 	}
-
-	// 	if err := errGroupChild.Wait(); err != nil {
-	// 		return []orderservice.Order{}, "", errors.Wrap(err, "resolve product detail on order item")
-	// 	}
-	// }
-
-	// if err := errGroup.Wait(); err != nil {
-	// 	return []orderservice.Order{}, "", errors.Wrap(err, "resolve seller and buyer detail")
-	// }
+	for index, order := range result {
+		result[index].Seller = users[result[index].Seller.ID]
+		result[index].Buyer = users[result[index].Buyer.ID]
+		for index := range order.Items {
+			order.Items[index].Product = products[order.Items[index].ProductID]
+		}
+		result[index].Items = order.Items
+	}
 
 	return result, cursor, nil
 }
