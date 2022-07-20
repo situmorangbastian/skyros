@@ -14,9 +14,12 @@ import (
 	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/situmorangbastian/skyros/orderservice"
 	"github.com/situmorangbastian/skyros/orderservice/internal"
+	grpcHandler "github.com/situmorangbastian/skyros/orderservice/internal/grpc"
 	handler "github.com/situmorangbastian/skyros/orderservice/internal/http"
 	mysqlRepo "github.com/situmorangbastian/skyros/orderservice/internal/mysql"
 	"github.com/situmorangbastian/skyros/orderservice/order"
@@ -50,9 +53,21 @@ func main() {
 		}
 	}()
 
+	// Grpc Client
+	userServiceGrpcConn, err := grpc.Dial(orderservice.GetEnv("USER_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(err)
+	}
+	productServiceGrpcConn, err := grpc.Dial(orderservice.GetEnv("PRODUCT_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(err)
+	}
+	userServiceGrpc := grpcHandler.NewUserService(userServiceGrpcConn)
+	productServiceGrpc := grpcHandler.NewProductService(productServiceGrpcConn)
+
 	// Init Order
 	orderRepo := mysqlRepo.NewOrderRepository(dbConn)
-	orderService := order.NewService(orderRepo)
+	orderService := order.NewService(orderRepo, userServiceGrpc, productServiceGrpc)
 
 	tokenSecretKey := orderservice.GetEnv("SECRET_KEY")
 
