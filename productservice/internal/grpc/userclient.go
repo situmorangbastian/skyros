@@ -5,9 +5,10 @@ import (
 	"errors"
 	"net/http"
 
+	"google.golang.org/grpc"
+
 	"github.com/situmorangbastian/skyros/productservice"
 	grpcService "github.com/situmorangbastian/skyros/skyrosgrpc"
-	"google.golang.org/grpc"
 )
 
 type userService struct {

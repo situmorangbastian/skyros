@@ -32,7 +32,7 @@ services:
     container_name: skyros.userservice.svc
     command: /app/skyros-user-service
     ports:
-      - '4001'
+      - '4001:4001'
     restart: always
     environment:
       - MYSQL_HOST=skyros.mysql.database
@@ -53,7 +53,7 @@ services:
     container_name: skyros.productservice.svc
     command: /app/skyros-product-service
     ports:
-      - '4002'
+      - '4002:4002'
     restart: always
     environment:
       - MYSQL_HOST=skyros.mysql.database
@@ -76,7 +76,7 @@ services:
     container_name: skyros.orderservice.svc
     command: /app/skyros-order-service
     ports:
-      - '4003'
+      - '4003:4003'
     restart: always
     environment:
       - MYSQL_HOST=skyros.mysql.database

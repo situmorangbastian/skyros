@@ -10,6 +10,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
+	"github.com/situmorangbastian/eclipse"
 
 	"github.com/situmorangbastian/skyros/productservice"
 )
@@ -69,7 +70,7 @@ func (r productRepository) Get(ctx context.Context, ID string) (productservice.P
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return productservice.Product{}, productservice.ErrorNotFound("product not found")
+			return productservice.Product{}, eclipse.NotFoundError("product not found")
 		}
 		return productservice.Product{}, err
 	}
@@ -90,7 +91,7 @@ func (r productRepository) Fetch(ctx context.Context, filter productservice.Filt
 	if filter.Cursor != "" {
 		decodedCursor, err := decodeCursor(filter.Cursor)
 		if err != nil {
-			return make([]productservice.Product, 0), "", productservice.ConstraintErrorf("invalid query param cursor")
+			return make([]productservice.Product, 0), "", eclipse.ConstraintErrorf("invalid query param cursor")
 		}
 		qBuilder = qBuilder.Where(sq.Lt{"created_time": decodedCursor})
 	}

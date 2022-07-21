@@ -4,8 +4,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-
-	"github.com/situmorangbastian/skyros/productservice"
+	"github.com/situmorangbastian/eclipse"
 )
 
 // CustomValidator is struct for custom validator
@@ -28,9 +27,9 @@ func (cv CustomValidator) Validate(data interface{}) error {
 		for _, err := range err.(validator.ValidationErrors) {
 			switch err.ActualTag() {
 			case "email":
-				return productservice.ConstraintError("invalid email")
+				return eclipse.ConstraintError("invalid email")
 			default:
-				return productservice.ConstraintError(strings.ToLower(err.Field()) + " " + err.ActualTag())
+				return eclipse.ConstraintError(strings.ToLower(err.Field()) + " " + err.ActualTag())
 			}
 		}
 	}

@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/situmorangbastian/eclipse"
 	"github.com/situmorangbastian/skyros/productservice"
 	"github.com/situmorangbastian/skyros/productservice/internal"
 	grpcHandler "github.com/situmorangbastian/skyros/productservice/internal/grpc"
@@ -73,14 +74,14 @@ func main() {
 
 	e := echo.New()
 	e.Use(
-		handler.ErrorMiddleware(),
+		eclipse.Error(),
 	)
 	e.Validator = internal.NewValidator()
 
 	g := e.Group("")
 	g.Use(
 		middleware.JWT([]byte(tokenSecretKey)),
-		handler.Authentication(),
+		eclipse.Authentication(),
 	)
 
 	// Init Handler

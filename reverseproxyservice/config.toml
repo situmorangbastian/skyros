@@ -1,5 +1,5 @@
 [server]
-    address = ":4123"
+    address = ":4000"
 
 [[endpoint]]
     path = "login"
