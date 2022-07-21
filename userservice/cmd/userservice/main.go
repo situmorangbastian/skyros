@@ -20,13 +20,13 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"google.golang.org/grpc"
 
+	"github.com/situmorangbastian/skyros/skyrosgrpc"
 	"github.com/situmorangbastian/skyros/userservice"
 	"github.com/situmorangbastian/skyros/userservice/internal"
 	grpcHandler "github.com/situmorangbastian/skyros/userservice/internal/grpc"
 	handler "github.com/situmorangbastian/skyros/userservice/internal/http"
 	mysqlRepo "github.com/situmorangbastian/skyros/userservice/internal/mysql"
 	"github.com/situmorangbastian/skyros/userservice/user"
-	"github.com/situmorangbastian/skyrosgrpc"
 )
 
 func main() {

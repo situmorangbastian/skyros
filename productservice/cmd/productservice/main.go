@@ -27,7 +27,7 @@ import (
 	handler "github.com/situmorangbastian/skyros/productservice/internal/http"
 	mysqlRepo "github.com/situmorangbastian/skyros/productservice/internal/mysql"
 	"github.com/situmorangbastian/skyros/productservice/product"
-	"github.com/situmorangbastian/skyrosgrpc"
+	"github.com/situmorangbastian/skyros/skyrosgrpc"
 )
 
 func main() {

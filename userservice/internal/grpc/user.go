@@ -6,8 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	grpc "github.com/situmorangbastian/skyros/skyrosgrpc"
 	"github.com/situmorangbastian/skyros/userservice"
-	grpc "github.com/situmorangbastian/skyrosgrpc"
 )
 
 type userHandler struct {
