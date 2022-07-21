@@ -23,7 +23,6 @@ type Endpoint struct {
 var (
 	config            Config
 	pathServiceTarget = map[string]string{}
-	// fallbackHost      string
 )
 
 func init() {
@@ -32,7 +31,7 @@ func init() {
 	viper.SetConfigFile(configFile)
 	err := viper.ReadInConfig()
 	if err != nil {
-		panic(err)
+		log.Fatalln(err.Error())
 	}
 
 	if _, err := toml.DecodeFile(configFile, &config); err != nil {
@@ -55,7 +54,7 @@ func main() {
 	http.Handle("/", proxy)
 	log.Info("service is running on port " + address)
 	if err := http.ListenAndServe(address, nil); err != nil {
-		log.Fatal(err)
+		log.Fatalln(err.Error())
 	}
 }
 
@@ -71,7 +70,10 @@ func modifyRequest(r *http.Request) {
 	if pathServiceTarget[firstPath] != "" {
 		host = pathServiceTarget[firstPath]
 	}
-	target, _ := url.Parse(host)
+	target, err := url.Parse(host)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 
 	r.Host = target.Host
 	r.URL.Host = r.Host
