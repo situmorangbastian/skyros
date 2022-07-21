@@ -1,0 +1,28 @@
+# Start by building the application.
+FROM golang:1.18-alpine3.16 as build
+
+ARG GITHUB_TOKEN
+
+RUN apk add --no-cache git
+
+RUN git config --global url."https://$GITHUB_TOKEN:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+
+WORKDIR /skyros-user-service
+
+COPY userservice .
+
+RUN export GOSUMDB=off
+
+RUN go mod vendor
+
+RUN CGO_ENABLED=0 go build -o skyros-user-service github.com/situmorangbastian/skyros/userservice/cmd/userservice
+
+FROM gcr.io/distroless/static
+
+WORKDIR /skyros-user-service
+
+COPY --from=build /skyros-user-service /app
+
+EXPOSE 4001
+
+CMD ["/app/skyros-user-service"]

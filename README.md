@@ -1,38 +1,29 @@
 # skyros
-Simple Ecommerce Service
 
-[![GitHub go.mod Go version of a Go module](https://img.shields.io/badge/Go-v1.16-green)](https://github.com/situmorangbastian/skyros/blob/main/go.mod)
-[![SKYROS Actions Status](https://github.com/situmorangbastian/skyros/actions/workflows/test.yml/badge.svg)](https://github.com/situmorangbastian/skyros/actions?query=workflow%3Atest)
-
+Simple Ecommerce Services
 
 ## Getting Started
+
+### Project Structure
+
+```bash
+├── init                        # Init Migration for Database
+├── orderservice                # Service for handle order
+├── productservice              # Service for handle product
+├── userservice                 # Service for handle user
+├── docker-compose.yml          # Docker compose file for all service
+├── Dockerfile-orderservice     # Docker file for orderservice
+├── Dockerfile-productservice   # Docker file for productservice
+└── Dockerfile-productservice   # Docker file for userservice
+```
 
 ### Documentation
 
 On this link [documentation](https://app.swaggerhub.com/apis-docs/situmorangbastian/skyros/1.0.0).
 
-### Project Structure
-```
-├── cmd/skyros              # Code for application init
-├── internal                # Internal code which cannot be exported to another application
-│     ├── http              # Code for delivery layer. Mainly use HTTP as delivery layer
-|     ├── mysql             # Code for repository layer source layer using mysql
-│     └── validator.go      # Code for custom validation for all structs
-├── mocks                   # auto generated file which mock existing interface. Use mockery package to generate this
-├── order                   # Code for usecase layer which implemented order service interface
-├── product                 # Code for usecase layer which implemented product service interface
-├── testdata                # Code which held helper for unit testing
-├── user                    # Code for usecase layer which implemented user service interface
-├── .env.example            # Config file example. Rename this to .env to use on your machine
-├── context.go              # Code which held custom context with user
-├── entity.go               # Code which held all structs declaration
-├── error.go                # Code which held all error type
-├── helper.go               # Code which held helper for get config from env
-└── skyros.go               # Code which held all interface
-```
-
 ### Database Migrations
-Using CLI version of https://github.com/golang-migrate/migrate
+
+Using CLI version of <https://github.com/golang-migrate/migrate>
 
 * [Installation](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
 
@@ -44,22 +35,21 @@ Run migration first.
 
 ```bash
 make mysql-up
-make migrate-up
+make service-migrate-up
 ```
 
-To start and stop the API, run:
+To start and stop the Services, run:
 
 ```bash
-make docker
-make run
-make stop
+make service-docker
+make service-up
+make service-down
 ```
 
 ### Dummy User
 
-
-
 User Seller
+
 ```bash
 POST /login
 {
@@ -69,6 +59,7 @@ POST /login
 ```
 
 User Buyer
+
 ```bash
 POST /login
 {

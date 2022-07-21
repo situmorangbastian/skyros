@@ -1,46 +1,87 @@
 version: "3"
 
-networks:
-  backend:
-    driver: bridge
-
 services:
-  mysql:
+  skyros.mysql:
     image: mysql:5.7
-    container_name: skyros.mysql
-    ports: 
-      - 3306:3306
-    environment: 
-      - MYSQL_ROOT_HOST=${MYSQL_HOST} 
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASS}
-      - MYSQL_DATABASE=${MYSQL_DBNAME}
-      - MYSQL_ROOT_PASSWORD=${MYSQL_PASS}
-      - MYSQL_TCP_PORT=${MYSQL_PORT}
-    volumes:
-      - database_mysql:/var/lib/mysql
-    networks:
-      - backend
-
-  skyros:
-    image: skyros:latest
-    container_name: skyros.svc
-    command: /app/skyros
+    platform: linux/x86_64
+    container_name: "skyros.mysql.database"
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: password
     ports:
-      - 4221:4221
-    volumes:
-      - api:/usr/src/app/
-    environment: 
-      - MYSQL_HOST=${MYSQL_HOST} 
-      - MYSQL_PORT=${MYSQL_PORT}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASS=${MYSQL_PASS}
-      - MYSQL_DBNAME=${MYSQL_DBNAME}
-      - SECRET_KEY=${SECRET_KEY}
-      - SERVER_ADDRESS=${SERVER_ADDRESS}
+      - '3306:3306'
+    expose:
+      - '3306'
     networks:
-      - backend
+      - default
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
 
-volumes:
-  api:
-  database_mysql: 
+  skyros.userservice:
+    image: skyros-user-service:latest
+    container_name: skyros.userservice.svc
+    command: /app/skyros-user-service
+    ports:
+      - '4001:4001'
+    restart: always
+    environment:
+      - MYSQL_HOST=skyros.mysql.database
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASS=password
+      - MYSQL_DBNAME=userservice
+      - SECRET_KEY=userservice-secret-key
+      - SERVER_ADDRESS=:4001
+      - GRPC_SERVER_ADDRESS=4011
+    depends_on:
+      - skyros.mysql
+    networks:
+      - default
+
+  skyros.productservice:
+    image: skyros-product-service:latest
+    container_name: skyros.productservice.svc
+    command: /app/skyros-product-service
+    ports:
+      - '4002:4002'
+    restart: always
+    environment:
+      - MYSQL_HOST=skyros.mysql.database
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASS=password
+      - MYSQL_DBNAME=productservice
+      - SECRET_KEY=userservice-secret-key
+      - SERVER_ADDRESS=:4002
+      - GRPC_SERVER_ADDRESS=4012
+      - USER_SERVICE_GRPC=skyros.userservice.svc:4011
+    depends_on:
+      - skyros.mysql
+      - skyros.userservice
+    networks:
+      - default
+
+  skyros.orderservice:
+    image: skyros-order-service:latest
+    container_name: skyros.orderservice.svc
+    command: /app/skyros-order-service
+    ports:
+      - '4003:4003'
+    restart: always
+    environment:
+      - MYSQL_HOST=skyros.mysql.database
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASS=password
+      - MYSQL_DBNAME=orderservice
+      - SECRET_KEY=userservice-secret-key
+      - SERVER_ADDRESS=:4003
+      - USER_SERVICE_GRPC=skyros.userservice.svc:4011
+      - PRODUCT_SERVICE_GRPC=skyros.productservice.svc:4012
+    depends_on:
+      - skyros.mysql
+      - skyros.userservice
+      - skyros.productservice
+    networks:
+      - default

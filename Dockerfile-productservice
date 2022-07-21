@@ -1,0 +1,28 @@
+# Start by building the application.
+FROM golang:1.18-alpine3.16 as build
+
+ARG GITHUB_TOKEN
+
+RUN apk add --no-cache git
+
+RUN git config --global url."https://$GITHUB_TOKEN:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+
+WORKDIR /skyros-product-service
+
+COPY productservice .
+
+RUN export GOSUMDB=off
+
+RUN go mod vendor
+
+RUN CGO_ENABLED=0 go build -o skyros-product-service github.com/situmorangbastian/skyros/productservice/cmd/productservice
+
+FROM gcr.io/distroless/static
+
+WORKDIR /skyros-product-service
+
+COPY --from=build /skyros-product-service /app
+
+EXPOSE 4002
+
+CMD ["/app/skyros-product-service"]
