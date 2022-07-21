@@ -7,6 +7,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
+	"github.com/situmorangbastian/eclipse"
 
 	"github.com/situmorangbastian/skyros/userservice"
 )
@@ -65,7 +66,7 @@ func (r userRepository) GetUser(ctx context.Context, identifier string) (userser
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return userservice.User{}, userservice.ErrorNotFound("user not found")
+			return userservice.User{}, eclipse.NotFoundError("user not found")
 		}
 		return userservice.User{}, err
 	}

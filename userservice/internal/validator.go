@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 
-	"github.com/situmorangbastian/skyros/userservice"
+	"github.com/situmorangbastian/eclipse"
 )
 
 type CustomValidator struct {
@@ -25,9 +25,9 @@ func (cv CustomValidator) Validate(data interface{}) error {
 		for _, err := range err.(validator.ValidationErrors) {
 			switch err.ActualTag() {
 			case "email":
-				return userservice.ConstraintError("invalid email")
+				return eclipse.ConstraintError("invalid email")
 			default:
-				return userservice.ConstraintError(strings.ToLower(err.Field()) + " " + err.ActualTag())
+				return eclipse.ConstraintError(strings.ToLower(err.Field()) + " " + err.ActualTag())
 			}
 		}
 	}
