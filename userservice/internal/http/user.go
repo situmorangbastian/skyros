@@ -7,6 +7,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 
+	"github.com/situmorangbastian/eclipse"
 	"github.com/situmorangbastian/skyros/userservice"
 )
 
@@ -34,7 +35,7 @@ func NewUserHandler(e *echo.Echo, service userservice.UserService, tokenSecretKe
 func (h userHandler) login(c echo.Context) error {
 	var user userservice.User
 	if err := c.Bind(&user); err != nil {
-		return userservice.ConstraintError("invalid request body")
+		return eclipse.ConstraintError("invalid request body")
 	}
 
 	res, err := h.service.Login(c.Request().Context(), user.Email, user.Password)
@@ -55,7 +56,7 @@ func (h userHandler) login(c echo.Context) error {
 func (h userHandler) registerSeller(c echo.Context) error {
 	var user userservice.User
 	if err := c.Bind(&user); err != nil {
-		return userservice.ConstraintError("invalid request body")
+		return eclipse.ConstraintError("invalid request body")
 	}
 
 	user.Type = userservice.UserSellerType
@@ -82,7 +83,7 @@ func (h userHandler) registerSeller(c echo.Context) error {
 func (h userHandler) registerBuyer(c echo.Context) error {
 	var user userservice.User
 	if err := c.Bind(&user); err != nil {
-		return userservice.ConstraintError("invalid request body")
+		return eclipse.ConstraintError("invalid request body")
 	}
 
 	user.Type = userservice.UserBuyerType

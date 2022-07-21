@@ -8,12 +8,13 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-migrate/migrate v3.5.4+incompatible
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.1.2
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
-	github.com/situmorangbastian/skyros/skyrosgrpc v0.0.0-20220721110406-f0bd01f31d6e
-	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
+	github.com/situmorangbastian/eclipse v1.2.1
+	github.com/situmorangbastian/skyros/skyrosgrpc v0.0.0-20220721115731-6a98cf36312d
+	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
 	google.golang.org/grpc v1.48.0
 )
 

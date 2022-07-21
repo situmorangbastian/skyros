@@ -20,6 +20,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"google.golang.org/grpc"
 
+	"github.com/situmorangbastian/eclipse"
 	"github.com/situmorangbastian/skyros/skyrosgrpc"
 	"github.com/situmorangbastian/skyros/userservice"
 	"github.com/situmorangbastian/skyros/userservice/internal"
@@ -65,7 +66,7 @@ func main() {
 
 	e := echo.New()
 	e.Use(
-		handler.ErrorMiddleware(),
+		eclipse.Error(),
 	)
 	e.Validator = internal.NewValidator()
 
