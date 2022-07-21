@@ -42,7 +42,7 @@ To start and stop the Services, run:
 
 ```bash
 make service-docker
-make service-up
+make service-up GITHUB_TOKEN=<YOUR_GITHUB_TOKEN>
 make service-down
 ```
 

@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/situmorangbastian/skyros/productservice"
-	grpcService "github.com/situmorangbastian/skyrosgrpc"
+	grpcService "github.com/situmorangbastian/skyros/skyrosgrpc"
 	"google.golang.org/grpc"
 )
 

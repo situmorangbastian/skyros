@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-	grpc "github.com/situmorangbastian/skyrosgrpc"
+	grpc "github.com/situmorangbastian/skyros/skyrosgrpc"
 
 	"github.com/situmorangbastian/skyros/productservice"
 )

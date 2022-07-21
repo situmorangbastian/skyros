@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	grpcService "github.com/situmorangbastian/skyrosgrpc"
+	grpcService "github.com/situmorangbastian/skyros/skyrosgrpc"
 	"google.golang.org/grpc"
 
 	"github.com/situmorangbastian/skyros/orderservice"
