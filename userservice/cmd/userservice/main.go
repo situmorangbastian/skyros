@@ -18,9 +18,9 @@ import (
 	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/situmorangbastian/eclipse"
 	"google.golang.org/grpc"
 
-	"github.com/situmorangbastian/eclipse"
 	"github.com/situmorangbastian/skyros/skyrosgrpc"
 	"github.com/situmorangbastian/skyros/userservice"
 	"github.com/situmorangbastian/skyros/userservice/internal"
@@ -73,7 +73,6 @@ func main() {
 	g := e.Group("")
 	g.Use(
 		middleware.JWT([]byte(tokenSecretKey)),
-		handler.Authentication(),
 	)
 
 	// Init Handler

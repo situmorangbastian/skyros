@@ -14,6 +14,7 @@ import (
 	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/situmorangbastian/eclipse"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -73,14 +74,14 @@ func main() {
 
 	e := echo.New()
 	e.Use(
-		handler.ErrorMiddleware(),
+		eclipse.Error(),
 	)
 	e.Validator = internal.NewValidator()
 
 	g := e.Group("")
 	g.Use(
 		middleware.JWT([]byte(tokenSecretKey)),
-		handler.Authentication(),
+		eclipse.Authentication(),
 	)
 
 	// Init Handler

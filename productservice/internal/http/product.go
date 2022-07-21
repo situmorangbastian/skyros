@@ -7,6 +7,8 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
+	"github.com/situmorangbastian/eclipse"
+
 	"github.com/situmorangbastian/skyros/productservice"
 )
 
@@ -31,7 +33,7 @@ func NewProductHandler(e *echo.Echo, g *echo.Group, service productservice.Produ
 func (h productHandler) store(c echo.Context) error {
 	var product productservice.Product
 	if err := c.Bind(&product); err != nil {
-		return productservice.ConstraintError("invalid request body")
+		return eclipse.ConstraintError("invalid request body")
 	}
 
 	if err := c.Validate(&product); err != nil {
@@ -65,21 +67,8 @@ func (h productHandler) fetch(c echo.Context) error {
 		})
 
 		claims := token.Claims.(jwt.MapClaims)
-		id := claims["id"].(string)
-		address := claims["address"].(string)
-		name := claims["name"].(string)
-		email := claims["email"].(string)
-		type_ := claims["type"].(string)
 
-		validUser := productservice.User{
-			ID:      id,
-			Address: address,
-			Name:    name,
-			Email:   email,
-			Type:    type_,
-		}
-
-		c.SetRequest(c.Request().WithContext(productservice.NewCustomContext(c.Request().Context(), validUser)))
+		c.SetRequest(c.Request().WithContext(eclipse.NewCustomContext(c.Request().Context(), claims)))
 	}
 
 	filter := productservice.Filter{
@@ -91,7 +80,7 @@ func (h productHandler) fetch(c echo.Context) error {
 	if c.QueryParam("num") != "" {
 		num, err := strconv.Atoi(c.QueryParam("num"))
 		if err != nil {
-			return productservice.ConstraintError("invalid num")
+			return eclipse.ConstraintError("invalid num")
 		}
 
 		filter.Num = num

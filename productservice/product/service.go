@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"github.com/situmorangbastian/eclipse"
 
 	"github.com/situmorangbastian/skyros/productservice"
 )
@@ -21,16 +22,16 @@ func NewService(productRepo productservice.ProductRepository, userServiceGrpc pr
 }
 
 func (s service) Store(ctx context.Context, product productservice.Product) (productservice.Product, error) {
-	customCtx, ok := ctx.(productservice.CustomContext)
+	customCtx, ok := ctx.(eclipse.CustomContext)
 	if !ok {
 		return productservice.Product{}, errors.Wrap(errors.New("invalid context"), "product.service.store: parse custom context")
 	}
 
-	if customCtx.User().Type != productservice.UserSellerType {
-		return productservice.Product{}, productservice.ErrorNotFound("not found")
+	if customCtx.User()["type"].(string) != productservice.UserSellerType {
+		return productservice.Product{}, eclipse.NotFoundError("not found")
 	}
 
-	product.Seller = customCtx.User()
+	product.Seller.ID = customCtx.User()["id"].(string)
 
 	result, err := s.productRepo.Store(ctx, product)
 	if err != nil {
@@ -57,10 +58,10 @@ func (s service) Get(ctx context.Context, ID string) (productservice.Product, er
 }
 
 func (s service) Fetch(ctx context.Context, filter productservice.Filter) ([]productservice.Product, string, error) {
-	customCtx, ok := ctx.(productservice.CustomContext)
+	customCtx, ok := ctx.(eclipse.CustomContext)
 	if ok {
-		if customCtx.User().Type == productservice.UserSellerType {
-			filter.SellerID = customCtx.User().ID
+		if customCtx.User()["type"].(string) == productservice.UserSellerType {
+			filter.SellerID = customCtx.User()["id"].(string)
 		}
 	}
 

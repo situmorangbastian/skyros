@@ -12,6 +12,7 @@ require (
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
+	github.com/situmorangbastian/eclipse v1.3.1
 	github.com/situmorangbastian/skyros/skyrosgrpc v0.0.0-20220721110406-f0bd01f31d6e
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	google.golang.org/grpc v1.48.0

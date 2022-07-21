@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/situmorangbastian/eclipse"
 	"github.com/situmorangbastian/skyros/orderservice"
 )
 
@@ -26,16 +27,16 @@ func NewService(
 }
 
 func (s service) Store(ctx context.Context, order orderservice.Order) (orderservice.Order, error) {
-	customCtx, ok := ctx.(orderservice.CustomContext)
+	customCtx, ok := ctx.(eclipse.CustomContext)
 	if !ok {
 		return orderservice.Order{}, errors.Wrap(errors.New("invalid context"), "order.service.store: parse custom context")
 	}
 
-	if customCtx.User().Type != orderservice.UserBuyerType {
-		return orderservice.Order{}, orderservice.ErrorNotFound("not found")
+	if customCtx.User()["type"].(string) != orderservice.UserBuyerType {
+		return orderservice.Order{}, eclipse.NotFoundError("not found")
 	}
 
-	order.Buyer = customCtx.User()
+	order.Buyer.ID = customCtx.User()["id"].(string)
 
 	order.TotalPrice = 0
 	productIds := []string{}
@@ -51,7 +52,7 @@ func (s service) Store(ctx context.Context, order orderservice.Order) (orderserv
 	for index := range order.Items {
 		order.Items[index].Product = products[order.Items[index].Product.ID]
 		if order.Items[index].Product.Name == "" {
-			return orderservice.Order{}, errors.Wrap(orderservice.ErrorNotFound("product not found"),
+			return orderservice.Order{}, errors.Wrap(eclipse.NotFoundError("product not found"),
 				"order.service.store: fetch product")
 		}
 		order.Seller = order.Items[index].Product.Seller
@@ -67,7 +68,7 @@ func (s service) Store(ctx context.Context, order orderservice.Order) (orderserv
 }
 
 func (s service) Get(ctx context.Context, ID string) (orderservice.Order, error) {
-	customCtx, ok := ctx.(orderservice.CustomContext)
+	customCtx, ok := ctx.(eclipse.CustomContext)
 	if !ok {
 		return orderservice.Order{}, errors.Wrap(errors.New("invalid context"), "order.service.get: parse custom context")
 	}
@@ -76,13 +77,13 @@ func (s service) Get(ctx context.Context, ID string) (orderservice.Order, error)
 		OrderID: ID,
 	}
 
-	switch customCtx.User().Type {
+	switch customCtx.User()["type"].(string) {
 	case orderservice.UserBuyerType:
-		filter.BuyerID = customCtx.User().ID
+		filter.BuyerID = customCtx.User()["id"].(string)
 	case orderservice.UserSellerType:
-		filter.SellerID = customCtx.User().ID
+		filter.SellerID = customCtx.User()["id"].(string)
 	default:
-		return orderservice.Order{}, orderservice.ErrorNotFound("not found")
+		return orderservice.Order{}, eclipse.NotFoundError("not found")
 	}
 
 	result, _, err := s.orderRepo.Fetch(ctx, filter)
@@ -91,7 +92,7 @@ func (s service) Get(ctx context.Context, ID string) (orderservice.Order, error)
 	}
 
 	if len(result) == 0 {
-		return orderservice.Order{}, orderservice.ErrorNotFound("not found")
+		return orderservice.Order{}, eclipse.NotFoundError("not found")
 	}
 
 	users, err := s.userService.FetchByIDs(ctx, []string{result[0].Seller.ID, result[0].Buyer.ID})
@@ -125,18 +126,18 @@ func (s service) Get(ctx context.Context, ID string) (orderservice.Order, error)
 }
 
 func (s service) Fetch(ctx context.Context, filter orderservice.Filter) ([]orderservice.Order, string, error) {
-	customCtx, ok := ctx.(orderservice.CustomContext)
+	customCtx, ok := ctx.(eclipse.CustomContext)
 	if !ok {
 		return []orderservice.Order{}, "", errors.Wrap(errors.New("invalid context"), "order.service.fetch: parse custom context")
 	}
 
-	switch customCtx.User().Type {
+	switch customCtx.User()["type"].(string) {
 	case orderservice.UserBuyerType:
-		filter.BuyerID = customCtx.User().ID
+		filter.BuyerID = customCtx.User()["id"].(string)
 	case orderservice.UserSellerType:
-		filter.SellerID = customCtx.User().ID
+		filter.SellerID = customCtx.User()["id"].(string)
 	default:
-		return []orderservice.Order{}, "", orderservice.ErrorNotFound("not found")
+		return []orderservice.Order{}, "", eclipse.NotFoundError("not found")
 	}
 
 	result, cursor, err := s.orderRepo.Fetch(ctx, filter)
@@ -176,13 +177,13 @@ func (s service) Fetch(ctx context.Context, filter orderservice.Filter) ([]order
 }
 
 func (s service) PatchStatus(ctx context.Context, ID string, status int) error {
-	customCtx, ok := ctx.(orderservice.CustomContext)
+	customCtx, ok := ctx.(eclipse.CustomContext)
 	if !ok {
 		return errors.Wrap(errors.New("invalid context"), "order.service.accept: parse custom context")
 	}
 
-	if customCtx.User().Type != orderservice.UserSellerType {
-		return orderservice.ErrorNotFound("not found")
+	if customCtx.User()["type"].(string) != orderservice.UserSellerType {
+		return eclipse.NotFoundError("not found")
 	}
 
 	return s.orderRepo.PatchStatus(ctx, ID, status)
