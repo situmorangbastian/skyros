@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package skyrosgrpc;
+
+import "general.proto";
+
+option go_package = "./skyrosgrpc";
+
+message UserFilter {
+  repeated string user_ids = 1;
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  string address = 4;
+  string type = 5;
+}
+
+message UsersResponse {
+    Status status = 1;
+    map<string,User> users = 2;
+}
+
+service UserService {
+  rpc GetUsers(UserFilter) returns (UsersResponse) {}
+}
