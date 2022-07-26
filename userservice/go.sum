@@ -100,8 +100,8 @@ github.com/sirupsen/logrus v1.9.0 h1:trlNQbNUG3OdDrDil03MCb1H2o9nJ1x4/5LYw7byDE0
 github.com/sirupsen/logrus v1.9.0/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/situmorangbastian/eclipse v1.3.1 h1:2jvaHs3xDnJyEgXIY5E60SGFsJ2pSDdgdRUtGVN3jMI=
 github.com/situmorangbastian/eclipse v1.3.1/go.mod h1:IVFt5OG5g160Sr3bF3I9kSUMs0Js76tOmKN5QEpXtU8=
-github.com/situmorangbastian/skyros/skyrosgrpc v0.0.0-20220721115731-6a98cf36312d h1:NTc73QYeX8vhHpELHclEsxyZ+9gpIqqfbpGCyKi9alk=
-github.com/situmorangbastian/skyros/skyrosgrpc v0.0.0-20220721115731-6a98cf36312d/go.mod h1:xNTHjYvTiOSOLA1VHns+MwHgbfdHq+97lV6UhuAF3FQ=
+github.com/situmorangbastian/skyros/skyrosgrpc v0.0.0-20220721110406-f0bd01f31d6e h1:lzISDo/rEnfFKLozTlVRWHgxXBDXpT32JwgqZBja+qY=
+github.com/situmorangbastian/skyros/skyrosgrpc v0.0.0-20220721110406-f0bd01f31d6e/go.mod h1:xNTHjYvTiOSOLA1VHns+MwHgbfdHq+97lV6UhuAF3FQ=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=

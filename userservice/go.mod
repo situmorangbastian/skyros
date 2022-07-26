@@ -13,7 +13,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/situmorangbastian/eclipse v1.3.1
-	github.com/situmorangbastian/skyros/skyrosgrpc v0.0.0-20220721115731-6a98cf36312d
+	github.com/situmorangbastian/skyros/skyrosgrpc v0.0.0-20220721110406-f0bd01f31d6e
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
 	google.golang.org/grpc v1.48.0
 )
