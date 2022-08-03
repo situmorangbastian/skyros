@@ -16,7 +16,7 @@ Simple Ecommerce Services
 ├── docker-compose.yml          # Docker compose file for all service
 ├── Dockerfile-orderservice     # Docker file for orderservice
 ├── Dockerfile-productservice   # Docker file for productservice
-└── Dockerfile-productservice   # Docker file for userservice
+└── Dockerfile-userservice      # Docker file for userservice
 ```
 
 ### Documentation
