@@ -1,49 +1,22 @@
 # Docker
-.PHONY: mysql-up
-mysql-up:
-	@docker-compose up -d skyros.mysql
-
-.PHONY: mysql-down
-mysql-down:
-	@docker stop skyros.mysql.database
-
 .PHONY: service-up
 service-up:
-	@docker-compose up -d skyros.userservice
-	@docker-compose up -d skyros.productservice
-	@docker-compose up -d skyros.orderservice
-	@docker-compose up -d skyros.reverseproxyservice
+	@docker-compose up -d
 
 .PHONY: service-down
 service-down:
-	@docker stop skyros.userservice.svc
-	@docker stop skyros.productservice.svc
-	@docker stop skyros.orderservice.svc
-	@docker stop skyros.reverseproxyservice.svc
-	@docker rm skyros.userservice.svc
-	@docker rm skyros.productservice.svc
-	@docker rm skyros.orderservice.svc
-	@docker rm skyros.reverseproxyservice.svc
-
+	@docker-compose down
 
 # Database Migration
 .PHONY: migrate-prepare
 migrate-prepare:
 	@GO111MODULE=off go get -tags 'mysql' -u github.com/golang-migrate/migrate/cmd/migrate
 
-.PHONY: service-migrate-up
-service-migrate-up:
+.PHONY: migrate-up
+migrate-up:
 	@migrate -database "mysql://root:password@tcp(127.0.0.1:3306)/userservice" \
 	-path=userservice/internal/mysql/migrations up
 	@migrate -database "mysql://root:password@tcp(127.0.0.1:3306)/productservice" \
 	-path=productservice/internal/mysql/migrations up
 	@migrate -database "mysql://root:password@tcp(127.0.0.1:3306)/orderservice" \
 	-path=orderservice/internal/mysql/migrations up
-
-# Build Docker Services
-.PHONY: service-docker
-service-docker:
-	@docker build --build-arg GITHUB_TOKEN=$(GITHUB_TOKEN) -f Dockerfile-userservice -t skyros-user-service:latest .
-	@docker build --build-arg GITHUB_TOKEN=$(GITHUB_TOKEN) -f Dockerfile-productservice -t skyros-product-service:latest .
-	@docker build --build-arg GITHUB_TOKEN=$(GITHUB_TOKEN) -f Dockerfile-orderservice -t skyros-order-service:latest .
-	@docker build -f Dockerfile-reverseproxyservice -t skyros-reverseproxy-service:latest .
