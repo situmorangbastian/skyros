@@ -33,19 +33,17 @@ Using CLI version of <https://github.com/golang-migrate/migrate>
 
 Make sure to set the .env file (see: .env.example).
 
-Run migration first.
-
-```bash
-make mysql-up
-make service-migrate-up
-```
-
 To start and stop the Services, run:
 
 ```bash
-make service-docker
-make service-up GITHUB_TOKEN=<YOUR_GITHUB_TOKEN>
+make service-up
 make service-down
+```
+
+Run migration.
+
+```bash
+make migrate-up
 ```
 
 ### Dummy User

@@ -10,9 +10,9 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: password
     ports:
-      - '3306:3306'
+      - "3306:3306"
     expose:
-      - '3306'
+      - "3306"
     networks:
       - default
     volumes:
@@ -23,16 +23,19 @@ services:
     container_name: skyros.reverseproxyservice.svc
     command: /app/skyros-reverseproxy-service
     ports:
-      - '4000:4000'
+      - "4000:4000"
     networks:
       - default
+    build:
+      context: .
+      dockerfile: Dockerfile-reverseproxyservice
 
   skyros.userservice:
     image: skyros-user-service:latest
     container_name: skyros.userservice.svc
     command: /app/skyros-user-service
     ports:
-      - '4001:4001'
+      - "4001:4001"
     restart: always
     environment:
       - MYSQL_HOST=skyros.mysql.database
@@ -47,13 +50,16 @@ services:
       - skyros.mysql
     networks:
       - default
+    build:
+      context: .
+      dockerfile: Dockerfile-userservice
 
   skyros.productservice:
     image: skyros-product-service:latest
     container_name: skyros.productservice.svc
     command: /app/skyros-product-service
     ports:
-      - '4002:4002'
+      - "4002:4002"
     restart: always
     environment:
       - MYSQL_HOST=skyros.mysql.database
@@ -70,13 +76,16 @@ services:
       - skyros.userservice
     networks:
       - default
+    build:
+      context: .
+      dockerfile: Dockerfile-productservice
 
   skyros.orderservice:
     image: skyros-order-service:latest
     container_name: skyros.orderservice.svc
     command: /app/skyros-order-service
     ports:
-      - '4003:4003'
+      - "4003:4003"
     restart: always
     environment:
       - MYSQL_HOST=skyros.mysql.database
@@ -94,3 +103,6 @@ services:
       - skyros.productservice
     networks:
       - default
+    build:
+      context: .
+      dockerfile: Dockerfile-orderservice

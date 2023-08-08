@@ -1,17 +1,8 @@
-# Start by building the application.
-FROM golang:1.18-alpine3.16 as build
-
-ARG GITHUB_TOKEN
-
-RUN apk add --no-cache git
-
-RUN git config --global url."https://$GITHUB_TOKEN:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+FROM golang:1.19-alpine3.18 as build
 
 WORKDIR /skyros-order-service
 
 COPY orderservice .
-
-RUN export GOSUMDB=off
 
 RUN go mod vendor
 
