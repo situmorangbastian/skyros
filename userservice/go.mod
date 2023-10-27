@@ -15,7 +15,7 @@ require (
 	github.com/situmorangbastian/eclipse v1.4.1
 	github.com/situmorangbastian/skyros/skyrosgrpc v0.0.0-20230808033814-fb77f63ef4ef
 	golang.org/x/crypto v0.14.0
-	google.golang.org/grpc v1.58.2
+	google.golang.org/grpc v1.58.3
 )
 
 require (
