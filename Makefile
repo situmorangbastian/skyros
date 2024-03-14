@@ -1,16 +1,10 @@
-# Docker
 .PHONY: service-up
 service-up:
-	@docker-compose up -d
+	@docker compose up -d
 
 .PHONY: service-down
 service-down:
-	@docker-compose down
-
-# Database Migration
-.PHONY: migrate-prepare
-migrate-prepare:
-	@GO111MODULE=off go get -tags 'mysql' -u github.com/golang-migrate/migrate/cmd/migrate
+	@docker compose down
 
 .PHONY: migrate-up
 migrate-up:
