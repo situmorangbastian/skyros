@@ -12,8 +12,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/golang-migrate/migrate/source/file"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/situmorangbastian/eclipse"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -80,7 +80,7 @@ func main() {
 
 	g := e.Group("")
 	g.Use(
-		middleware.JWT([]byte(tokenSecretKey)),
+		echojwt.JWT([]byte(tokenSecretKey)),
 		eclipse.Authentication(),
 	)
 
