@@ -51,19 +51,13 @@ make migrate-up
 User Seller
 
 ```bash
-POST /login
-{
-  "email": "user-seller@example.com",
-  "password": "password"
-}
+"email": "user-seller@example.com",
+"password": "password"
 ```
 
 User Buyer
 
 ```bash
-POST /login
-{
-  "email": "user-buyer@example.com",
-  "password": "password"
-}
+"email": "user-buyer@example.com",
+"password": "password"
 ```
