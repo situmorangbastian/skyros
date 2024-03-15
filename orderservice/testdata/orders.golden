@@ -1,0 +1,25 @@
+[
+  {
+    "id": "",
+    "buyer": {
+      "email": "",
+      "name": "",
+      "address": ""
+    },
+    "seller": {
+      "email": "",
+      "name": "",
+      "address": ""
+    },
+    "description": "",
+    "source_address": "",
+    "destination_address": "DKI Jakarta",
+    "items": [
+      {
+        "product_id": "product-id",
+        "quantity": 1
+      }
+    ],
+    "total_price": 0
+  }
+]
