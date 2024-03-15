@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/labstack/echo/v4"
-	"github.com/situmorangbastian/eclipse"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -21,7 +20,7 @@ import (
 
 func getEchoServer() *echo.Echo {
 	e := echo.New()
-	e.Use(eclipse.Error())
+	e.Use(orderservice.Error())
 	e.Validator = internal.NewValidator()
 
 	return e
