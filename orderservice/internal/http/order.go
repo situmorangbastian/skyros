@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
-	"github.com/situmorangbastian/eclipse"
 
 	"github.com/situmorangbastian/skyros/orderservice"
 )
@@ -37,7 +36,7 @@ func NewOrderHandler(g *echo.Group, service orderservice.OrderService) {
 func (h orderHandler) store(c echo.Context) error {
 	var order orderservice.Order
 	if err := c.Bind(&order); err != nil {
-		return eclipse.ConstraintError("invalid request body")
+		return orderservice.ConstraintError("invalid request body")
 	}
 
 	if err := c.Validate(&order); err != nil {
@@ -71,7 +70,7 @@ func (h orderHandler) fetch(c echo.Context) error {
 	if c.QueryParam("num") != "" {
 		num, err := strconv.Atoi(c.QueryParam("num"))
 		if err != nil {
-			return eclipse.ConstraintError("invalid num")
+			return orderservice.ConstraintError("invalid num")
 		}
 
 		filter.Num = num
@@ -93,7 +92,7 @@ func (h orderHandler) patchStatus(c echo.Context) error {
 
 	var request patchRequest
 	if err := c.Bind(&request); err != nil {
-		return eclipse.ConstraintError("invalid request body")
+		return orderservice.ConstraintError("invalid request body")
 	}
 
 	if err := c.Validate(&request); err != nil {
@@ -101,7 +100,7 @@ func (h orderHandler) patchStatus(c echo.Context) error {
 	}
 
 	if request.Status != "accept" {
-		return eclipse.ConstraintError("unsupported status")
+		return orderservice.ConstraintError("unsupported status")
 	}
 
 	err := h.service.PatchStatus(c.Request().Context(), c.Param("id"), orderStatusAccept)

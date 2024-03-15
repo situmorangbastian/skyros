@@ -14,7 +14,6 @@ import (
 	_ "github.com/golang-migrate/migrate/source/file"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
-	"github.com/situmorangbastian/eclipse"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -74,14 +73,14 @@ func main() {
 
 	e := echo.New()
 	e.Use(
-		eclipse.Error(),
+		orderservice.Error(),
 	)
 	e.Validator = internal.NewValidator()
 
 	g := e.Group("")
 	g.Use(
 		echojwt.JWT([]byte(tokenSecretKey)),
-		eclipse.Authentication(),
+		orderservice.Authentication(),
 	)
 
 	// Init Handler

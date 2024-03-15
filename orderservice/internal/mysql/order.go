@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/situmorangbastian/eclipse"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/situmorangbastian/skyros/orderservice"
@@ -103,7 +102,7 @@ func (r orderRepository) Fetch(ctx context.Context, filter orderservice.Filter) 
 	if filter.Cursor != "" {
 		decodedCursor, err := decodeCursor(filter.Cursor)
 		if err != nil {
-			return make([]orderservice.Order, 0), "", eclipse.ConstraintErrorf("invalid query param cursor")
+			return make([]orderservice.Order, 0), "", orderservice.ConstraintErrorf("invalid query param cursor")
 		}
 		qBuilder = qBuilder.Where(sq.Lt{"created_time": decodedCursor})
 	}
@@ -223,7 +222,7 @@ func (r orderRepository) PatchStatus(ctx context.Context, ID string, status int)
 	}
 
 	if affected == 0 {
-		return eclipse.NotFoundError("order not found")
+		return orderservice.NotFoundError("order not found")
 	}
 
 	return nil
