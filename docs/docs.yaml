@@ -1,0 +1,595 @@
+openapi: 3.0.0
+info:
+  title: SKYROS
+  description: Simple Ecommerce Service
+  version: "1.0.0"
+paths:
+  /login:
+    post:
+      tags:
+        - User
+      description: User Login
+      operationId: userLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLogin"
+      responses:
+        "200":
+          description: Return access token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAccessToken"
+        "400":
+          description: Request Body Invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Request Body Invalid
+        "404":
+          description: Not found user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: not found user
+        "500":
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: internal server error
+  /register/buyer:
+    post:
+      tags:
+        - User
+      description: User Register with type Buyer
+      operationId: registerUserBuyer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegister"
+      responses:
+        "200":
+          description: Return access token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAccessToken"
+        "400":
+          description: Request Body Invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Request Body Invalid
+        "500":
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: internal server error
+  /register/seller:
+    post:
+      tags:
+        - User
+      description: User Register with type Seller
+      operationId: registerUserSeller
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegister"
+      responses:
+        "200":
+          description: Return access token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAccessToken"
+        "400":
+          description: Request Body Invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Request Body Invalid
+        "500":
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: internal server error
+
+  /product:
+    post:
+      tags:
+        - Product
+      description: Register New Product
+      operationId: addProduct
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Product"
+      responses:
+        "200":
+          description: Return access token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+        "400":
+          description: Request Body Invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Request Body Invalid
+        "404":
+          description: If User Not A Seller
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: not found
+        "500":
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: internal server error
+    get:
+      tags:
+        - Product
+      description: Fetch All Products
+      operationId: fetchAllProduct
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationOptional"
+        - $ref: "#/components/parameters/Num"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Search"
+      responses:
+        "200":
+          description: Return List of Product
+          headers:
+            X-Cursor:
+              description: "The cursor for getting next page."
+              schema:
+                type: "string"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/ProductResponse"
+        "400":
+          description: Invalid Filter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Num must be a number
+        "500":
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: internal server error
+  /product/:id:
+    get:
+      tags:
+        - Product
+      description: Get Detail Product
+      operationId: getProduct
+      responses:
+        "200":
+          description: Return access token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+        "404":
+          description: Data Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: product not found
+        "500":
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: internal server error
+
+  /order:
+    post:
+      security:
+        - BearerAuth:
+            - write
+      tags:
+        - Order
+      description: Add Order
+      operationId: addOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Order"
+      responses:
+        "200":
+          description: Return access token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+        "400":
+          description: Request Body Invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Request Body Invalid
+        "500":
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: internal server error
+    get:
+      tags:
+        - Order
+      description: Fetch All Order
+      operationId: fetchAllOrder
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/Num"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Search"
+      responses:
+        "200":
+          description: Return List of Product
+          headers:
+            X-Cursor:
+              description: "The cursor for getting next page."
+              schema:
+                type: "string"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/OrderResponse"
+        "400":
+          description: Invalid Filter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Num must be a number
+        "500":
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: internal server error
+  /order/:id:
+    get:
+      tags:
+        - Order
+      description: Get Detail Order
+      operationId: getOrder
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+      responses:
+        "200":
+          description: Return access token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+        "404":
+          description: Data Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: order not found
+        "500":
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: internal server error
+    patch:
+      tags:
+        - Order
+      description: Patch Status Order
+      operationId: patchStatusOrder
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchStatus"
+      responses:
+        "204":
+          description: Return No Content
+        "404":
+          description: Data Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: order not found
+        "500":
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: internal server error
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    Authorization:
+      in: header
+      name: Authorization
+      required: true
+      description: "contains the credentials to authenticate a user "
+      schema:
+        type: string
+        example: Bearer a4ce74c5-058b-4546-9126-964c1d373227
+    AuthorizationOptional:
+      in: header
+      name: Authorization
+      required: false
+      description: "contains the credentials to authenticate for spesific user for example to fetch all product from seller"
+      schema:
+        type: string
+        example: Bearer a4ce74c5-058b-4546-9126-964c1d373227
+    Num:
+      in: query
+      name: num
+      description: Number of items to be returned in a page. Defaults to 20.
+      schema:
+        type: integer
+        default: 20
+      required: false
+    Cursor:
+      in: query
+      name: cursor
+      description: The cursor for getting next page.
+      schema:
+        type: string
+      required: false
+    Search:
+      in: query
+      name: search
+      description: For Search Product
+      schema:
+        type: string
+      required: false
+  schemas:
+    UserLogin:
+      type: object
+      properties:
+        email:
+          type: string
+          example: user@example.com
+        password:
+          type: string
+          example: password
+    UserRegister:
+      type: object
+      properties:
+        name:
+          type: string
+          example: User
+        address:
+          type: string
+          example: Jakarta
+        email:
+          type: string
+          example: user@example.com
+        password:
+          type: string
+          example: password
+    UserDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          example: user-id
+        name:
+          type: string
+          example: User
+        address:
+          type: string
+          example: Jakarta
+        email:
+          type: string
+          example: user@example.com
+    UserAccessToken:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: user-access-token
+    Product:
+      type: object
+      properties:
+        name:
+          description: name of product
+          type: string
+          example: Toyota Innova
+        description:
+          description: description of product
+          type: string
+          example: Super Car
+        price:
+          description: price of product
+          type: string
+          example: 200000000
+    ProductResponse:
+      type: object
+      properties:
+        name:
+          description: name of product
+          type: string
+          example: Toyota Innova
+        description:
+          description: description of product
+          type: string
+          example: Super Car
+        price:
+          description: price of product
+          type: string
+          example: 200000000
+        seller:
+          description: seller of product
+          type: object
+          $ref: "#/components/schemas/UserDetail"
+    Order:
+      type: object
+      properties:
+        description:
+          description: description of product
+          type: string
+          example: Warna Hitam
+        source_address:
+          description: Seller Address
+          type: string
+          example: Jakarta
+        destination_address:
+          description: Buyer Address
+          type: string
+          example: Medan
+        items:
+          description: items of order
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderProduct"
+    OrderProduct:
+      type: object
+      properties:
+        product_id:
+          description: Product ID
+          type: string
+          example: product-id
+        quantity:
+          description: Quantity of Product
+          type: string
+          example: 30
+    OrderResponse:
+      type: object
+      properties:
+        description:
+          description: description of product
+          type: string
+          example: Warna Hitam
+        source_address:
+          description: Seller Address
+          type: string
+          example: Jakarta
+        destination_address:
+          description: Buyer Address
+          type: string
+          example: Medan
+        total_price:
+          description: Buyer Address
+          type: integer
+          example: 200000
+        items:
+          description: items of order
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderProductResponse"
+        seller:
+          description: seller of product
+          type: object
+          $ref: "#/components/schemas/UserDetail"
+        buyer:
+          description: buyer of product
+          type: object
+          $ref: "#/components/schemas/UserDetail"
+    OrderProductResponse:
+      type: object
+      properties:
+        product:
+          description: Detail Product
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        quantity:
+          description: Quantity of Product
+          type: string
+          example: 30
+    PatchStatus:
+      type: object
+      properties:
+        status:
+          description: Status of Order
+          type: string
+          example: accept
+    Error:
+      type: object
+      properties:
+        error:
+          description: The error code.
+          type: string
+          example: Error description
+        reasons:
+          type: object
+          additionalProperties: true
+      required:
+        - error
