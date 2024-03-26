@@ -7,6 +7,7 @@ Simple Ecommerce Services
 ### Project Structure
 
 ```bash
+├── docs                        # API Docs
 ├── init                        # Init Migration for Database
 ├── orderservice                # Service for handle order
 ├── productservice              # Service for handle product
@@ -21,7 +22,17 @@ Simple Ecommerce Services
 
 ### Documentation
 
-On this link [documentation](https://app.swaggerhub.com/apis-docs/situmorangbastian/skyros/1.0.0).
+Documentation using swagger
+
+Go to `docs` folder, and run this
+
+```bash
+go run main.go
+```
+
+and open this link to see the api documentation:
+
+[API Docs](http://localhost:8080/swagger/index.html).
 
 ### Database Migrations
 
