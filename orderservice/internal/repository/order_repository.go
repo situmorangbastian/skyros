@@ -8,6 +8,6 @@ import (
 
 type OrderRepository interface {
 	Store(ctx context.Context, order models.Order) (models.Order, error)
-	Fetch(ctx context.Context, filter models.Filter) ([]models.Order, string, error)
+	Fetch(ctx context.Context, filter models.Filter) ([]models.Order, error)
 	PatchStatus(ctx context.Context, ID string, status int) error
 }

@@ -103,8 +103,8 @@ func (op OrderProduct) MarshalJSON() ([]byte, error) {
 }
 
 type Filter struct {
-	Cursor   string
-	Num      int
+	Page     int
+	PageSize int
 	Search   string
 	SellerID string
 	BuyerID  string

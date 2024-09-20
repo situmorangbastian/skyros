@@ -15,7 +15,7 @@ type OrderUsecase struct {
 }
 
 // Fetch provides a mock function with given fields: ctx, filter
-func (_m *OrderUsecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Order, string, error) {
+func (_m *OrderUsecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Order, error) {
 	ret := _m.Called(ctx, filter)
 
 	if len(ret) == 0 {
@@ -23,9 +23,8 @@ func (_m *OrderUsecase) Fetch(ctx context.Context, filter models.Filter) ([]mode
 	}
 
 	var r0 []models.Order
-	var r1 string
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, models.Filter) ([]models.Order, string, error)); ok {
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, models.Filter) ([]models.Order, error)); ok {
 		return rf(ctx, filter)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, models.Filter) []models.Order); ok {
@@ -36,19 +35,13 @@ func (_m *OrderUsecase) Fetch(ctx context.Context, filter models.Filter) ([]mode
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, models.Filter) string); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, models.Filter) error); ok {
 		r1 = rf(ctx, filter)
 	} else {
-		r1 = ret.Get(1).(string)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, models.Filter) error); ok {
-		r2 = rf(ctx, filter)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // Get provides a mock function with given fields: ctx, ID

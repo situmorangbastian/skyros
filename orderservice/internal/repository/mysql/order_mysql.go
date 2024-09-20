@@ -20,14 +20,13 @@ type orderRepository struct {
 	db *sql.DB
 }
 
-// NewOrderRepository will create the order mysql repository
 func NewOrderRepository(db *sql.DB) repository.OrderRepository {
-	return orderRepository{
+	return &orderRepository{
 		db: db,
 	}
 }
 
-func (r orderRepository) Store(ctx context.Context, order models.Order) (models.Order, error) {
+func (r *orderRepository) Store(ctx context.Context, order models.Order) (models.Order, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return models.Order{}, err
@@ -39,8 +38,30 @@ func (r orderRepository) Store(ctx context.Context, order models.Order) (models.
 	order.UpdatedTime = timeNow
 
 	query, args, err := sq.Insert("orders").
-		Columns("id", "buyer_id", "seller_id", "description", "source_address", "destination_address", "total_price", "status", "created_time", "updated_time").
-		Values(order.ID, order.Buyer.ID, order.Seller.ID, order.Description, order.SourceAddress, order.DestinationAddress, order.TotalPrice, order.Status, order.CreatedTime, order.UpdatedTime).ToSql()
+		Columns(
+			"id",
+			"buyer_id",
+			"seller_id",
+			"description",
+			"source_address",
+			"destination_address",
+			"total_price",
+			"status",
+			"created_time",
+			"updated_time",
+		).
+		Values(
+			order.ID,
+			order.Buyer.ID,
+			order.Seller.ID,
+			order.Description,
+			order.SourceAddress,
+			order.DestinationAddress,
+			order.TotalPrice,
+			order.Status,
+			order.CreatedTime,
+			order.UpdatedTime,
+		).ToSql()
 	if err != nil {
 		return models.Order{}, err
 	}
@@ -62,8 +83,22 @@ func (r orderRepository) Store(ctx context.Context, order models.Order) (models.
 
 	for _, orderItem := range order.Items {
 		query, args, err := sq.Insert("orders_product").
-			Columns("id", "order_id", "product_id", "quantity", "created_time", "updated_time").
-			Values(uuid.New().String(), order.ID, orderItem.ProductID, orderItem.Quantity, timeNow, timeNow).ToSql()
+			Columns(
+				"id",
+				"order_id",
+				"product_id",
+				"quantity",
+				"created_time",
+				"updated_time",
+			).
+			Values(
+				uuid.New().String(),
+				order.ID,
+				orderItem.ProductID,
+				orderItem.Quantity,
+				timeNow,
+				timeNow,
+			).ToSql()
 		if err != nil {
 			return models.Order{}, err
 		}
@@ -91,23 +126,24 @@ func (r orderRepository) Store(ctx context.Context, order models.Order) (models.
 	return order, nil
 }
 
-func (r orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]models.Order, string, error) {
-	qBuilder := sq.Select("id", "buyer_id", "seller_id", "description", "source_address", "destination_address", "total_price", "status", "created_time", "updated_time").
+func (r *orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]models.Order, error) {
+	qBuilder := sq.Select(
+		"id",
+		"buyer_id",
+		"seller_id",
+		"description",
+		"source_address",
+		"destination_address",
+		"total_price",
+		"status",
+		"created_time",
+		"updated_time",
+	).
 		From("orders").
-		Where("deleted_time IS NULL").
 		OrderBy("created_time DESC")
 
-	if filter.Num > 0 {
-		qBuilder = qBuilder.Limit(uint64(filter.Num))
-	}
-
-	if filter.Cursor != "" {
-		decodedCursor, err := decodeCursor(filter.Cursor)
-		if err != nil {
-			return make([]models.Order, 0), "", internalErr.ConstraintErrorf("invalid query param cursor")
-		}
-		qBuilder = qBuilder.Where(sq.Lt{"created_time": decodedCursor})
-	}
+	offset := (filter.Page - 1) * filter.PageSize
+	qBuilder = qBuilder.Limit(uint64(filter.PageSize)).Offset(uint64(offset))
 
 	if filter.SellerID != "" {
 		qBuilder = qBuilder.Where(sq.Eq{"seller_id": filter.SellerID})
@@ -115,12 +151,12 @@ func (r orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]mod
 
 	query, args, err := qBuilder.ToSql()
 	if err != nil {
-		return []models.Order{}, "", err
+		return []models.Order{}, err
 	}
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return []models.Order{}, "", err
+		return []models.Order{}, err
 	}
 
 	orders := make([]models.Order, 0)
@@ -139,7 +175,7 @@ func (r orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]mod
 			&order.UpdatedTime,
 		)
 		if err != nil {
-			return []models.Order{}, "", err
+			return []models.Order{}, err
 		}
 
 		orders = append(orders, order)
@@ -152,7 +188,10 @@ func (r orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]mod
 		order.Items = make([]models.OrderProduct, 0)
 
 		errGroup.Go(func() error {
-			query, args, err := sq.Select("product_id", "quantity").
+			query, args, err := sq.Select(
+				"product_id",
+				"quantity",
+			).
 				From("orders_product").
 				Where(sq.Eq{"order_id": order.ID}).
 				OrderBy("created_time DESC").ToSql()
@@ -186,22 +225,17 @@ func (r orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]mod
 	}
 
 	if err := errGroup.Wait(); err != nil {
-		return []models.Order{}, "", err
+		return []models.Order{}, err
 	}
 
 	if err = rows.Err(); err != nil {
-		return []models.Order{}, "", err
+		return []models.Order{}, err
 	}
 
-	nextCursor := ""
-	if len(orders) > 0 {
-		nextCursor = encodeCursor(orders[len(orders)-1].CreatedTime)
-	}
-
-	return orders, nextCursor, nil
+	return orders, nil
 }
 
-func (r orderRepository) PatchStatus(ctx context.Context, ID string, status int) error {
+func (r *orderRepository) PatchStatus(ctx context.Context, ID string, status int) error {
 	query, args, err := sq.Update("orders").
 		Set("status", status).
 		Set("updated_time", time.Now()).

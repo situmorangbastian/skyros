@@ -1,4 +1,4 @@
-package test
+package handlers_test
 
 import (
 	"errors"
@@ -154,29 +154,34 @@ func TestOrderHTTPFetch(t *testing.T) {
 		expectedStatusCode int
 	}{
 		"success": {
-			queryParam: "?num=20",
+			queryParam: "?pagesize=20",
 			orderUsecase: testdata.FuncCall{
 				Called: true,
 				Input: []interface{}{mock.Anything, models.Filter{
-					Num: 20,
+					PageSize: 20,
 				}},
-				Output: []interface{}{mockOrders, "", nil},
+				Output: []interface{}{mockOrders, nil},
 			},
 			expectedStatusCode: http.StatusOK,
 		},
 		"error: unexpected error from service": {
-			queryParam: "?num=20",
+			queryParam: "?pagesize=20&page=1",
 			orderUsecase: testdata.FuncCall{
 				Called: true,
 				Input: []interface{}{mock.Anything, models.Filter{
-					Num: 20,
+					PageSize: 20,
+					Page:     1,
 				}},
-				Output: []interface{}{[]models.Order{}, "", errors.New("unexpected error")},
+				Output: []interface{}{[]models.Order{}, errors.New("unexpected error")},
 			},
 			expectedStatusCode: http.StatusInternalServerError,
 		},
-		"error: invalid query param num": {
-			queryParam:         "?num=abc",
+		"error: invalid query param limit": {
+			queryParam:         "?pagesize=abc",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		"error: invalid query param offset": {
+			queryParam:         "?page=abc",
 			expectedStatusCode: http.StatusBadRequest,
 		},
 	}
