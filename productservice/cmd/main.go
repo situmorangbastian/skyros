@@ -21,23 +21,25 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/situmorangbastian/eclipse"
-	"github.com/situmorangbastian/skyros/productservice"
-	"github.com/situmorangbastian/skyros/productservice/internal"
-	grpcHandler "github.com/situmorangbastian/skyros/productservice/internal/grpc"
-	handler "github.com/situmorangbastian/skyros/productservice/internal/http"
-	mysqlRepo "github.com/situmorangbastian/skyros/productservice/internal/mysql"
-	"github.com/situmorangbastian/skyros/productservice/product"
+	grpcHandler "github.com/situmorangbastian/skyros/productservice/api/grpc"
+	restHandler "github.com/situmorangbastian/skyros/productservice/api/rest/handler"
+	"github.com/situmorangbastian/skyros/productservice/api/rest/middleware"
+	"github.com/situmorangbastian/skyros/productservice/api/rest/validator"
+	internalErr "github.com/situmorangbastian/skyros/productservice/internal/error"
+	"github.com/situmorangbastian/skyros/productservice/internal/helpers"
+	mysqlRepo "github.com/situmorangbastian/skyros/productservice/internal/repository/mysql"
+	grpcService "github.com/situmorangbastian/skyros/productservice/internal/services/grpc"
+	"github.com/situmorangbastian/skyros/productservice/internal/usecase"
 	"github.com/situmorangbastian/skyros/skyrosgrpc"
 )
 
 func main() {
 	// Init Mysql Connection
-	dbHost := productservice.GetEnv("MYSQL_HOST")
-	dbPort := productservice.GetEnv("MYSQL_PORT")
-	dbUser := productservice.GetEnv("MYSQL_USER")
-	dbPass := productservice.GetEnv("MYSQL_PASS")
-	dbName := productservice.GetEnv("MYSQL_DBNAME")
+	dbHost := helpers.GetEnv("MYSQL_HOST")
+	dbPort := helpers.GetEnv("MYSQL_PORT")
+	dbUser := helpers.GetEnv("MYSQL_USER")
+	dbPass := helpers.GetEnv("MYSQL_PASS")
+	dbName := helpers.GetEnv("MYSQL_DBNAME")
 	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
 	val := url.Values{}
 	val.Add("parseTime", "1")
@@ -60,37 +62,37 @@ func main() {
 	}()
 
 	// Grpc Client
-	userServiceGrpcConn, err := grpc.Dial(productservice.GetEnv("USER_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	userSvcGrpcClient, err := grpc.NewClient(helpers.GetEnv("USER_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err)
 	}
-	userServiceGrpc := grpcHandler.NewUserService(userServiceGrpcConn)
+	userServiceGrpc := grpcService.NewUserService(userSvcGrpcClient)
 
 	// Init Product
 	productRepo := mysqlRepo.NewProductRepository(dbConn)
-	productService := product.NewService(productRepo, userServiceGrpc)
+	productService := usecase.NewProductUsecase(productRepo, userServiceGrpc)
 
-	tokenSecretKey := productservice.GetEnv("SECRET_KEY")
+	tokenSecretKey := helpers.GetEnv("SECRET_KEY")
 
 	e := echo.New()
 	e.Use(
-		eclipse.Error(),
+		internalErr.Error(),
 	)
-	e.Validator = internal.NewValidator()
+	e.Validator = validator.NewValidator()
 
 	g := e.Group("")
 	g.Use(
 		echojwt.JWT([]byte(tokenSecretKey)),
-		eclipse.Authentication(),
+		middleware.Authentication(),
 	)
 
 	// Init Handler
-	handler.NewProductHandler(e, g, productService)
+	restHandler.NewProductHandler(e, g, productService)
 
 	// Start server
 	wg := sync.WaitGroup{}
 	wg.Add(2)
-	serverAddress := productservice.GetEnv("SERVER_ADDRESS")
+	serverAddress := helpers.GetEnv("SERVER_ADDRESS")
 	go func() {
 		defer wg.Done()
 		if err := e.Start(serverAddress); err != nil {
@@ -104,7 +106,7 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		port, err := strconv.Atoi(productservice.GetEnv("GRPC_SERVER_ADDRESS"))
+		port, err := strconv.Atoi(helpers.GetEnv("GRPC_SERVER_ADDRESS"))
 		if err != nil {
 			log.Fatal(errors.New("invalid grpc server port"))
 		}
