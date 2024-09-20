@@ -1,10 +1,12 @@
-package orderservice
+package middleware
 
 import (
 	"net/http"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
+
+	"github.com/situmorangbastian/skyros/orderservice/api/rest/context"
 )
 
 func Authentication() echo.MiddlewareFunc {
@@ -16,7 +18,7 @@ func Authentication() echo.MiddlewareFunc {
 			}
 			userClaims := user.Claims.(jwt.MapClaims)
 
-			c.SetRequest(c.Request().WithContext(NewCustomContext(c.Request().Context(), userClaims)))
+			c.SetRequest(c.Request().WithContext(context.NewCustomContext(c.Request().Context(), userClaims)))
 
 			return next(c)
 		}

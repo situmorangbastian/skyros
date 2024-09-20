@@ -17,21 +17,23 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/situmorangbastian/skyros/orderservice"
-	"github.com/situmorangbastian/skyros/orderservice/internal"
-	grpcHandler "github.com/situmorangbastian/skyros/orderservice/internal/grpc"
-	handler "github.com/situmorangbastian/skyros/orderservice/internal/http"
-	mysqlRepo "github.com/situmorangbastian/skyros/orderservice/internal/mysql"
-	"github.com/situmorangbastian/skyros/orderservice/order"
+	resthandlers "github.com/situmorangbastian/skyros/orderservice/api/rest/handlers"
+	"github.com/situmorangbastian/skyros/orderservice/api/rest/middleware"
+	"github.com/situmorangbastian/skyros/orderservice/api/rest/validators"
+	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/error"
+	"github.com/situmorangbastian/skyros/orderservice/internal/helpers"
+	mysqlRepo "github.com/situmorangbastian/skyros/orderservice/internal/repository/mysql"
+	grpcService "github.com/situmorangbastian/skyros/orderservice/internal/services/grpc"
+	"github.com/situmorangbastian/skyros/orderservice/internal/usecase"
 )
 
 func main() {
 	// Init Mysql Connection
-	dbHost := orderservice.GetEnv("MYSQL_HOST")
-	dbPort := orderservice.GetEnv("MYSQL_PORT")
-	dbUser := orderservice.GetEnv("MYSQL_USER")
-	dbPass := orderservice.GetEnv("MYSQL_PASS")
-	dbName := orderservice.GetEnv("MYSQL_DBNAME")
+	dbHost := helpers.GetEnv("MYSQL_HOST")
+	dbPort := helpers.GetEnv("MYSQL_PORT")
+	dbUser := helpers.GetEnv("MYSQL_USER")
+	dbPass := helpers.GetEnv("MYSQL_PASS")
+	dbName := helpers.GetEnv("MYSQL_DBNAME")
 	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
 	val := url.Values{}
 	val.Add("parseTime", "1")
@@ -54,40 +56,40 @@ func main() {
 	}()
 
 	// Grpc Client
-	userServiceGrpcConn, err := grpc.Dial(orderservice.GetEnv("USER_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	userServiceGrpcConn, err := grpc.Dial(helpers.GetEnv("USER_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err)
 	}
-	productServiceGrpcConn, err := grpc.Dial(orderservice.GetEnv("PRODUCT_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	productServiceGrpcConn, err := grpc.Dial(helpers.GetEnv("PRODUCT_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err)
 	}
-	userServiceGrpc := grpcHandler.NewUserService(userServiceGrpcConn)
-	productServiceGrpc := grpcHandler.NewProductService(productServiceGrpcConn)
+	userServiceGrpc := grpcService.NewUserService(userServiceGrpcConn)
+	productServiceGrpc := grpcService.NewProductService(productServiceGrpcConn)
 
 	// Init Order
 	orderRepo := mysqlRepo.NewOrderRepository(dbConn)
-	orderService := order.NewService(orderRepo, userServiceGrpc, productServiceGrpc)
+	orderService := usecase.NewUsecase(orderRepo, userServiceGrpc, productServiceGrpc)
 
-	tokenSecretKey := orderservice.GetEnv("SECRET_KEY")
+	tokenSecretKey := helpers.GetEnv("SECRET_KEY")
 
 	e := echo.New()
 	e.Use(
-		orderservice.Error(),
+		internalErr.Error(),
 	)
-	e.Validator = internal.NewValidator()
+	e.Validator = validators.NewValidator()
 
 	g := e.Group("")
 	g.Use(
 		echojwt.JWT([]byte(tokenSecretKey)),
-		orderservice.Authentication(),
+		middleware.Authentication(),
 	)
 
 	// Init Handler
-	handler.NewOrderHandler(g, orderService)
+	resthandlers.NewOrderHandler(g, orderService)
 
 	// Start server
-	serverAddress := orderservice.GetEnv("SERVER_ADDRESS")
+	serverAddress := helpers.GetEnv("SERVER_ADDRESS")
 	go func() {
 		if err := e.Start(serverAddress); err != nil {
 			e.Logger.Info("shutting down the server...")

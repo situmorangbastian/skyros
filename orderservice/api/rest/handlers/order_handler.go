@@ -1,4 +1,4 @@
-package http
+package handlers
 
 import (
 	"net/http"
@@ -6,7 +6,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/situmorangbastian/skyros/orderservice"
+	"github.com/situmorangbastian/skyros/orderservice/internal/domain/models"
+	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/error"
+	"github.com/situmorangbastian/skyros/orderservice/internal/usecase"
 )
 
 const (
@@ -14,16 +16,16 @@ const (
 )
 
 type orderHandler struct {
-	service orderservice.OrderService
+	orderUsecase usecase.OrderUsecase
 }
 
 // NewOrderHandler init the order handler
-func NewOrderHandler(g *echo.Group, service orderservice.OrderService) {
-	if service == nil {
-		panic("http: nil product service")
+func NewOrderHandler(g *echo.Group, orderUsecase usecase.OrderUsecase) {
+	if orderUsecase == nil {
+		panic("http: order usecase is nil")
 	}
 
-	handler := &orderHandler{service}
+	handler := &orderHandler{orderUsecase}
 
 	g.POST("/order", handler.store)
 
@@ -34,16 +36,16 @@ func NewOrderHandler(g *echo.Group, service orderservice.OrderService) {
 }
 
 func (h orderHandler) store(c echo.Context) error {
-	var order orderservice.Order
+	var order models.Order
 	if err := c.Bind(&order); err != nil {
-		return orderservice.ConstraintError("invalid request body")
+		return internalErr.ConstraintError("invalid request body")
 	}
 
 	if err := c.Validate(&order); err != nil {
 		return err
 	}
 
-	res, err := h.service.Store(c.Request().Context(), order)
+	res, err := h.orderUsecase.Store(c.Request().Context(), order)
 	if err != nil {
 		return err
 	}
@@ -52,7 +54,7 @@ func (h orderHandler) store(c echo.Context) error {
 }
 
 func (h orderHandler) get(c echo.Context) error {
-	res, err := h.service.Get(c.Request().Context(), c.Param("id"))
+	res, err := h.orderUsecase.Get(c.Request().Context(), c.Param("id"))
 	if err != nil {
 		return err
 	}
@@ -61,7 +63,7 @@ func (h orderHandler) get(c echo.Context) error {
 }
 
 func (h orderHandler) fetch(c echo.Context) error {
-	filter := orderservice.Filter{
+	filter := models.Filter{
 		Cursor: c.QueryParam("cursor"),
 		Search: c.QueryParam("search"),
 		Num:    20,
@@ -70,13 +72,13 @@ func (h orderHandler) fetch(c echo.Context) error {
 	if c.QueryParam("num") != "" {
 		num, err := strconv.Atoi(c.QueryParam("num"))
 		if err != nil {
-			return orderservice.ConstraintError("invalid num")
+			return internalErr.ConstraintError("invalid num")
 		}
 
 		filter.Num = num
 	}
 
-	res, cursor, err := h.service.Fetch(c.Request().Context(), filter)
+	res, cursor, err := h.orderUsecase.Fetch(c.Request().Context(), filter)
 	if err != nil {
 		return err
 	}
@@ -92,7 +94,7 @@ func (h orderHandler) patchStatus(c echo.Context) error {
 
 	var request patchRequest
 	if err := c.Bind(&request); err != nil {
-		return orderservice.ConstraintError("invalid request body")
+		return internalErr.ConstraintError("invalid request body")
 	}
 
 	if err := c.Validate(&request); err != nil {
@@ -100,10 +102,10 @@ func (h orderHandler) patchStatus(c echo.Context) error {
 	}
 
 	if request.Status != "accept" {
-		return orderservice.ConstraintError("unsupported status")
+		return internalErr.ConstraintError("unsupported status")
 	}
 
-	err := h.service.PatchStatus(c.Request().Context(), c.Param("id"), orderStatusAccept)
+	err := h.orderUsecase.PatchStatus(c.Request().Context(), c.Param("id"), orderStatusAccept)
 	if err != nil {
 		return err
 	}

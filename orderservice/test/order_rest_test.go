@@ -1,4 +1,4 @@
-package http_test
+package test
 
 import (
 	"errors"
@@ -11,17 +11,18 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/situmorangbastian/skyros/orderservice"
-	"github.com/situmorangbastian/skyros/orderservice/internal"
-	handler "github.com/situmorangbastian/skyros/orderservice/internal/http"
+	resthandlers "github.com/situmorangbastian/skyros/orderservice/api/rest/handlers"
+	"github.com/situmorangbastian/skyros/orderservice/api/rest/validators"
+	"github.com/situmorangbastian/skyros/orderservice/internal/domain/models"
+	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/error"
 	"github.com/situmorangbastian/skyros/orderservice/mocks"
 	"github.com/situmorangbastian/skyros/orderservice/testdata"
 )
 
 func getEchoServer() *echo.Echo {
 	e := echo.New()
-	e.Use(orderservice.Error())
-	e.Validator = internal.NewValidator()
+	e.Use(internalErr.Error())
+	e.Validator = validators.NewValidator()
 
 	return e
 }
@@ -30,17 +31,17 @@ func TestOrderHTTPStore(t *testing.T) {
 	orderJSON := testdata.GetGolden(t, "order")
 	invalidOrderJSON := testdata.GetGolden(t, "invalidorder")
 
-	var mockOrder orderservice.Order
+	var mockOrder models.Order
 	testdata.GoldenJSONUnmarshal(t, "order", &mockOrder)
 
 	tests := map[string]struct {
 		input              []byte
-		orderService       testdata.FuncCall
+		orderUsecase       testdata.FuncCall
 		expectedStatusCode int
 	}{
 		"success": {
 			input: orderJSON,
-			orderService: testdata.FuncCall{
+			orderUsecase: testdata.FuncCall{
 				Called: true,
 				Input:  []interface{}{mock.Anything, mockOrder},
 				Output: []interface{}{mockOrder, nil},
@@ -57,10 +58,10 @@ func TestOrderHTTPStore(t *testing.T) {
 		},
 		"error: unexpected error from service": {
 			input: orderJSON,
-			orderService: testdata.FuncCall{
+			orderUsecase: testdata.FuncCall{
 				Called: true,
 				Input:  []interface{}{mock.Anything, mockOrder},
-				Output: []interface{}{orderservice.Order{}, errors.New("unexpected error")},
+				Output: []interface{}{models.Order{}, errors.New("unexpected error")},
 			},
 			expectedStatusCode: http.StatusInternalServerError,
 		},
@@ -70,17 +71,17 @@ func TestOrderHTTPStore(t *testing.T) {
 	g := e.Group("")
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			service := new(mocks.OrderService)
-			if test.orderService.Called {
-				service.On("Store", test.orderService.Input...).
-					Return(test.orderService.Output...).Once()
+			service := new(mocks.OrderUsecase)
+			if test.orderUsecase.Called {
+				service.On("Store", test.orderUsecase.Input...).
+					Return(test.orderUsecase.Output...).Once()
 			}
 
 			req := httptest.NewRequest(echo.POST, "/order", strings.NewReader(string(test.input)))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 
-			handler.NewOrderHandler(g, service)
+			resthandlers.NewOrderHandler(g, service)
 			e.ServeHTTP(rec, req)
 
 			service.AssertExpectations(t)
@@ -91,17 +92,17 @@ func TestOrderHTTPStore(t *testing.T) {
 }
 
 func TestOrderHTTPGet(t *testing.T) {
-	var mockOrder orderservice.Order
+	var mockOrder models.Order
 	testdata.GoldenJSONUnmarshal(t, "order", &mockOrder)
 
 	tests := map[string]struct {
 		orderId            string
-		orderService       testdata.FuncCall
+		orderUsecase       testdata.FuncCall
 		expectedStatusCode int
 	}{
 		"success": {
 			orderId: "order-id",
-			orderService: testdata.FuncCall{
+			orderUsecase: testdata.FuncCall{
 				Called: true,
 				Input:  []interface{}{mock.Anything, "order-id"},
 				Output: []interface{}{mockOrder, nil},
@@ -110,10 +111,10 @@ func TestOrderHTTPGet(t *testing.T) {
 		},
 		"error: unexpected error from service": {
 			orderId: "order-id",
-			orderService: testdata.FuncCall{
+			orderUsecase: testdata.FuncCall{
 				Called: true,
 				Input:  []interface{}{mock.Anything, "order-id"},
-				Output: []interface{}{orderservice.Order{}, errors.New("unexpected error")},
+				Output: []interface{}{models.Order{}, errors.New("unexpected error")},
 			},
 			expectedStatusCode: http.StatusInternalServerError,
 		},
@@ -123,17 +124,17 @@ func TestOrderHTTPGet(t *testing.T) {
 	g := e.Group("")
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			service := new(mocks.OrderService)
-			if test.orderService.Called {
-				service.On("Get", test.orderService.Input...).
-					Return(test.orderService.Output...).Once()
+			service := new(mocks.OrderUsecase)
+			if test.orderUsecase.Called {
+				service.On("Get", test.orderUsecase.Input...).
+					Return(test.orderUsecase.Output...).Once()
 			}
 
 			req := httptest.NewRequest(echo.GET, "/order/"+test.orderId, nil)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 
-			handler.NewOrderHandler(g, service)
+			resthandlers.NewOrderHandler(g, service)
 			e.ServeHTTP(rec, req)
 
 			service.AssertExpectations(t)
@@ -144,19 +145,19 @@ func TestOrderHTTPGet(t *testing.T) {
 }
 
 func TestOrderHTTPFetch(t *testing.T) {
-	var mockOrders []orderservice.Order
+	var mockOrders []models.Order
 	testdata.GoldenJSONUnmarshal(t, "orders", &mockOrders)
 
 	tests := map[string]struct {
 		queryParam         string
-		orderService       testdata.FuncCall
+		orderUsecase       testdata.FuncCall
 		expectedStatusCode int
 	}{
 		"success": {
 			queryParam: "?num=20",
-			orderService: testdata.FuncCall{
+			orderUsecase: testdata.FuncCall{
 				Called: true,
-				Input: []interface{}{mock.Anything, orderservice.Filter{
+				Input: []interface{}{mock.Anything, models.Filter{
 					Num: 20,
 				}},
 				Output: []interface{}{mockOrders, "", nil},
@@ -165,12 +166,12 @@ func TestOrderHTTPFetch(t *testing.T) {
 		},
 		"error: unexpected error from service": {
 			queryParam: "?num=20",
-			orderService: testdata.FuncCall{
+			orderUsecase: testdata.FuncCall{
 				Called: true,
-				Input: []interface{}{mock.Anything, orderservice.Filter{
+				Input: []interface{}{mock.Anything, models.Filter{
 					Num: 20,
 				}},
-				Output: []interface{}{[]orderservice.Order{}, "", errors.New("unexpected error")},
+				Output: []interface{}{[]models.Order{}, "", errors.New("unexpected error")},
 			},
 			expectedStatusCode: http.StatusInternalServerError,
 		},
@@ -184,17 +185,17 @@ func TestOrderHTTPFetch(t *testing.T) {
 	g := e.Group("")
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			service := new(mocks.OrderService)
-			if test.orderService.Called {
-				service.On("Fetch", test.orderService.Input...).
-					Return(test.orderService.Output...).Once()
+			service := new(mocks.OrderUsecase)
+			if test.orderUsecase.Called {
+				service.On("Fetch", test.orderUsecase.Input...).
+					Return(test.orderUsecase.Output...).Once()
 			}
 
 			req := httptest.NewRequest(echo.GET, "/order"+test.queryParam, nil)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 
-			handler.NewOrderHandler(g, service)
+			resthandlers.NewOrderHandler(g, service)
 			e.ServeHTTP(rec, req)
 
 			service.AssertExpectations(t)
@@ -207,12 +208,12 @@ func TestOrderHTTPFetch(t *testing.T) {
 func TestOrderHTTPPatch(t *testing.T) {
 	tests := map[string]struct {
 		input              []byte
-		orderService       testdata.FuncCall
+		orderUsecase       testdata.FuncCall
 		expectedStatusCode int
 	}{
 		"success": {
 			input: []byte(`{"status":"accept"}`),
-			orderService: testdata.FuncCall{
+			orderUsecase: testdata.FuncCall{
 				Called: true,
 				Input:  []interface{}{mock.Anything, "order-id", 1},
 				Output: []interface{}{nil},
@@ -233,7 +234,7 @@ func TestOrderHTTPPatch(t *testing.T) {
 		},
 		"error: unexpected error from service": {
 			input: []byte(`{"status":"accept"}`),
-			orderService: testdata.FuncCall{
+			orderUsecase: testdata.FuncCall{
 				Called: true,
 				Input:  []interface{}{mock.Anything, "order-id", 1},
 				Output: []interface{}{errors.New("unexpected error")},
@@ -246,17 +247,17 @@ func TestOrderHTTPPatch(t *testing.T) {
 	g := e.Group("")
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			service := new(mocks.OrderService)
-			if test.orderService.Called {
-				service.On("PatchStatus", test.orderService.Input...).
-					Return(test.orderService.Output...).Once()
+			service := new(mocks.OrderUsecase)
+			if test.orderUsecase.Called {
+				service.On("PatchStatus", test.orderUsecase.Input...).
+					Return(test.orderUsecase.Output...).Once()
 			}
 
 			req := httptest.NewRequest(echo.PATCH, "/order/order-id", strings.NewReader(string(test.input)))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 
-			handler.NewOrderHandler(g, service)
+			resthandlers.NewOrderHandler(g, service)
 			e.ServeHTTP(rec, req)
 
 			service.AssertExpectations(t)

@@ -1,4 +1,4 @@
-package orderservice
+package models
 
 import (
 	"encoding/json"

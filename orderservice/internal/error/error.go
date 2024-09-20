@@ -1,4 +1,4 @@
-package orderservice
+package error
 
 import (
 	"fmt"
