@@ -64,26 +64,33 @@ func (h orderHandler) get(c echo.Context) error {
 
 func (h orderHandler) fetch(c echo.Context) error {
 	filter := models.Filter{
-		Cursor: c.QueryParam("cursor"),
-		Search: c.QueryParam("search"),
-		Num:    20,
+		Search:   c.QueryParam("search"),
+		PageSize: 20,
 	}
 
-	if c.QueryParam("num") != "" {
-		num, err := strconv.Atoi(c.QueryParam("num"))
+	if c.QueryParam("pagesize") != "" {
+		pagesize, err := strconv.Atoi(c.QueryParam("pagesize"))
 		if err != nil {
-			return internalErr.ConstraintError("invalid num")
+			return internalErr.ConstraintError("invalid pagesize")
 		}
 
-		filter.Num = num
+		filter.PageSize = pagesize
 	}
 
-	res, cursor, err := h.orderUsecase.Fetch(c.Request().Context(), filter)
+	if c.QueryParam("page") != "" {
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil {
+			return internalErr.ConstraintError("invalid page")
+		}
+
+		filter.Page = page
+	}
+
+	res, err := h.orderUsecase.Fetch(c.Request().Context(), filter)
 	if err != nil {
 		return err
 	}
 
-	c.Response().Header().Set(`X-Cursor`, cursor)
 	return c.JSON(http.StatusOK, res)
 }
 

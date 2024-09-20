@@ -1,3 +1,3 @@
 # orderservice
 
-Simple Order Service
+Order Service

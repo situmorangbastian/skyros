@@ -16,7 +16,7 @@ import (
 type OrderUsecase interface {
 	Store(ctx context.Context, order models.Order) (models.Order, error)
 	Get(ctx context.Context, ID string) (models.Order, error)
-	Fetch(ctx context.Context, filter models.Filter) ([]models.Order, string, error)
+	Fetch(ctx context.Context, filter models.Filter) ([]models.Order, error)
 	PatchStatus(ctx context.Context, ID string, status int) error
 }
 
@@ -97,7 +97,7 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
 		return models.Order{}, internalErr.NotFoundError("not found")
 	}
 
-	result, _, err := u.orderRepo.Fetch(ctx, filter)
+	result, err := u.orderRepo.Fetch(ctx, filter)
 	if err != nil {
 		return models.Order{}, errors.Wrap(err, "order.service.get: fetch from repository")
 	}
@@ -136,10 +136,10 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
 	return result[0], nil
 }
 
-func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Order, string, error) {
+func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Order, error) {
 	customCtx, ok := ctx.(restCtx.CustomContext)
 	if !ok {
-		return []models.Order{}, "", errors.Wrap(errors.New("invalid context"), "order.service.fetch: parse custom context")
+		return []models.Order{}, errors.Wrap(errors.New("invalid context"), "order.service.fetch: parse custom context")
 	}
 
 	switch customCtx.User()["type"].(string) {
@@ -148,12 +148,12 @@ func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Ord
 	case models.UserSellerType:
 		filter.SellerID = customCtx.User()["id"].(string)
 	default:
-		return []models.Order{}, "", internalErr.NotFoundError("not found")
+		return []models.Order{}, internalErr.NotFoundError("not found")
 	}
 
-	result, cursor, err := u.orderRepo.Fetch(ctx, filter)
+	result, err := u.orderRepo.Fetch(ctx, filter)
 	if err != nil {
-		return []models.Order{}, "", errors.Wrap(err, "order.service.fetch: fetch from repository")
+		return []models.Order{}, errors.Wrap(err, "order.service.fetch: fetch from repository")
 	}
 
 	userIds := []string{}
@@ -167,12 +167,12 @@ func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Ord
 
 	users, err := u.userService.FetchByIDs(ctx, userIds)
 	if err != nil {
-		return []models.Order{}, "", errors.Wrap(err, "order.service.fetch: fetch users")
+		return []models.Order{}, errors.Wrap(err, "order.service.fetch: fetch users")
 	}
 
 	products, err := u.productService.FetchByIDs(ctx, productIds)
 	if err != nil {
-		return []models.Order{}, "", errors.Wrap(err, "order.service.fetch: fetch products")
+		return []models.Order{}, errors.Wrap(err, "order.service.fetch: fetch products")
 	}
 
 	for index, order := range result {
@@ -184,7 +184,7 @@ func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Ord
 		result[index].Items = order.Items
 	}
 
-	return result, cursor, nil
+	return result, nil
 }
 
 func (u *usecase) PatchStatus(ctx context.Context, ID string, status int) error {
