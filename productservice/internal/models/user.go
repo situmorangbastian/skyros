@@ -1,9 +1,6 @@
-package productservice
+package models
 
-import (
-	"encoding/json"
-	"time"
-)
+import "encoding/json"
 
 const (
 	UserSellerType = "seller"
@@ -28,22 +25,4 @@ func (u User) MarshalJSON() ([]byte, error) {
 		Name:    u.Name,
 		Address: u.Address,
 	})
-}
-
-type Product struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name" validate:"required"`
-	Description string    `json:"description" validate:"required"`
-	Price       int64     `json:"price" validate:"required"`
-	Seller      User      `json:"seller" validate:"-"`
-	CreatedTime time.Time `json:"created_time"`
-	UpdatedTime time.Time `json:"updated_time"`
-}
-
-type Filter struct {
-	Cursor   string
-	Num      int
-	Search   string
-	SellerID string
-	OrderID  string
 }

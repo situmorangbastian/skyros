@@ -1,3 +1,3 @@
 # productservice
 
-Simple Product Service
+Product Service

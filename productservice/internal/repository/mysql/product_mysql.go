@@ -10,23 +10,23 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-	"github.com/situmorangbastian/eclipse"
 
-	"github.com/situmorangbastian/skyros/productservice"
+	internalErr "github.com/situmorangbastian/skyros/productservice/internal/error"
+	"github.com/situmorangbastian/skyros/productservice/internal/models"
+	"github.com/situmorangbastian/skyros/productservice/internal/repository"
 )
 
 type productRepository struct {
 	db *sql.DB
 }
 
-// NewProductRepository will create the product mysql repository
-func NewProductRepository(db *sql.DB) productservice.ProductRepository {
+func NewProductRepository(db *sql.DB) repository.ProductRepository {
 	return productRepository{
 		db: db,
 	}
 }
 
-func (r productRepository) Store(ctx context.Context, product productservice.Product) (productservice.Product, error) {
+func (r productRepository) Store(ctx context.Context, product models.Product) (models.Product, error) {
 	timeNow := time.Now()
 
 	product.ID = uuid.New().String()
@@ -37,28 +37,28 @@ func (r productRepository) Store(ctx context.Context, product productservice.Pro
 		Columns("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
 		Values(product.ID, product.Name, product.Description, product.Price, product.Seller.ID, product.CreatedTime, product.UpdatedTime).ToSql()
 	if err != nil {
-		return productservice.Product{}, err
+		return models.Product{}, err
 	}
 
 	_, err = r.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return productservice.Product{}, err
+		return models.Product{}, err
 	}
 
 	return product, nil
 }
 
-func (r productRepository) Get(ctx context.Context, ID string) (productservice.Product, error) {
+func (r productRepository) Get(ctx context.Context, ID string) (models.Product, error) {
 	query, args, err := sq.Select("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
 		From("product").
 		Where(sq.Eq{"id": ID}).ToSql()
 	if err != nil {
-		return productservice.Product{}, err
+		return models.Product{}, err
 	}
 
 	rows := r.db.QueryRowContext(ctx, query, args...)
 
-	product := productservice.Product{}
+	product := models.Product{}
 	err = rows.Scan(
 		&product.ID,
 		&product.Name,
@@ -70,31 +70,22 @@ func (r productRepository) Get(ctx context.Context, ID string) (productservice.P
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return productservice.Product{}, eclipse.NotFoundError("product not found")
+			return models.Product{}, internalErr.NotFoundError("product not found")
 		}
-		return productservice.Product{}, err
+		return models.Product{}, err
 	}
 
 	return product, nil
 }
 
-func (r productRepository) Fetch(ctx context.Context, filter productservice.Filter) ([]productservice.Product, string, error) {
+func (r productRepository) Fetch(ctx context.Context, filter models.ProductFilter) ([]models.Product, error) {
 	qBuilder := sq.Select("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
 		From("product").
 		Where("deleted_time IS NULL").
 		OrderBy("created_time DESC")
 
-	if filter.Num > 0 {
-		qBuilder = qBuilder.Limit(uint64(filter.Num))
-	}
-
-	if filter.Cursor != "" {
-		decodedCursor, err := decodeCursor(filter.Cursor)
-		if err != nil {
-			return make([]productservice.Product, 0), "", eclipse.ConstraintErrorf("invalid query param cursor")
-		}
-		qBuilder = qBuilder.Where(sq.Lt{"created_time": decodedCursor})
-	}
+	offset := (filter.Page - 1) * filter.PageSize
+	qBuilder = qBuilder.Limit(uint64(filter.PageSize)).Offset(uint64(offset))
 
 	if filter.Search != "" {
 		keywords := strings.Split(filter.Search, ",")
@@ -109,17 +100,17 @@ func (r productRepository) Fetch(ctx context.Context, filter productservice.Filt
 
 	query, args, err := qBuilder.ToSql()
 	if err != nil {
-		return []productservice.Product{}, "", err
+		return []models.Product{}, err
 	}
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return []productservice.Product{}, "", err
+		return []models.Product{}, err
 	}
 
-	products := make([]productservice.Product, 0)
+	products := make([]models.Product, 0)
 	for rows.Next() {
-		product := productservice.Product{}
+		product := models.Product{}
 		err = rows.Scan(
 			&product.ID,
 			&product.Name,
@@ -130,38 +121,33 @@ func (r productRepository) Fetch(ctx context.Context, filter productservice.Filt
 			&product.UpdatedTime,
 		)
 		if err != nil {
-			return []productservice.Product{}, "", err
+			return []models.Product{}, err
 		}
 
 		products = append(products, product)
 	}
 
-	nextCursor := ""
-	if len(products) > 0 {
-		nextCursor = encodeCursor(products[len(products)-1].CreatedTime)
-	}
-
-	return products, nextCursor, nil
+	return products, nil
 }
 
-func (r productRepository) FetchByIds(ctx context.Context, ids []string) (map[string]productservice.Product, error) {
+func (r productRepository) FetchByIds(ctx context.Context, ids []string) (map[string]models.Product, error) {
 	qBuilder := sq.Select("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
 		From("product").
 		Where(sq.Eq{"id": ids})
 
 	query, args, err := qBuilder.ToSql()
 	if err != nil {
-		return map[string]productservice.Product{}, err
+		return map[string]models.Product{}, err
 	}
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return map[string]productservice.Product{}, err
+		return map[string]models.Product{}, err
 	}
 
-	products := map[string]productservice.Product{}
+	products := map[string]models.Product{}
 	for rows.Next() {
-		product := productservice.Product{}
+		product := models.Product{}
 		err = rows.Scan(
 			&product.ID,
 			&product.Name,
@@ -172,7 +158,7 @@ func (r productRepository) FetchByIds(ctx context.Context, ids []string) (map[st
 			&product.UpdatedTime,
 		)
 		if err != nil {
-			return map[string]productservice.Product{}, err
+			return map[string]models.Product{}, err
 		}
 
 		products[product.ID] = product
