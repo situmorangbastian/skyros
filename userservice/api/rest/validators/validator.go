@@ -1,11 +1,11 @@
-package internal
+package validators
 
 import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 
-	"github.com/situmorangbastian/eclipse"
+	internalErr "github.com/situmorangbastian/skyros/userservice/internal/errors"
 )
 
 type CustomValidator struct {
@@ -25,9 +25,9 @@ func (cv CustomValidator) Validate(data interface{}) error {
 		for _, err := range err.(validator.ValidationErrors) {
 			switch err.ActualTag() {
 			case "email":
-				return eclipse.ConstraintError("invalid email")
+				return internalErr.ConstraintError("invalid email")
 			default:
-				return eclipse.ConstraintError(strings.ToLower(err.Field()) + " " + err.ActualTag())
+				return internalErr.ConstraintError(strings.ToLower(err.Field()) + " " + err.ActualTag())
 			}
 		}
 	}

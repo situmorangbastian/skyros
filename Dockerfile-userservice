@@ -6,7 +6,7 @@ COPY userservice .
 
 RUN go mod vendor
 
-RUN CGO_ENABLED=0 go build -o skyros-user-service github.com/situmorangbastian/skyros/userservice/cmd/userservice
+RUN CGO_ENABLED=0 go build -o skyros-user-service github.com/situmorangbastian/skyros/userservice/cmd
 
 FROM gcr.io/distroless/static
 

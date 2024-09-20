@@ -18,25 +18,25 @@ import (
 	_ "github.com/golang-migrate/migrate/source/file"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
-	"github.com/situmorangbastian/eclipse"
 	"google.golang.org/grpc"
 
 	"github.com/situmorangbastian/skyros/skyrosgrpc"
-	"github.com/situmorangbastian/skyros/userservice"
-	"github.com/situmorangbastian/skyros/userservice/internal"
-	grpcHandler "github.com/situmorangbastian/skyros/userservice/internal/grpc"
-	handler "github.com/situmorangbastian/skyros/userservice/internal/http"
-	mysqlRepo "github.com/situmorangbastian/skyros/userservice/internal/mysql"
-	"github.com/situmorangbastian/skyros/userservice/user"
+	grpcHandler "github.com/situmorangbastian/skyros/userservice/api/grpc"
+	restHandler "github.com/situmorangbastian/skyros/userservice/api/rest/handlers"
+	"github.com/situmorangbastian/skyros/userservice/api/rest/validators"
+	"github.com/situmorangbastian/skyros/userservice/internal/config"
+	internalErr "github.com/situmorangbastian/skyros/userservice/internal/errors"
+	mysqlRepo "github.com/situmorangbastian/skyros/userservice/internal/repository/mysql"
+	"github.com/situmorangbastian/skyros/userservice/internal/usecase"
 )
 
 func main() {
 	// Init Mysql Connection
-	dbHost := userservice.GetEnv("MYSQL_HOST")
-	dbPort := userservice.GetEnv("MYSQL_PORT")
-	dbUser := userservice.GetEnv("MYSQL_USER")
-	dbPass := userservice.GetEnv("MYSQL_PASS")
-	dbName := userservice.GetEnv("MYSQL_DBNAME")
+	dbHost := config.GetEnv("MYSQL_HOST")
+	dbPort := config.GetEnv("MYSQL_PORT")
+	dbUser := config.GetEnv("MYSQL_USER")
+	dbPass := config.GetEnv("MYSQL_PASS")
+	dbName := config.GetEnv("MYSQL_DBNAME")
 	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
 	val := url.Values{}
 	val.Add("parseTime", "1")
@@ -58,17 +58,19 @@ func main() {
 		}
 	}()
 
-	// Init User
+	// Init Repository
 	userRepo := mysqlRepo.NewUserRepository(dbConn)
-	userService := user.NewService(userRepo)
 
-	tokenSecretKey := userservice.GetEnv("SECRET_KEY")
+	// Init Usecase
+	userService := usecase.NewUserUsecase(userRepo)
+
+	tokenSecretKey := config.GetEnv("SECRET_KEY")
 
 	e := echo.New()
 	e.Use(
-		eclipse.Error(),
+		internalErr.Error(),
 	)
-	e.Validator = internal.NewValidator()
+	e.Validator = validators.NewValidator()
 
 	g := e.Group("")
 	g.Use(
@@ -76,12 +78,12 @@ func main() {
 	)
 
 	// Init Handler
-	handler.NewUserHandler(e, userService, tokenSecretKey)
+	restHandler.NewUserHandler(e, userService, tokenSecretKey)
 
 	// Start server
 	wg := sync.WaitGroup{}
 	wg.Add(2)
-	serverAddress := userservice.GetEnv("SERVER_ADDRESS")
+	serverAddress := config.GetEnv("SERVER_ADDRESS")
 	go func() {
 		defer wg.Done()
 		if err := e.Start(serverAddress); err != nil {
@@ -95,7 +97,7 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		port, err := strconv.Atoi(userservice.GetEnv("GRPC_SERVER_ADDRESS"))
+		port, err := strconv.Atoi(config.GetEnv("GRPC_SERVER_ADDRESS"))
 		if err != nil {
 			log.Fatal(errors.New("invalid grpc server port"))
 		}

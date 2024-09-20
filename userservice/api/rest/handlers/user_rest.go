@@ -1,4 +1,4 @@
-package http
+package handlers
 
 import (
 	"net/http"
@@ -7,23 +7,23 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 
-	"github.com/situmorangbastian/eclipse"
-	"github.com/situmorangbastian/skyros/userservice"
+	internalErr "github.com/situmorangbastian/skyros/userservice/internal/errors"
+	"github.com/situmorangbastian/skyros/userservice/internal/models"
+	"github.com/situmorangbastian/skyros/userservice/internal/usecase"
 )
 
-type userHandler struct {
-	service        userservice.UserService
+type userRestHandler struct {
+	userUsecase    usecase.UserUsecase
 	tokenSecretKey string
 }
 
-// NewUserHandler init the user handler
-func NewUserHandler(e *echo.Echo, service userservice.UserService, tokenSecretKey string) {
-	if service == nil {
-		panic("http: nil user service")
+func NewUserHandler(e *echo.Echo, userUsecase usecase.UserUsecase, tokenSecretKey string) {
+	if userUsecase == nil {
+		panic("http: user usecase is nil")
 	}
 
-	handler := &userHandler{
-		service:        service,
+	handler := &userRestHandler{
+		userUsecase:    userUsecase,
 		tokenSecretKey: tokenSecretKey,
 	}
 
@@ -32,13 +32,13 @@ func NewUserHandler(e *echo.Echo, service userservice.UserService, tokenSecretKe
 	e.POST("/register/seller", handler.registerSeller)
 }
 
-func (h userHandler) login(c echo.Context) error {
-	var user userservice.User
+func (h *userRestHandler) login(c echo.Context) error {
+	var user models.User
 	if err := c.Bind(&user); err != nil {
-		return eclipse.ConstraintError("invalid request body")
+		return internalErr.ConstraintError("invalid request body")
 	}
 
-	res, err := h.service.Login(c.Request().Context(), user.Email, user.Password)
+	res, err := h.userUsecase.Login(c.Request().Context(), user.Email, user.Password)
 	if err != nil {
 		return err
 	}
@@ -53,19 +53,19 @@ func (h userHandler) login(c echo.Context) error {
 	})
 }
 
-func (h userHandler) registerSeller(c echo.Context) error {
-	var user userservice.User
+func (h *userRestHandler) registerSeller(c echo.Context) error {
+	var user models.User
 	if err := c.Bind(&user); err != nil {
-		return eclipse.ConstraintError("invalid request body")
+		return internalErr.ConstraintError("invalid request body")
 	}
 
-	user.Type = userservice.UserSellerType
+	user.Type = models.UserSellerType
 
 	if err := c.Validate(&user); err != nil {
 		return err
 	}
 
-	res, err := h.service.Register(c.Request().Context(), user)
+	res, err := h.userUsecase.Register(c.Request().Context(), user)
 	if err != nil {
 		return err
 	}
@@ -80,19 +80,19 @@ func (h userHandler) registerSeller(c echo.Context) error {
 	})
 }
 
-func (h userHandler) registerBuyer(c echo.Context) error {
-	var user userservice.User
+func (h *userRestHandler) registerBuyer(c echo.Context) error {
+	var user models.User
 	if err := c.Bind(&user); err != nil {
-		return eclipse.ConstraintError("invalid request body")
+		return internalErr.ConstraintError("invalid request body")
 	}
 
-	user.Type = userservice.UserBuyerType
+	user.Type = models.UserBuyerType
 
 	if err := c.Validate(&user); err != nil {
 		return err
 	}
 
-	res, err := h.service.Register(c.Request().Context(), user)
+	res, err := h.userUsecase.Register(c.Request().Context(), user)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (h userHandler) registerBuyer(c echo.Context) error {
 	})
 }
 
-func generateToken(user userservice.User, secretKey string) (string, error) {
+func generateToken(user models.User, secretKey string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
