@@ -14,17 +14,17 @@ import (
 )
 
 type userService struct {
-	grpcClientConn *grpc.ClientConn
+	grpcClient *grpc.ClientConn
 }
 
-func NewUserService(grpcClientConn *grpc.ClientConn) services.UserServiceGrpc {
+func NewUserService(grpcClient *grpc.ClientConn) services.UserServiceGrpc {
 	return userService{
-		grpcClientConn: grpcClientConn,
+		grpcClient: grpcClient,
 	}
 }
 
 func (s userService) FetchByIDs(ctx context.Context, ids []string) (map[string]models.User, error) {
-	c := grpcService.NewUserServiceClient(s.grpcClientConn)
+	c := grpcService.NewUserServiceClient(s.grpcClient)
 
 	r, err := c.GetUsers(ctx, &grpcService.UserFilter{
 		UserIds: ids,

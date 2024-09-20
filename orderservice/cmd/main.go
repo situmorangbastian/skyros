@@ -56,16 +56,16 @@ func main() {
 	}()
 
 	// Grpc Client
-	userServiceGrpcConn, err := grpc.Dial(helpers.GetEnv("USER_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	userSvcGrpcClient, err := grpc.NewClient(helpers.GetEnv("USER_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err)
 	}
-	productServiceGrpcConn, err := grpc.Dial(helpers.GetEnv("PRODUCT_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	productSvcGrpcClient, err := grpc.NewClient(helpers.GetEnv("PRODUCT_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err)
 	}
-	userServiceGrpc := grpcService.NewUserService(userServiceGrpcConn)
-	productServiceGrpc := grpcService.NewProductService(productServiceGrpcConn)
+	userServiceGrpc := grpcService.NewUserService(userSvcGrpcClient)
+	productServiceGrpc := grpcService.NewProductService(productSvcGrpcClient)
 
 	// Init Order
 	orderRepo := mysqlRepo.NewOrderRepository(dbConn)
