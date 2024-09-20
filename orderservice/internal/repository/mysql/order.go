@@ -11,7 +11,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/situmorangbastian/skyros/orderservice"
+	"github.com/situmorangbastian/skyros/orderservice/internal/domain/models"
+	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/error"
+	"github.com/situmorangbastian/skyros/orderservice/internal/repository"
 )
 
 type orderRepository struct {
@@ -19,16 +21,16 @@ type orderRepository struct {
 }
 
 // NewOrderRepository will create the order mysql repository
-func NewOrderRepository(db *sql.DB) orderservice.OrderRepository {
+func NewOrderRepository(db *sql.DB) repository.OrderRepository {
 	return orderRepository{
 		db: db,
 	}
 }
 
-func (r orderRepository) Store(ctx context.Context, order orderservice.Order) (orderservice.Order, error) {
+func (r orderRepository) Store(ctx context.Context, order models.Order) (models.Order, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return orderservice.Order{}, err
+		return models.Order{}, err
 	}
 
 	timeNow := time.Now()
@@ -40,12 +42,12 @@ func (r orderRepository) Store(ctx context.Context, order orderservice.Order) (o
 		Columns("id", "buyer_id", "seller_id", "description", "source_address", "destination_address", "total_price", "status", "created_time", "updated_time").
 		Values(order.ID, order.Buyer.ID, order.Seller.ID, order.Description, order.SourceAddress, order.DestinationAddress, order.TotalPrice, order.Status, order.CreatedTime, order.UpdatedTime).ToSql()
 	if err != nil {
-		return orderservice.Order{}, err
+		return models.Order{}, err
 	}
 
 	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
-		return orderservice.Order{}, err
+		return models.Order{}, err
 	}
 	defer func() {
 		if err := stmt.Close(); err != nil {
@@ -55,7 +57,7 @@ func (r orderRepository) Store(ctx context.Context, order orderservice.Order) (o
 
 	_, err = stmt.ExecContext(ctx, args...)
 	if err != nil {
-		return orderservice.Order{}, err
+		return models.Order{}, err
 	}
 
 	for _, orderItem := range order.Items {
@@ -63,12 +65,12 @@ func (r orderRepository) Store(ctx context.Context, order orderservice.Order) (o
 			Columns("id", "order_id", "product_id", "quantity", "created_time", "updated_time").
 			Values(uuid.New().String(), order.ID, orderItem.ProductID, orderItem.Quantity, timeNow, timeNow).ToSql()
 		if err != nil {
-			return orderservice.Order{}, err
+			return models.Order{}, err
 		}
 
 		stmt, err := tx.PrepareContext(ctx, query)
 		if err != nil {
-			return orderservice.Order{}, err
+			return models.Order{}, err
 		}
 		defer func() {
 			if err := stmt.Close(); err != nil {
@@ -78,18 +80,18 @@ func (r orderRepository) Store(ctx context.Context, order orderservice.Order) (o
 
 		_, err = stmt.ExecContext(ctx, args...)
 		if err != nil {
-			return orderservice.Order{}, err
+			return models.Order{}, err
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
-		return orderservice.Order{}, err
+		return models.Order{}, err
 	}
 
 	return order, nil
 }
 
-func (r orderRepository) Fetch(ctx context.Context, filter orderservice.Filter) ([]orderservice.Order, string, error) {
+func (r orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]models.Order, string, error) {
 	qBuilder := sq.Select("id", "buyer_id", "seller_id", "description", "source_address", "destination_address", "total_price", "status", "created_time", "updated_time").
 		From("orders").
 		Where("deleted_time IS NULL").
@@ -102,7 +104,7 @@ func (r orderRepository) Fetch(ctx context.Context, filter orderservice.Filter) 
 	if filter.Cursor != "" {
 		decodedCursor, err := decodeCursor(filter.Cursor)
 		if err != nil {
-			return make([]orderservice.Order, 0), "", orderservice.ConstraintErrorf("invalid query param cursor")
+			return make([]models.Order, 0), "", internalErr.ConstraintErrorf("invalid query param cursor")
 		}
 		qBuilder = qBuilder.Where(sq.Lt{"created_time": decodedCursor})
 	}
@@ -113,17 +115,17 @@ func (r orderRepository) Fetch(ctx context.Context, filter orderservice.Filter) 
 
 	query, args, err := qBuilder.ToSql()
 	if err != nil {
-		return []orderservice.Order{}, "", err
+		return []models.Order{}, "", err
 	}
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return []orderservice.Order{}, "", err
+		return []models.Order{}, "", err
 	}
 
-	orders := make([]orderservice.Order, 0)
+	orders := make([]models.Order, 0)
 	for rows.Next() {
-		order := orderservice.Order{}
+		order := models.Order{}
 		err = rows.Scan(
 			&order.ID,
 			&order.Buyer.ID,
@@ -137,7 +139,7 @@ func (r orderRepository) Fetch(ctx context.Context, filter orderservice.Filter) 
 			&order.UpdatedTime,
 		)
 		if err != nil {
-			return []orderservice.Order{}, "", err
+			return []models.Order{}, "", err
 		}
 
 		orders = append(orders, order)
@@ -147,7 +149,7 @@ func (r orderRepository) Fetch(ctx context.Context, filter orderservice.Filter) 
 	for index, order := range orders {
 		index, order := index, order
 
-		order.Items = make([]orderservice.OrderProduct, 0)
+		order.Items = make([]models.OrderProduct, 0)
 
 		errGroup.Go(func() error {
 			query, args, err := sq.Select("product_id", "quantity").
@@ -163,9 +165,9 @@ func (r orderRepository) Fetch(ctx context.Context, filter orderservice.Filter) 
 				return err
 			}
 
-			orderProducts := make([]orderservice.OrderProduct, 0)
+			orderProducts := make([]models.OrderProduct, 0)
 			for rows.Next() {
-				orderProduct := orderservice.OrderProduct{}
+				orderProduct := models.OrderProduct{}
 				err = rows.Scan(
 					&orderProduct.ProductID,
 					&orderProduct.Quantity,
@@ -184,11 +186,11 @@ func (r orderRepository) Fetch(ctx context.Context, filter orderservice.Filter) 
 	}
 
 	if err := errGroup.Wait(); err != nil {
-		return []orderservice.Order{}, "", err
+		return []models.Order{}, "", err
 	}
 
 	if err = rows.Err(); err != nil {
-		return []orderservice.Order{}, "", err
+		return []models.Order{}, "", err
 	}
 
 	nextCursor := ""
@@ -222,7 +224,7 @@ func (r orderRepository) PatchStatus(ctx context.Context, ID string, status int)
 	}
 
 	if affected == 0 {
-		return orderservice.NotFoundError("order not found")
+		return internalErr.NotFoundError("order not found")
 	}
 
 	return nil

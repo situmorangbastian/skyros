@@ -1,11 +1,11 @@
-package internal
+package validators
 
 import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 
-	"github.com/situmorangbastian/skyros/orderservice"
+	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/error"
 )
 
 // CustomValidator is struct for custom validator
@@ -28,9 +28,9 @@ func (cv CustomValidator) Validate(data interface{}) error {
 		for _, err := range err.(validator.ValidationErrors) {
 			switch err.ActualTag() {
 			case "email":
-				return orderservice.ConstraintError("invalid email")
+				return internalErr.ConstraintError("invalid email")
 			default:
-				return orderservice.ConstraintError(strings.ToLower(err.Field()) + " " + err.ActualTag())
+				return internalErr.ConstraintError(strings.ToLower(err.Field()) + " " + err.ActualTag())
 			}
 		}
 	}
