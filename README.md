@@ -32,7 +32,7 @@ go run main.go
 
 and open this link to see the api documentation:
 
-[API Docs](http://localhost:8080/swagger/index.html).
+[API Docs](http://localhost:8080/docs).
 
 ### Database Migrations
 
