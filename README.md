@@ -1,10 +1,16 @@
 # skyros
 
-Simple Ecommerce Services
+This project demonstrates a Go-based microservices architecture using **gRPC** and **REST**
 
-## Getting Started
+## Table of Contents
 
-### Project Structure
+- [Project Structure](#project-structure)
+- [Features](#features)
+- [Technologies Used](#technologies-used)
+- [Documentation](#documentation)
+- [Getting Started](#getting-started)
+
+## Project Structure
 
 ```bash
 ├── docs                        # API Docs
@@ -20,7 +26,22 @@ Simple Ecommerce Services
 └── Dockerfile-userservice      # Docker file for userservice
 ```
 
-### Documentation
+## Features
+
+- **gRPC Microservices**: Each service is defined using protobuf and communicates via gRPC.
+- **Modular Structure**: Separation of concerns with independent REST and gRPC entry points.
+- **Custom Middleware**: Custom Echo middleware for request handling.
+- **Unit Testing**: Mocks and golden files for testing services and APIs.
+
+## Technologies Used
+
+- [Go](https://golang.org/)
+- [gRPC](https://grpc.io/)
+- [Echo](https://echo.labstack.com/) (HTTP Framework for REST)
+- [Protobuf](https://developers.google.com/protocol-buffers) (Service Definitions)
+- [Mockery](https://github.com/vektra/mockery) (Mocks for Unit Testing)
+
+## Documentation
 
 Documentation using swagger
 
@@ -34,11 +55,13 @@ and open this link to see the api documentation:
 
 [API Docs](http://localhost:8080/docs).
 
+## Getting Started
+
 ### Database Migrations
 
 Using CLI version of <https://github.com/golang-migrate/migrate>
 
-* [Installation](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
+- [Installation](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
 
 ### Running
 
