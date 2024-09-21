@@ -14,7 +14,7 @@ import (
 	resthandlers "github.com/situmorangbastian/skyros/orderservice/api/rest/handlers"
 	"github.com/situmorangbastian/skyros/orderservice/api/rest/validators"
 	"github.com/situmorangbastian/skyros/orderservice/internal/domain/models"
-	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/error"
+	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/errors"
 	"github.com/situmorangbastian/skyros/orderservice/mocks"
 	"github.com/situmorangbastian/skyros/orderservice/testdata"
 )

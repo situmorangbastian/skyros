@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 
-	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/error"
+	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/errors"
 )
 
 // CustomValidator is struct for custom validator

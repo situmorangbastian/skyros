@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/situmorangbastian/skyros/orderservice/internal/domain/models"
-	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/error"
+	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/errors"
 	"github.com/situmorangbastian/skyros/orderservice/internal/usecase"
 )
 

@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	"net/http"
@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	restCtx "github.com/situmorangbastian/skyros/productservice/api/rest/context"
-	internalErr "github.com/situmorangbastian/skyros/productservice/internal/error"
+	internalErr "github.com/situmorangbastian/skyros/productservice/internal/errors"
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
 	"github.com/situmorangbastian/skyros/productservice/internal/usecase"
 )
