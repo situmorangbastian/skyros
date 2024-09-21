@@ -22,10 +22,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	grpcHandler "github.com/situmorangbastian/skyros/productservice/api/grpc"
-	restHandler "github.com/situmorangbastian/skyros/productservice/api/rest/handler"
+	restHandler "github.com/situmorangbastian/skyros/productservice/api/rest/handlers"
 	"github.com/situmorangbastian/skyros/productservice/api/rest/middleware"
 	"github.com/situmorangbastian/skyros/productservice/api/rest/validator"
-	internalErr "github.com/situmorangbastian/skyros/productservice/internal/error"
+	internalErr "github.com/situmorangbastian/skyros/productservice/internal/errors"
 	"github.com/situmorangbastian/skyros/productservice/internal/helpers"
 	mysqlRepo "github.com/situmorangbastian/skyros/productservice/internal/repository/mysql"
 	grpcService "github.com/situmorangbastian/skyros/productservice/internal/services/grpc"

@@ -8,7 +8,7 @@ import (
 
 	restCtx "github.com/situmorangbastian/skyros/orderservice/api/rest/context"
 	"github.com/situmorangbastian/skyros/orderservice/internal/domain/models"
-	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/error"
+	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/errors"
 	"github.com/situmorangbastian/skyros/orderservice/internal/repository"
 	"github.com/situmorangbastian/skyros/orderservice/internal/services"
 )

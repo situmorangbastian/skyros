@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	restCtx "github.com/situmorangbastian/skyros/productservice/api/rest/context"
-	internalErr "github.com/situmorangbastian/skyros/productservice/internal/error"
+	internalErr "github.com/situmorangbastian/skyros/productservice/internal/errors"
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
 	"github.com/situmorangbastian/skyros/productservice/internal/repository"
 	"github.com/situmorangbastian/skyros/productservice/internal/services"

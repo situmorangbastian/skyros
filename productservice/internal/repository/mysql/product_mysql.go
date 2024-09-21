@@ -11,7 +11,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 
-	internalErr "github.com/situmorangbastian/skyros/productservice/internal/error"
+	internalErr "github.com/situmorangbastian/skyros/productservice/internal/errors"
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
 	"github.com/situmorangbastian/skyros/productservice/internal/repository"
 )

@@ -12,7 +12,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/situmorangbastian/skyros/orderservice/internal/domain/models"
-	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/error"
+	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/errors"
 	"github.com/situmorangbastian/skyros/orderservice/internal/repository"
 )
 

@@ -20,7 +20,7 @@ import (
 	resthandlers "github.com/situmorangbastian/skyros/orderservice/api/rest/handlers"
 	"github.com/situmorangbastian/skyros/orderservice/api/rest/middleware"
 	"github.com/situmorangbastian/skyros/orderservice/api/rest/validators"
-	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/error"
+	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/errors"
 	"github.com/situmorangbastian/skyros/orderservice/internal/helpers"
 	mysqlRepo "github.com/situmorangbastian/skyros/orderservice/internal/repository/mysql"
 	grpcService "github.com/situmorangbastian/skyros/orderservice/internal/services/grpc"
