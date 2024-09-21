@@ -11,7 +11,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 
-	internalErr "github.com/situmorangbastian/skyros/productservice/internal/errors"
+	customErrors "github.com/situmorangbastian/skyros/productservice/internal/errors"
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
 	"github.com/situmorangbastian/skyros/productservice/internal/repository"
 )
@@ -70,7 +70,7 @@ func (r productRepository) Get(ctx context.Context, ID string) (models.Product, 
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return models.Product{}, internalErr.NotFoundError("product not found")
+			return models.Product{}, customErrors.NotFoundError("product not found")
 		}
 		return models.Product{}, err
 	}

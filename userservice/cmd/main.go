@@ -25,7 +25,7 @@ import (
 	restHandler "github.com/situmorangbastian/skyros/userservice/api/rest/handlers"
 	"github.com/situmorangbastian/skyros/userservice/api/rest/validators"
 	"github.com/situmorangbastian/skyros/userservice/internal/config"
-	internalErr "github.com/situmorangbastian/skyros/userservice/internal/errors"
+	customErrors "github.com/situmorangbastian/skyros/userservice/internal/errors"
 	mysqlRepo "github.com/situmorangbastian/skyros/userservice/internal/repository/mysql"
 	"github.com/situmorangbastian/skyros/userservice/internal/usecase"
 )
@@ -68,7 +68,7 @@ func main() {
 
 	e := echo.New()
 	e.Use(
-		internalErr.Error(),
+		customErrors.Error(),
 	)
 	e.Validator = validators.NewValidator()
 
