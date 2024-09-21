@@ -1,0 +1,21 @@
+FROM golang:1.23.1-alpine3.20 AS build
+
+WORKDIR /skyros-gateway-service
+
+COPY gatewayservice .
+
+RUN go mod vendor
+
+RUN CGO_ENABLED=0 go build -o skyros-gateway-service github.com/situmorangbastian/skyros/gatewayservice
+
+FROM gcr.io/distroless/static
+
+WORKDIR /skyros-gateway-service
+
+COPY --from=build /skyros-gateway-service /app
+
+COPY --from=build /skyros-gateway-service/config.toml .
+
+EXPOSE 4000
+
+CMD ["/app/skyros-gateway-service"]
