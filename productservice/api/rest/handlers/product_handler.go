@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	restCtx "github.com/situmorangbastian/skyros/productservice/api/rest/context"
-	internalErr "github.com/situmorangbastian/skyros/productservice/internal/errors"
+	customErrors "github.com/situmorangbastian/skyros/productservice/internal/errors"
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
 	"github.com/situmorangbastian/skyros/productservice/internal/usecase"
 )
@@ -35,7 +35,7 @@ func NewProductHandler(e *echo.Echo, g *echo.Group, productUsecase usecase.Produ
 func (h productHandler) store(c echo.Context) error {
 	var product models.Product
 	if err := c.Bind(&product); err != nil {
-		return internalErr.ConstraintError("invalid request body")
+		return customErrors.ConstraintError("invalid request body")
 	}
 
 	if err := c.Validate(&product); err != nil {
@@ -81,7 +81,7 @@ func (h productHandler) fetch(c echo.Context) error {
 	if c.QueryParam("pagesize") != "" {
 		pagesize, err := strconv.Atoi(c.QueryParam("pagesize"))
 		if err != nil {
-			return internalErr.ConstraintError("invalid pagesize")
+			return customErrors.ConstraintError("invalid pagesize")
 		}
 
 		filter.PageSize = pagesize
@@ -90,7 +90,7 @@ func (h productHandler) fetch(c echo.Context) error {
 	if c.QueryParam("page") != "" {
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil {
-			return internalErr.ConstraintError("invalid page")
+			return customErrors.ConstraintError("invalid page")
 		}
 
 		filter.Page = page

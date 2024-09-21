@@ -25,7 +25,7 @@ import (
 	restHandler "github.com/situmorangbastian/skyros/productservice/api/rest/handlers"
 	"github.com/situmorangbastian/skyros/productservice/api/rest/middleware"
 	"github.com/situmorangbastian/skyros/productservice/api/rest/validator"
-	internalErr "github.com/situmorangbastian/skyros/productservice/internal/errors"
+	customErrors "github.com/situmorangbastian/skyros/productservice/internal/errors"
 	"github.com/situmorangbastian/skyros/productservice/internal/helpers"
 	mysqlRepo "github.com/situmorangbastian/skyros/productservice/internal/repository/mysql"
 	grpcService "github.com/situmorangbastian/skyros/productservice/internal/services/grpc"
@@ -76,7 +76,7 @@ func main() {
 
 	e := echo.New()
 	e.Use(
-		internalErr.Error(),
+		customErrors.Error(),
 	)
 	e.Validator = validator.NewValidator()
 

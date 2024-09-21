@@ -8,7 +8,7 @@ import (
 
 	restCtx "github.com/situmorangbastian/skyros/orderservice/api/rest/context"
 	"github.com/situmorangbastian/skyros/orderservice/internal/domain/models"
-	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/errors"
+	customErrors "github.com/situmorangbastian/skyros/orderservice/internal/errors"
 	"github.com/situmorangbastian/skyros/orderservice/internal/repository"
 	"github.com/situmorangbastian/skyros/orderservice/internal/services"
 )
@@ -44,7 +44,7 @@ func (u *usecase) Store(ctx context.Context, order models.Order) (models.Order, 
 	}
 
 	if customCtx.User()["type"].(string) != models.UserBuyerType {
-		return models.Order{}, internalErr.NotFoundError("not found")
+		return models.Order{}, customErrors.NotFoundError("not found")
 	}
 
 	order.Buyer.ID = customCtx.User()["id"].(string)
@@ -63,7 +63,7 @@ func (u *usecase) Store(ctx context.Context, order models.Order) (models.Order, 
 	for index := range order.Items {
 		order.Items[index].Product = products[order.Items[index].Product.ID]
 		if order.Items[index].Product.Name == "" {
-			return models.Order{}, errors.Wrap(internalErr.NotFoundError("product not found"),
+			return models.Order{}, errors.Wrap(customErrors.NotFoundError("product not found"),
 				"order.service.store: fetch product")
 		}
 		order.Seller = order.Items[index].Product.Seller
@@ -94,7 +94,7 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
 	case models.UserSellerType:
 		filter.SellerID = customCtx.User()["id"].(string)
 	default:
-		return models.Order{}, internalErr.NotFoundError("not found")
+		return models.Order{}, customErrors.NotFoundError("not found")
 	}
 
 	result, err := u.orderRepo.Fetch(ctx, filter)
@@ -103,7 +103,7 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
 	}
 
 	if len(result) == 0 {
-		return models.Order{}, internalErr.NotFoundError("not found")
+		return models.Order{}, customErrors.NotFoundError("not found")
 	}
 
 	users, err := u.userService.FetchByIDs(ctx, []string{result[0].Seller.ID, result[0].Buyer.ID})
@@ -148,7 +148,7 @@ func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Ord
 	case models.UserSellerType:
 		filter.SellerID = customCtx.User()["id"].(string)
 	default:
-		return []models.Order{}, internalErr.NotFoundError("not found")
+		return []models.Order{}, customErrors.NotFoundError("not found")
 	}
 
 	result, err := u.orderRepo.Fetch(ctx, filter)
@@ -194,7 +194,7 @@ func (u *usecase) PatchStatus(ctx context.Context, ID string, status int) error 
 	}
 
 	if customCtx.User()["type"].(string) != models.UserSellerType {
-		return internalErr.NotFoundError("not found")
+		return customErrors.NotFoundError("not found")
 	}
 
 	return u.orderRepo.PatchStatus(ctx, ID, status)

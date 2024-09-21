@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	restCtx "github.com/situmorangbastian/skyros/productservice/api/rest/context"
-	internalErr "github.com/situmorangbastian/skyros/productservice/internal/errors"
+	customErrors "github.com/situmorangbastian/skyros/productservice/internal/errors"
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
 	"github.com/situmorangbastian/skyros/productservice/internal/repository"
 	"github.com/situmorangbastian/skyros/productservice/internal/services"
@@ -38,7 +38,7 @@ func (u *usecase) Store(ctx context.Context, product models.Product) (models.Pro
 	}
 
 	if customCtx.User()["type"].(string) != models.UserSellerType {
-		return models.Product{}, internalErr.NotFoundError("not found")
+		return models.Product{}, customErrors.NotFoundError("not found")
 	}
 
 	product.Seller.ID = customCtx.User()["id"].(string)

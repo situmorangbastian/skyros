@@ -14,14 +14,14 @@ import (
 	resthandlers "github.com/situmorangbastian/skyros/orderservice/api/rest/handlers"
 	"github.com/situmorangbastian/skyros/orderservice/api/rest/validators"
 	"github.com/situmorangbastian/skyros/orderservice/internal/domain/models"
-	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/errors"
+	customErrors "github.com/situmorangbastian/skyros/orderservice/internal/errors"
 	"github.com/situmorangbastian/skyros/orderservice/mocks"
 	"github.com/situmorangbastian/skyros/orderservice/testdata"
 )
 
 func getEchoServer() *echo.Echo {
 	e := echo.New()
-	e.Use(internalErr.Error())
+	e.Use(customErrors.Error())
 	e.Validator = validators.NewValidator()
 
 	return e

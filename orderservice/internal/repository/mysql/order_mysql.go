@@ -12,7 +12,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/situmorangbastian/skyros/orderservice/internal/domain/models"
-	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/errors"
+	customErrors "github.com/situmorangbastian/skyros/orderservice/internal/errors"
 	"github.com/situmorangbastian/skyros/orderservice/internal/repository"
 )
 
@@ -258,7 +258,7 @@ func (r *orderRepository) PatchStatus(ctx context.Context, ID string, status int
 	}
 
 	if affected == 0 {
-		return internalErr.NotFoundError("order not found")
+		return customErrors.NotFoundError("order not found")
 	}
 
 	return nil

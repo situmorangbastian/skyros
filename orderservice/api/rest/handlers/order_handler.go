@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/situmorangbastian/skyros/orderservice/internal/domain/models"
-	internalErr "github.com/situmorangbastian/skyros/orderservice/internal/errors"
+	customErrors "github.com/situmorangbastian/skyros/orderservice/internal/errors"
 	"github.com/situmorangbastian/skyros/orderservice/internal/usecase"
 )
 
@@ -38,7 +38,7 @@ func NewOrderHandler(g *echo.Group, orderUsecase usecase.OrderUsecase) {
 func (h orderHandler) store(c echo.Context) error {
 	var order models.Order
 	if err := c.Bind(&order); err != nil {
-		return internalErr.ConstraintError("invalid request body")
+		return customErrors.ConstraintError("invalid request body")
 	}
 
 	if err := c.Validate(&order); err != nil {
@@ -71,7 +71,7 @@ func (h orderHandler) fetch(c echo.Context) error {
 	if c.QueryParam("pagesize") != "" {
 		pagesize, err := strconv.Atoi(c.QueryParam("pagesize"))
 		if err != nil {
-			return internalErr.ConstraintError("invalid pagesize")
+			return customErrors.ConstraintError("invalid pagesize")
 		}
 
 		filter.PageSize = pagesize
@@ -80,7 +80,7 @@ func (h orderHandler) fetch(c echo.Context) error {
 	if c.QueryParam("page") != "" {
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil {
-			return internalErr.ConstraintError("invalid page")
+			return customErrors.ConstraintError("invalid page")
 		}
 
 		filter.Page = page
@@ -101,7 +101,7 @@ func (h orderHandler) patchStatus(c echo.Context) error {
 
 	var request patchRequest
 	if err := c.Bind(&request); err != nil {
-		return internalErr.ConstraintError("invalid request body")
+		return customErrors.ConstraintError("invalid request body")
 	}
 
 	if err := c.Validate(&request); err != nil {
@@ -109,7 +109,7 @@ func (h orderHandler) patchStatus(c echo.Context) error {
 	}
 
 	if request.Status != "accept" {
-		return internalErr.ConstraintError("unsupported status")
+		return customErrors.ConstraintError("unsupported status")
 	}
 
 	err := h.orderUsecase.PatchStatus(c.Request().Context(), c.Param("id"), orderStatusAccept)

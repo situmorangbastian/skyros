@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 
-	internalErr "github.com/situmorangbastian/skyros/userservice/internal/errors"
+	customErrors "github.com/situmorangbastian/skyros/userservice/internal/errors"
 	"github.com/situmorangbastian/skyros/userservice/internal/models"
 	"github.com/situmorangbastian/skyros/userservice/internal/usecase"
 )
@@ -35,7 +35,7 @@ func NewUserHandler(e *echo.Echo, userUsecase usecase.UserUsecase, tokenSecretKe
 func (h *userRestHandler) login(c echo.Context) error {
 	var user models.User
 	if err := c.Bind(&user); err != nil {
-		return internalErr.ConstraintError("invalid request body")
+		return customErrors.ConstraintError("invalid request body")
 	}
 
 	res, err := h.userUsecase.Login(c.Request().Context(), user.Email, user.Password)
@@ -56,7 +56,7 @@ func (h *userRestHandler) login(c echo.Context) error {
 func (h *userRestHandler) registerSeller(c echo.Context) error {
 	var user models.User
 	if err := c.Bind(&user); err != nil {
-		return internalErr.ConstraintError("invalid request body")
+		return customErrors.ConstraintError("invalid request body")
 	}
 
 	user.Type = models.UserSellerType
@@ -83,7 +83,7 @@ func (h *userRestHandler) registerSeller(c echo.Context) error {
 func (h *userRestHandler) registerBuyer(c echo.Context) error {
 	var user models.User
 	if err := c.Bind(&user); err != nil {
-		return internalErr.ConstraintError("invalid request body")
+		return customErrors.ConstraintError("invalid request body")
 	}
 
 	user.Type = models.UserBuyerType

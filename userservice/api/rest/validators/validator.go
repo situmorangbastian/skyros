@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 
-	internalErr "github.com/situmorangbastian/skyros/userservice/internal/errors"
+	customErrors "github.com/situmorangbastian/skyros/userservice/internal/errors"
 )
 
 type CustomValidator struct {
@@ -25,9 +25,9 @@ func (cv CustomValidator) Validate(data interface{}) error {
 		for _, err := range err.(validator.ValidationErrors) {
 			switch err.ActualTag() {
 			case "email":
-				return internalErr.ConstraintError("invalid email")
+				return customErrors.ConstraintError("invalid email")
 			default:
-				return internalErr.ConstraintError(strings.ToLower(err.Field()) + " " + err.ActualTag())
+				return customErrors.ConstraintError(strings.ToLower(err.Field()) + " " + err.ActualTag())
 			}
 		}
 	}

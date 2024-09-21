@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 
-	internalErr "github.com/situmorangbastian/skyros/userservice/internal/errors"
+	customErrors "github.com/situmorangbastian/skyros/userservice/internal/errors"
 	"github.com/situmorangbastian/skyros/userservice/internal/models"
 	"github.com/situmorangbastian/skyros/userservice/internal/repository"
 )
@@ -35,7 +35,7 @@ func (u *userUsecase) Login(ctx context.Context, email, password string) (models
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return models.User{}, internalErr.NotFoundError("user not found")
+		return models.User{}, customErrors.NotFoundError("user not found")
 	}
 
 	return user, nil
@@ -45,14 +45,14 @@ func (u *userUsecase) Register(ctx context.Context, user models.User) (models.Us
 	currentUser, err := u.userRepo.GetUser(ctx, user.Email)
 	if err != nil {
 		switch errors.Cause(err).(type) {
-		case internalErr.NotFoundError:
+		case customErrors.NotFoundError:
 		default:
 			return models.User{}, errors.Wrap(err, "user.service.register: get user by email")
 		}
 	}
 
 	if currentUser.Email == user.Email {
-		return models.User{}, internalErr.ConflictError("email already exist")
+		return models.User{}, customErrors.ConflictError("email already exist")
 	}
 
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
