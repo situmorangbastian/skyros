@@ -1,4 +1,4 @@
-package userservice
+package config
 
 import (
 	"os"

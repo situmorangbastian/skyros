@@ -1,4 +1,4 @@
-package userservice
+package models
 
 import (
 	"encoding/json"

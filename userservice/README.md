@@ -1,3 +1,3 @@
 # userservice
 
-Simple User Service
+User Service
