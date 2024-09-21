@@ -18,17 +18,17 @@ services:
     volumes:
       - ./init:/docker-entrypoint-initdb.d
 
-  skyros.reverseproxyservice:
-    image: skyros-reverseproxy-service:latest
-    container_name: skyros.reverseproxyservice.svc
-    command: /app/skyros-reverseproxy-service
+  skyros.gatewayservice:
+    image: skyros-gateway-service:latest
+    container_name: skyros.gatewayservice.svc
+    command: /app/skyros-gateway-service
     ports:
       - "4000:4000"
     networks:
       - default
     build:
       context: .
-      dockerfile: Dockerfile-reverseproxyservice
+      dockerfile: Dockerfile-gatewayservice
 
   skyros.userservice:
     image: skyros-user-service:latest

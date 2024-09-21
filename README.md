@@ -17,7 +17,7 @@ This project demonstrates a Go-based microservices architecture using **gRPC** a
 ├── init                        # Init Migration for Database
 ├── orderservice                # Service for handle order
 ├── productservice              # Service for handle product
-├── reverseproxyservice         # Service for API Gateway
+├── gatewayservice         # Service for API Gateway
 ├── skyrosgrpc                  # Package for Grpc Library
 ├── userservice                 # Service for handle user
 ├── docker-compose.yml          # Docker compose file for all service
