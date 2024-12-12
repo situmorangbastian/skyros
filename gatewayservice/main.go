@@ -58,7 +58,7 @@ func main() {
 	// Start server
 	go func() {
 		if err := fiberApp.Listen(address); err != nil {
-			log.Info("shutting down the server")
+			log.Fatal("shutting down the server")
 		}
 	}()
 

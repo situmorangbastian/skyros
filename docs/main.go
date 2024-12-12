@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"os"
+	"os/signal"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -34,5 +37,19 @@ func main() {
 		URL: fmt.Sprintf("http://localhost%s/apidocs", address),
 	}))
 
-	app.Listen(address)
+	// Start server
+	go func() {
+		if err := app.Listen(address); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server with
+	// a timeout of 10 seconds.
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	if err := app.ShutdownWithTimeout(10 * time.Second); err != nil {
+		log.Fatal(err)
+	}
 }
