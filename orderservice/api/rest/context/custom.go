@@ -3,7 +3,7 @@ package context
 import (
 	"context"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type CustomContext struct {
