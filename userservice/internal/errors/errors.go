@@ -8,6 +8,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type ConstraintError string
@@ -69,5 +71,19 @@ func Error() echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
 			}
 		}
+	}
+}
+
+func GenerateGrpcError(err error) error {
+	switch errors.Cause(err).(type) {
+	case ConstraintError:
+		return status.Error(codes.InvalidArgument, errors.Cause(err).Error())
+	case NotFoundError:
+		return status.Error(codes.NotFound, errors.Cause(err).Error())
+	case ConflictError:
+		return status.Error(codes.AlreadyExists, errors.Cause(err).Error())
+	default:
+		log.Error(err)
+		return status.Error(codes.Internal, "internal server error")
 	}
 }

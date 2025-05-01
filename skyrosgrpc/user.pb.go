@@ -317,10 +317,10 @@ const file_user_proto_rawDesc = "" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"6\n" +
 	"\x11UserLoginResponse\x12!\n" +
-	"\faccess_token\x18\x01 \x01(\tR\vaccessToken2\xa8\x01\n" +
+	"\faccess_token\x18\x01 \x01(\tR\vaccessToken2\xab\x01\n" +
 	"\vUserService\x12?\n" +
-	"\bGetUsers\x12\x16.skyrosgrpc.UserFilter\x1a\x19.skyrosgrpc.UsersResponse\"\x00\x12X\n" +
-	"\tUserLogin\x12\x1c.skyrosgrpc.UserLoginRequest\x1a\x1d.skyrosgrpc.UserLoginResponse\"\x0e\x82\xd3\xe4\x93\x02\b\"\x06/loginB\x0eZ\f./skyrosgrpcb\x06proto3"
+	"\bGetUsers\x12\x16.skyrosgrpc.UserFilter\x1a\x19.skyrosgrpc.UsersResponse\"\x00\x12[\n" +
+	"\tUserLogin\x12\x1c.skyrosgrpc.UserLoginRequest\x1a\x1d.skyrosgrpc.UserLoginResponse\"\x11\x82\xd3\xe4\x93\x02\v:\x01*\"\x06/loginB\x0eZ\f./skyrosgrpcb\x06proto3"
 
 var (
 	file_user_proto_rawDescOnce sync.Once

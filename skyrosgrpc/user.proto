@@ -39,6 +39,7 @@ service UserService {
   rpc UserLogin(UserLoginRequest) returns (UserLoginResponse) {
     option (google.api.http) = {
       post: "/login"
+      body: "*"
     };
   }
 }

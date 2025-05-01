@@ -8,9 +8,9 @@ service-down:
 
 .PHONY: migrate-up
 migrate-up:
-	@migrate -database "mysql://root:password@tcp(127.0.0.1:3306)/userservice" \
-	-path=userservice/internal/mysql/migrations up
-	@migrate -database "mysql://root:password@tcp(127.0.0.1:3306)/productservice" \
-	-path=productservice/internal/mysql/migrations up
-	@migrate -database "mysql://root:password@tcp(127.0.0.1:3306)/orderservice" \
-	-path=orderservice/internal/mysql/migrations up
+	@migrate -database "mysql://root:my-secret-pw@tcp(127.0.0.1:3306)/userservice" \
+	-path=userservice/migrations up
+	@migrate -database "mysql://root:my-secret-pw@tcp(127.0.0.1:3306)/productservice" \
+	-path=productservice/migrations up
+	@migrate -database "mysql://root:my-secret-pw@tcp(127.0.0.1:3306)/orderservice" \
+	-path=orderservice/migrations up

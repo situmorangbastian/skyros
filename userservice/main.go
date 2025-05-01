@@ -3,40 +3,44 @@ package main
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
-	"strconv"
 	"sync"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/golang-migrate/migrate/source/file"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
 	"github.com/situmorangbastian/skyros/skyrosgrpc"
 	grpcHandler "github.com/situmorangbastian/skyros/userservice/api/grpc"
 	restHandler "github.com/situmorangbastian/skyros/userservice/api/rest/handlers"
 	"github.com/situmorangbastian/skyros/userservice/api/rest/validators"
-	"github.com/situmorangbastian/skyros/userservice/internal/config"
 	customErrors "github.com/situmorangbastian/skyros/userservice/internal/errors"
 	mysqlRepo "github.com/situmorangbastian/skyros/userservice/internal/repository/mysql"
 	"github.com/situmorangbastian/skyros/userservice/internal/usecase"
 )
 
 func main() {
+	viper.SetConfigFile(".env")
+	viper.AutomaticEnv()
+	viper.ReadInConfig()
+
 	// Init Mysql Connection
-	dbHost := config.GetEnv("MYSQL_HOST")
-	dbPort := config.GetEnv("MYSQL_PORT")
-	dbUser := config.GetEnv("MYSQL_USER")
-	dbPass := config.GetEnv("MYSQL_PASS")
-	dbName := config.GetEnv("MYSQL_DBNAME")
+	dbHost := viper.GetString("MYSQL_HOST")
+	dbPort := viper.GetString("MYSQL_PORT")
+	dbUser := viper.GetString("MYSQL_USER")
+	dbPass := viper.GetString("MYSQL_PASS")
+	dbName := viper.GetString("MYSQL_DBNAME")
 	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
 	val := url.Values{}
 	val.Add("parseTime", "1")
@@ -64,7 +68,7 @@ func main() {
 	// Init Usecase
 	userService := usecase.NewUserUsecase(userRepo)
 
-	tokenSecretKey := config.GetEnv("SECRET_KEY")
+	tokenSecretKey := viper.GetString("SECRET_KEY")
 
 	e := echo.New()
 	e.Use(
@@ -82,8 +86,8 @@ func main() {
 
 	// Start server
 	wg := sync.WaitGroup{}
-	wg.Add(2)
-	serverAddress := config.GetEnv("SERVER_ADDRESS")
+	wg.Add(3)
+	serverAddress := viper.GetString("SERVER_ADDRESS")
 	go func() {
 		defer wg.Done()
 		if err := e.Start(serverAddress); err != nil {
@@ -92,26 +96,36 @@ func main() {
 	}()
 
 	grpcServer := grpc.NewServer()
-	grpcUserService := grpcHandler.NewUserGrpcServer(userService)
+	grpcUserService := grpcHandler.NewUserGrpcServer(userService, tokenSecretKey)
 	skyrosgrpc.RegisterUserServiceServer(grpcServer, grpcUserService)
 
 	go func() {
 		defer wg.Done()
-		port, err := strconv.Atoi(config.GetEnv("GRPC_SERVER_ADDRESS"))
-		if err != nil {
-			log.Fatal(errors.New("invalid grpc server port"))
-		}
-
-		listen, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+		listen, err := net.Listen("tcp", fmt.Sprintf(":%d", viper.GetInt("GRPC_SERVER_ADDRESS")))
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Println("GRPC Server Running on Port: ", port)
+		fmt.Println("GRPC Server Running on Port: ", viper.GetInt("GRPC_SERVER_ADDRESS"))
 		if err := grpcServer.Serve(listen); err != nil {
 			log.Fatal(err)
 		}
 	}()
+
+	mux := runtime.NewServeMux()
+	err = skyrosgrpc.RegisterUserServiceHandlerFromEndpoint(context.Background(), mux, fmt.Sprintf(":%d", viper.GetInt("GRPC_SERVER_ADDRESS")), []grpc.DialOption{grpc.WithInsecure()})
+	if err != nil {
+		log.Fatalf("Failed to register gRPC-Gateway handler: %v", err)
+	}
+
+	// Start HTTP server for gRPC-Gateway
+	go func() {
+		log.Printf("gRPC-Gateway server listening on %s", fmt.Sprintf(":%d", viper.GetInt("GRPC_GATEWAY_SERVER_ADDRESS")))
+		if err := http.ListenAndServe(fmt.Sprintf(":%d", viper.GetInt("GRPC_GATEWAY_SERVER_ADDRESS")), mux); err != nil {
+			log.Fatalf("Failed to serve gRPC-Gateway: %v", err)
+		}
+	}()
+
 	wg.Wait()
 
 	// Wait for interrupt signal to gracefully shutdown the server with
