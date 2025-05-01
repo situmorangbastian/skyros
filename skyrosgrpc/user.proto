@@ -50,13 +50,13 @@ service UserService {
   rpc GetUsers(UserFilter) returns (UsersResponse) {}
   rpc UserLogin(UserLoginRequest) returns (UserLoginResponse) {
     option (google.api.http) = {
-      post: "/login"
+      post: "/v1/users/login"
       body: "*"
     };
   }
   rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse) {
     option (google.api.http) = {
-      post: "/register/{user_type}"
+      post: "/v1/users/register/{user_type}"
       body: "*"
     };
   }

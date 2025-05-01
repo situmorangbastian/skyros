@@ -445,11 +445,11 @@ const file_user_proto_rawDesc = "" +
 	"\bpassword\x18\x04 \x01(\tR\bpassword\x12\x18\n" +
 	"\aaddress\x18\x05 \x01(\tR\aaddress\"9\n" +
 	"\x14RegisterUserResponse\x12!\n" +
-	"\faccess_token\x18\x01 \x01(\tR\vaccessToken2\xa0\x02\n" +
+	"\faccess_token\x18\x01 \x01(\tR\vaccessToken2\xb2\x02\n" +
 	"\vUserService\x12?\n" +
-	"\bGetUsers\x12\x16.skyrosgrpc.UserFilter\x1a\x19.skyrosgrpc.UsersResponse\"\x00\x12[\n" +
-	"\tUserLogin\x12\x1c.skyrosgrpc.UserLoginRequest\x1a\x1d.skyrosgrpc.UserLoginResponse\"\x11\x82\xd3\xe4\x93\x02\v:\x01*\"\x06/login\x12s\n" +
-	"\fRegisterUser\x12\x1f.skyrosgrpc.RegisterUserRequest\x1a .skyrosgrpc.RegisterUserResponse\" \x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/register/{user_type}B\x0eZ\f./skyrosgrpcb\x06proto3"
+	"\bGetUsers\x12\x16.skyrosgrpc.UserFilter\x1a\x19.skyrosgrpc.UsersResponse\"\x00\x12d\n" +
+	"\tUserLogin\x12\x1c.skyrosgrpc.UserLoginRequest\x1a\x1d.skyrosgrpc.UserLoginResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/v1/users/login\x12|\n" +
+	"\fRegisterUser\x12\x1f.skyrosgrpc.RegisterUserRequest\x1a .skyrosgrpc.RegisterUserResponse\")\x82\xd3\xe4\x93\x02#:\x01*\"\x1e/v1/users/register/{user_type}B\x0eZ\f./skyrosgrpcb\x06proto3"
 
 var (
 	file_user_proto_rawDescOnce sync.Once
