@@ -2,15 +2,15 @@
 address = ":4000"
 
 [[endpoint]]
-path = "login"
+path = "v1/users/login"
 service = "http://skyros.userservice.svc:4001"
 
 [[endpoint]]
-path = "register/buyer"
+path = "v1/users/register/buyer"
 service = "http://skyros.userservice.svc:4001"
 
 [[endpoint]]
-path = "register/seller"
+path = "v1/users/register/seller"
 service = "http://skyros.userservice.svc:4001"
 
 [[endpoint]]

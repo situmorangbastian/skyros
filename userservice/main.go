@@ -59,7 +59,7 @@ func main() {
 	skyrosgrpc.RegisterUserServiceServer(grpcServer, grpcUserService)
 
 	mux := runtime.NewServeMux()
-	err = skyrosgrpc.RegisterUserServiceHandlerFromEndpoint(context.Background(), mux, fmt.Sprintf(":%d", cfg.GetInt("GRPC_SERVER_PORT")), []grpc.DialOption{grpc.WithInsecure()})
+	err = skyrosgrpc.RegisterUserServiceHandlerFromEndpoint(context.Background(), mux, cfg.GetString("GRPC_SERVICE_ENDPOINT"), []grpc.DialOption{grpc.WithInsecure()})
 	if err != nil {
 		log.Fatal("failed register gRPC-Gateway handler: ", err)
 	}
