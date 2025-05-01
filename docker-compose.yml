@@ -16,7 +16,7 @@ services:
     networks:
       - default
     volumes:
-      - ./init:/docker-entrypoint-initdb.d
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
   skyros.gatewayservice:
     image: skyros-gateway-service:latest
@@ -62,7 +62,7 @@ services:
       - MYSQL_HOST=skyros.mysql.database
       - MYSQL_PORT=3306
       - MYSQL_USER=root
-      - MYSQL_PASS=password
+      - MYSQL_PASS=my-secret-pw
       - MYSQL_DBNAME=productservice
       - SECRET_KEY=userservice-secret-key
       - SERVER_ADDRESS=:4002
@@ -88,7 +88,7 @@ services:
       - MYSQL_HOST=skyros.mysql.database
       - MYSQL_PORT=3306
       - MYSQL_USER=root
-      - MYSQL_PASS=password
+      - MYSQL_PASS=my-secret-pw
       - MYSQL_DBNAME=orderservice
       - SECRET_KEY=userservice-secret-key
       - SERVER_ADDRESS=:4003
