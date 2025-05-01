@@ -20,8 +20,10 @@ import (
 
 	"github.com/situmorangbastian/skyros/skyrosgrpc"
 	grpcHandler "github.com/situmorangbastian/skyros/userservice/api/grpc"
+	"github.com/situmorangbastian/skyros/userservice/api/validators"
 	mysqlRepo "github.com/situmorangbastian/skyros/userservice/internal/repository/mysql"
 	"github.com/situmorangbastian/skyros/userservice/internal/usecase"
+	"github.com/situmorangbastian/skyros/userservice/middleware"
 )
 
 func main() {
@@ -52,8 +54,8 @@ func main() {
 	userRepo := mysqlRepo.NewUserRepository(dbConn)
 	userService := usecase.NewUserUsecase(userRepo)
 
-	grpcServer := grpc.NewServer()
-	grpcUserService := grpcHandler.NewUserGrpcServer(userService, cfg.GetString("SECRET_KEY"))
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(middleware.ErrorHandlingInterceptor(log)))
+	grpcUserService := grpcHandler.NewUserGrpcServer(userService, cfg.GetString("SECRET_KEY"), validators.NewValidator())
 	skyrosgrpc.RegisterUserServiceServer(grpcServer, grpcUserService)
 
 	mux := runtime.NewServeMux()

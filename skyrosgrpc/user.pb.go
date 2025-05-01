@@ -290,6 +290,126 @@ func (x *UserLoginResponse) GetAccessToken() string {
 	return ""
 }
 
+type RegisterUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserType      string                 `protobuf:"bytes,1,opt,name=user_type,json=userType,proto3" json:"user_type,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	Password      string                 `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
+	Address       string                 `protobuf:"bytes,5,opt,name=address,proto3" json:"address,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterUserRequest) Reset() {
+	*x = RegisterUserRequest{}
+	mi := &file_user_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterUserRequest) ProtoMessage() {}
+
+func (x *RegisterUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterUserRequest.ProtoReflect.Descriptor instead.
+func (*RegisterUserRequest) Descriptor() ([]byte, []int) {
+	return file_user_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *RegisterUserRequest) GetUserType() string {
+	if x != nil {
+		return x.UserType
+	}
+	return ""
+}
+
+func (x *RegisterUserRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RegisterUserRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *RegisterUserRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+func (x *RegisterUserRequest) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+type RegisterUserResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterUserResponse) Reset() {
+	*x = RegisterUserResponse{}
+	mi := &file_user_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterUserResponse) ProtoMessage() {}
+
+func (x *RegisterUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_user_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterUserResponse.ProtoReflect.Descriptor instead.
+func (*RegisterUserResponse) Descriptor() ([]byte, []int) {
+	return file_user_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *RegisterUserResponse) GetAccessToken() string {
+	if x != nil {
+		return x.AccessToken
+	}
+	return ""
+}
+
 var File_user_proto protoreflect.FileDescriptor
 
 const file_user_proto_rawDesc = "" +
@@ -317,10 +437,19 @@ const file_user_proto_rawDesc = "" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"6\n" +
 	"\x11UserLoginResponse\x12!\n" +
-	"\faccess_token\x18\x01 \x01(\tR\vaccessToken2\xab\x01\n" +
+	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"\x92\x01\n" +
+	"\x13RegisterUserRequest\x12\x1b\n" +
+	"\tuser_type\x18\x01 \x01(\tR\buserType\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
+	"\x05email\x18\x03 \x01(\tR\x05email\x12\x1a\n" +
+	"\bpassword\x18\x04 \x01(\tR\bpassword\x12\x18\n" +
+	"\aaddress\x18\x05 \x01(\tR\aaddress\"9\n" +
+	"\x14RegisterUserResponse\x12!\n" +
+	"\faccess_token\x18\x01 \x01(\tR\vaccessToken2\xa0\x02\n" +
 	"\vUserService\x12?\n" +
 	"\bGetUsers\x12\x16.skyrosgrpc.UserFilter\x1a\x19.skyrosgrpc.UsersResponse\"\x00\x12[\n" +
-	"\tUserLogin\x12\x1c.skyrosgrpc.UserLoginRequest\x1a\x1d.skyrosgrpc.UserLoginResponse\"\x11\x82\xd3\xe4\x93\x02\v:\x01*\"\x06/loginB\x0eZ\f./skyrosgrpcb\x06proto3"
+	"\tUserLogin\x12\x1c.skyrosgrpc.UserLoginRequest\x1a\x1d.skyrosgrpc.UserLoginResponse\"\x11\x82\xd3\xe4\x93\x02\v:\x01*\"\x06/login\x12s\n" +
+	"\fRegisterUser\x12\x1f.skyrosgrpc.RegisterUserRequest\x1a .skyrosgrpc.RegisterUserResponse\" \x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/register/{user_type}B\x0eZ\f./skyrosgrpcb\x06proto3"
 
 var (
 	file_user_proto_rawDescOnce sync.Once
@@ -334,26 +463,30 @@ func file_user_proto_rawDescGZIP() []byte {
 	return file_user_proto_rawDescData
 }
 
-var file_user_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_user_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_user_proto_goTypes = []any{
-	(*UserFilter)(nil),        // 0: skyrosgrpc.UserFilter
-	(*User)(nil),              // 1: skyrosgrpc.User
-	(*UsersResponse)(nil),     // 2: skyrosgrpc.UsersResponse
-	(*UserLoginRequest)(nil),  // 3: skyrosgrpc.UserLoginRequest
-	(*UserLoginResponse)(nil), // 4: skyrosgrpc.UserLoginResponse
-	nil,                       // 5: skyrosgrpc.UsersResponse.UsersEntry
-	(*Status)(nil),            // 6: skyrosgrpc.Status
+	(*UserFilter)(nil),           // 0: skyrosgrpc.UserFilter
+	(*User)(nil),                 // 1: skyrosgrpc.User
+	(*UsersResponse)(nil),        // 2: skyrosgrpc.UsersResponse
+	(*UserLoginRequest)(nil),     // 3: skyrosgrpc.UserLoginRequest
+	(*UserLoginResponse)(nil),    // 4: skyrosgrpc.UserLoginResponse
+	(*RegisterUserRequest)(nil),  // 5: skyrosgrpc.RegisterUserRequest
+	(*RegisterUserResponse)(nil), // 6: skyrosgrpc.RegisterUserResponse
+	nil,                          // 7: skyrosgrpc.UsersResponse.UsersEntry
+	(*Status)(nil),               // 8: skyrosgrpc.Status
 }
 var file_user_proto_depIdxs = []int32{
-	6, // 0: skyrosgrpc.UsersResponse.status:type_name -> skyrosgrpc.Status
-	5, // 1: skyrosgrpc.UsersResponse.users:type_name -> skyrosgrpc.UsersResponse.UsersEntry
+	8, // 0: skyrosgrpc.UsersResponse.status:type_name -> skyrosgrpc.Status
+	7, // 1: skyrosgrpc.UsersResponse.users:type_name -> skyrosgrpc.UsersResponse.UsersEntry
 	1, // 2: skyrosgrpc.UsersResponse.UsersEntry.value:type_name -> skyrosgrpc.User
 	0, // 3: skyrosgrpc.UserService.GetUsers:input_type -> skyrosgrpc.UserFilter
 	3, // 4: skyrosgrpc.UserService.UserLogin:input_type -> skyrosgrpc.UserLoginRequest
-	2, // 5: skyrosgrpc.UserService.GetUsers:output_type -> skyrosgrpc.UsersResponse
-	4, // 6: skyrosgrpc.UserService.UserLogin:output_type -> skyrosgrpc.UserLoginResponse
-	5, // [5:7] is the sub-list for method output_type
-	3, // [3:5] is the sub-list for method input_type
+	5, // 5: skyrosgrpc.UserService.RegisterUser:input_type -> skyrosgrpc.RegisterUserRequest
+	2, // 6: skyrosgrpc.UserService.GetUsers:output_type -> skyrosgrpc.UsersResponse
+	4, // 7: skyrosgrpc.UserService.UserLogin:output_type -> skyrosgrpc.UserLoginResponse
+	6, // 8: skyrosgrpc.UserService.RegisterUser:output_type -> skyrosgrpc.RegisterUserResponse
+	6, // [6:9] is the sub-list for method output_type
+	3, // [3:6] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
 	3, // [3:3] is the sub-list for extension extendee
 	0, // [0:3] is the sub-list for field type_name
@@ -371,7 +504,7 @@ func file_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_proto_rawDesc), len(file_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
