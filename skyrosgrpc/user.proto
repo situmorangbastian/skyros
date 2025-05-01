@@ -4,6 +4,8 @@ package skyrosgrpc;
 
 import "general.proto";
 
+import "google/api/annotations.proto";
+
 option go_package = "./skyrosgrpc";
 
 message UserFilter {
@@ -23,6 +25,20 @@ message UsersResponse {
   map<string,User> users = 2;
 }
 
+message UserLoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message UserLoginResponse {
+  string access_token = 1;
+}
+
 service UserService {
   rpc GetUsers(UserFilter) returns (UsersResponse) {}
+  rpc UserLogin(UserLoginRequest) returns (UserLoginResponse) {
+    option (google.api.http) = {
+      post: "/login"
+    };
+  }
 }
