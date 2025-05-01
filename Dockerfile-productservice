@@ -2,9 +2,13 @@ FROM golang:1.23.8-alpine3.20 AS build
 
 WORKDIR /skyros-product-service
 
-COPY productservice .
+COPY ./productservice ./productservice
 
-RUN go mod vendor
+COPY ./skyrosgrpc ./skyrosgrpc
+
+COPY go.mod go.sum ./
+
+RUN go mod tidy
 
 RUN CGO_ENABLED=0 go build -o skyros-product-service github.com/situmorangbastian/skyros/productservice/cmd
 
