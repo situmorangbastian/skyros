@@ -19,8 +19,8 @@ message User {
 }
 
 message UsersResponse {
-    Status status = 1;
-    map<string,User> users = 2;
+  Status status = 1;
+  map<string,User> users = 2;
 }
 
 service UserService {
