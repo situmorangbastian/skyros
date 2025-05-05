@@ -66,7 +66,7 @@ func main() {
 
 	grpcGatewaySvr := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.GetInt("GRPC_GATEWAY_SERVER_PORT")),
-		Handler: mux,
+		Handler: middleware.RestMiddleware(mux),
 	}
 
 	wg := sync.WaitGroup{}
