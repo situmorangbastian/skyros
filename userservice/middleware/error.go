@@ -2,39 +2,34 @@ package middleware
 
 import (
 	"context"
+	"net/http"
 
-	"github.com/pkg/errors"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	cstmErrs "github.com/situmorangbastian/skyros/userservice/internal/errors"
 )
 
-func ErrorHandlingInterceptor(log *logrus.Entry) grpc.UnaryServerInterceptor {
-	return func(
-		ctx context.Context,
-		req interface{},
-		info *grpc.UnaryServerInfo,
-		handler grpc.UnaryHandler,
-	) (interface{}, error) {
-		resp, err := handler(ctx, req)
-		if err == nil {
-			return resp, nil
+func ErrRestHandler(log *logrus.Entry) runtime.ErrorHandlerFunc {
+	return func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler,
+		w http.ResponseWriter, r *http.Request, err error) {
+		st, ok := status.FromError(err)
+		if !ok {
+			log.WithError(err).Error("unhandled error")
+			st := status.New(codes.Internal, "Internal Server Error")
+			runtime.DefaultHTTPErrorHandler(ctx, mux, marshaler, w, r, st.Err())
+			return
 		}
 
-		err = errors.Cause(err)
-		switch err.(type) {
-		case cstmErrs.ConstraintError:
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		case cstmErrs.NotFoundError:
-			return nil, status.Error(codes.NotFound, err.Error())
-		case cstmErrs.ConflictError:
-			return nil, status.Error(codes.AlreadyExists, err.Error())
-		default:
-			log.Error(err)
-			return nil, status.Error(codes.Internal, "Internal Server Error")
+		code := st.Code()
+		message := st.Message()
+
+		if st.Code() == codes.Internal {
+			log.WithError(err).Error("unhandled error")
+			message = "Internal Server Error"
 		}
+
+		st = status.New(code, message)
+		runtime.DefaultHTTPErrorHandler(ctx, mux, marshaler, w, r, st.Err())
 	}
 }

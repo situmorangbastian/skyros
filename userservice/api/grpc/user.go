@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	grpcService "github.com/situmorangbastian/skyros/skyrosgrpc"
 	"github.com/situmorangbastian/skyros/userservice/api/validators"
@@ -38,7 +40,7 @@ func generateToken(user models.User, secretKey string) (string, error) {
 
 	accessToken, err := token.SignedString([]byte(secretKey))
 	if err != nil {
-		return "", err
+		return "", status.Error(codes.Internal, err.Error())
 	}
 
 	return accessToken, nil

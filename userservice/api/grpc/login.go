@@ -3,16 +3,18 @@ package grpc
 import (
 	"context"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	grpcService "github.com/situmorangbastian/skyros/skyrosgrpc"
-	cstmErrs "github.com/situmorangbastian/skyros/userservice/internal/errors"
 )
 
 func (g *userGrpcHandler) UserLogin(ctx context.Context, request *grpcService.UserLoginRequest) (*grpcService.UserLoginResponse, error) {
 	if request.GetEmail() == "" {
-		return nil, cstmErrs.ConflictError("email is required")
+		return nil, status.Error(codes.InvalidArgument, "email is required")
 	}
 	if request.GetPassword() == "" {
-		return nil, cstmErrs.ConflictError("password is required")
+		return nil, status.Error(codes.InvalidArgument, "password is required")
 	}
 
 	res, err := g.userUsecase.Login(ctx, request.Email, request.Password)

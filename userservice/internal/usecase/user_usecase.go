@@ -5,8 +5,9 @@ import (
 
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
-	customErrors "github.com/situmorangbastian/skyros/userservice/internal/errors"
 	"github.com/situmorangbastian/skyros/userservice/internal/models"
 	"github.com/situmorangbastian/skyros/userservice/internal/repository"
 )
@@ -30,12 +31,12 @@ func NewUserUsecase(userRepo repository.UserRepository) UserUsecase {
 func (u *userUsecase) Login(ctx context.Context, email, password string) (models.User, error) {
 	user, err := u.userRepo.GetUser(ctx, email)
 	if err != nil {
-		return models.User{}, errors.Wrap(err, "user.service.login: get user by email repo")
+		return models.User{}, err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return models.User{}, customErrors.NotFoundError("user not found")
+		return models.User{}, status.Error(codes.NotFound, "user not found")
 	}
 
 	return user, nil
@@ -44,15 +45,11 @@ func (u *userUsecase) Login(ctx context.Context, email, password string) (models
 func (u *userUsecase) Register(ctx context.Context, user models.User) (models.User, error) {
 	currentUser, err := u.userRepo.GetUser(ctx, user.Email)
 	if err != nil {
-		switch errors.Cause(err).(type) {
-		case customErrors.NotFoundError:
-		default:
-			return models.User{}, errors.Wrap(err, "user.service.register: get user by email")
-		}
+		return models.User{}, err
 	}
 
 	if currentUser.Email == user.Email {
-		return models.User{}, customErrors.ConflictError("email already exist")
+		return models.User{}, status.Error(codes.AlreadyExists, "email already exist")
 	}
 
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -64,7 +61,7 @@ func (u *userUsecase) Register(ctx context.Context, user models.User) (models.Us
 
 	result, err := u.userRepo.Register(ctx, user)
 	if err != nil {
-		return models.User{}, errors.Wrap(err, "user.service.register: register repo")
+		return models.User{}, err
 	}
 
 	return result, nil
@@ -73,7 +70,7 @@ func (u *userUsecase) Register(ctx context.Context, user models.User) (models.Us
 func (u *userUsecase) FetchUsersByIDs(ctx context.Context, ids []string) (map[string]models.User, error) {
 	users, err := u.userRepo.FetchUsersByIDs(ctx, ids)
 	if err != nil {
-		return map[string]models.User{}, errors.Wrap(err, "user.service.fetch: get users by ids")
+		return map[string]models.User{}, err
 	}
 
 	return users, nil

@@ -7,8 +7,9 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
-	customErrors "github.com/situmorangbastian/skyros/userservice/internal/errors"
 	"github.com/situmorangbastian/skyros/userservice/internal/models"
 	"github.com/situmorangbastian/skyros/userservice/internal/repository"
 )
@@ -83,7 +84,7 @@ func (r *userMysqlRepo) GetUser(ctx context.Context, identifier string) (models.
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return models.User{}, customErrors.NotFoundError("user not found")
+			return models.User{}, status.Error(codes.NotFound, "user not found")
 		}
 		return models.User{}, err
 	}

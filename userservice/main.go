@@ -17,6 +17,7 @@ import (
 	"github.com/sirupsen/logrus"
 	cfg "github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/situmorangbastian/skyros/skyrosgrpc"
 	grpcHandler "github.com/situmorangbastian/skyros/userservice/api/grpc"
@@ -54,17 +55,24 @@ func main() {
 	userRepo := mysqlRepo.NewUserRepository(dbConn)
 	userService := usecase.NewUserUsecase(userRepo)
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(middleware.ErrorHandlingInterceptor(log)))
+	grpcServer := grpc.NewServer()
 	grpcUserService := grpcHandler.NewUserGrpcServer(userService, cfg.GetString("SECRET_KEY"), validators.NewValidator())
 	skyrosgrpc.RegisterUserServiceServer(grpcServer, grpcUserService)
 
-	mux := runtime.NewServeMux()
-	err = skyrosgrpc.RegisterUserServiceHandlerFromEndpoint(context.Background(), mux, cfg.GetString("GRPC_SERVICE_ENDPOINT"), []grpc.DialOption{grpc.WithInsecure()})
+	mux := runtime.NewServeMux(
+		runtime.WithErrorHandler(middleware.ErrRestHandler(log)),
+	)
+	err = skyrosgrpc.RegisterUserServiceHandlerFromEndpoint(
+		context.Background(),
+		mux,
+		cfg.GetString("GRPC_SERVICE_ENDPOINT"),
+		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
+	)
 	if err != nil {
 		log.Fatal("failed register gRPC-Gateway handler: ", err)
 	}
 
-	grpcGatewaySvr := &http.Server{
+	restServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.GetInt("GRPC_GATEWAY_SERVER_PORT")),
 		Handler: middleware.RestMiddleware(mux),
 	}
@@ -86,7 +94,7 @@ func main() {
 
 	go func() {
 		log.Info("gRPC-Gateway server listening on ", fmt.Sprintf(":%d", cfg.GetInt("GRPC_GATEWAY_SERVER_PORT")))
-		if err := grpcGatewaySvr.ListenAndServe(); err != nil {
+		if err := restServer.ListenAndServe(); err != nil {
 			log.Fatal("Failed to serve gRPC-Gateway: ", err)
 		}
 	}()
@@ -100,7 +108,7 @@ func main() {
 	log.Info("shutting down servers...")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := grpcGatewaySvr.Shutdown(ctx); err != nil {
+	if err := restServer.Shutdown(ctx); err != nil {
 		log.Error("failed shutdown gRPC-Gateway")
 	}
 	grpcServer.GracefulStop()
