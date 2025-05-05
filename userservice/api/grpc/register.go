@@ -4,7 +4,9 @@ import (
 	"context"
 
 	grpcService "github.com/situmorangbastian/skyros/skyrosgrpc"
-	cstmErrs "github.com/situmorangbastian/skyros/userservice/internal/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/situmorangbastian/skyros/userservice/internal/models"
 )
 
@@ -12,7 +14,7 @@ func (g *userGrpcHandler) RegisterUser(ctx context.Context, request *grpcService
 	switch request.GetUserType() {
 	case "buyer", "seller":
 	default:
-		return nil, cstmErrs.NotFoundError("Not Found")
+		return nil, status.Error(codes.NotFound, "Not Found")
 	}
 
 	user := models.User{
