@@ -10,7 +10,7 @@ import (
 	"github.com/situmorangbastian/skyros/orderservice/internal/domain/models"
 	"github.com/situmorangbastian/skyros/orderservice/internal/helpers"
 	"github.com/situmorangbastian/skyros/orderservice/internal/services"
-	grpcService "github.com/situmorangbastian/skyros/skyrosgrpc"
+	productpb "github.com/situmorangbastian/skyros/proto/product"
 )
 
 type productService struct {
@@ -24,9 +24,9 @@ func NewProductService(grpcClient *grpc.ClientConn) services.ProductServiceGrpc 
 }
 
 func (s productService) FetchByIDs(ctx context.Context, ids []string) (map[string]models.Product, error) {
-	c := grpcService.NewProductServiceClient(s.grpcClient)
+	c := productpb.NewProductServiceClient(s.grpcClient)
 
-	r, err := c.GetProducts(ctx, &grpcService.ProductFilter{
+	r, err := c.GetProducts(ctx, &productpb.ProductFilter{
 		Ids: ids,
 	})
 	if err != nil {

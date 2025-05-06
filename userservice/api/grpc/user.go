@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	grpcService "github.com/situmorangbastian/skyros/skyrosgrpc"
+	userpb "github.com/situmorangbastian/skyros/proto/user"
 	"github.com/situmorangbastian/skyros/userservice/api/validators"
 	"github.com/situmorangbastian/skyros/userservice/internal/models"
 	"github.com/situmorangbastian/skyros/userservice/internal/usecase"
@@ -19,7 +19,7 @@ type userGrpcHandler struct {
 	validators     validators.CustomValidator
 }
 
-func NewUserGrpcServer(userUsecase usecase.UserUsecase, tokenSecretKey string, validators validators.CustomValidator) grpcService.UserServiceServer {
+func NewUserGrpcServer(userUsecase usecase.UserUsecase, tokenSecretKey string, validators validators.CustomValidator) userpb.UserServiceServer {
 	return &userGrpcHandler{
 		userUsecase:    userUsecase,
 		tokenSecretKey: tokenSecretKey,

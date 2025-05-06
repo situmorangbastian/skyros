@@ -10,7 +10,7 @@ import (
 	"github.com/situmorangbastian/skyros/orderservice/internal/domain/models"
 	"github.com/situmorangbastian/skyros/orderservice/internal/helpers"
 	"github.com/situmorangbastian/skyros/orderservice/internal/services"
-	grpcService "github.com/situmorangbastian/skyros/skyrosgrpc"
+	userpb "github.com/situmorangbastian/skyros/proto/user"
 )
 
 type userService struct {
@@ -24,9 +24,9 @@ func NewUserService(grpcClient *grpc.ClientConn) services.UserServiceGrpc {
 }
 
 func (s userService) FetchByIDs(ctx context.Context, ids []string) (map[string]models.User, error) {
-	c := grpcService.NewUserServiceClient(s.grpcClient)
+	c := userpb.NewUserServiceClient(s.grpcClient)
 
-	r, err := c.GetUsers(ctx, &grpcService.UserFilter{
+	r, err := c.GetUsers(ctx, &userpb.UserFilter{
 		UserIds: ids,
 	})
 	if err != nil {

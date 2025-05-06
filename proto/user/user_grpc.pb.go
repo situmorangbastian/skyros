@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             (unknown)
-// source: user.proto
+// source: user/user.proto
 
-package skyrosgrpc
+package user
 
 import (
 	context "context"
@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_GetUsers_FullMethodName     = "/skyrosgrpc.UserService/GetUsers"
-	UserService_UserLogin_FullMethodName    = "/skyrosgrpc.UserService/UserLogin"
-	UserService_RegisterUser_FullMethodName = "/skyrosgrpc.UserService/RegisterUser"
+	UserService_GetUsers_FullMethodName     = "/user.UserService/GetUsers"
+	UserService_UserLogin_FullMethodName    = "/user.UserService/UserLogin"
+	UserService_RegisterUser_FullMethodName = "/user.UserService/RegisterUser"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -174,7 +174,7 @@ func _UserService_RegisterUser_Handler(srv interface{}, ctx context.Context, dec
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var UserService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "skyrosgrpc.UserService",
+	ServiceName: "user.UserService",
 	HandlerType: (*UserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -191,5 +191,5 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "user.proto",
+	Metadata: "user/user.proto",
 }

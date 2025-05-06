@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package skyrosgrpc;
+package product;
 
-import "user.proto";
+import "user/user.proto";
 
-import "general.proto";
+import "common/types.proto";
 
-option go_package = "./skyrosgrpc";
+option go_package = "github.com/situmorangbastian/skyros/proto/product;product";
 
 message ProductFilter {
   repeated string ids = 1;
@@ -17,11 +17,11 @@ message Product {
   string name = 2;
   string description = 3;
   int32 price = 4;
-  User seller = 5;
+  user.User seller = 5;
 }
 
 message ProductsResponse {
-    Status status = 1;
+    common.Status status = 1;
     map<string,Product> products = 2;
 }
 

@@ -6,10 +6,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	grpcService "github.com/situmorangbastian/skyros/skyrosgrpc"
+	userpb "github.com/situmorangbastian/skyros/proto/user"
 )
 
-func (g *userGrpcHandler) UserLogin(ctx context.Context, request *grpcService.UserLoginRequest) (*grpcService.UserLoginResponse, error) {
+func (g *userGrpcHandler) UserLogin(ctx context.Context, request *userpb.UserLoginRequest) (*userpb.UserLoginResponse, error) {
 	if request.GetEmail() == "" {
 		return nil, status.Error(codes.InvalidArgument, "email is required")
 	}
@@ -27,7 +27,7 @@ func (g *userGrpcHandler) UserLogin(ctx context.Context, request *grpcService.Us
 		return nil, err
 	}
 
-	return &grpcService.UserLoginResponse{
+	return &userpb.UserLoginResponse{
 		AccessToken: accessToken,
 	}, nil
 }

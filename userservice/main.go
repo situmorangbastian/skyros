@@ -19,7 +19,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/situmorangbastian/skyros/skyrosgrpc"
+	userGrpcSvc "github.com/situmorangbastian/skyros/proto/user"
 	grpcHandler "github.com/situmorangbastian/skyros/userservice/api/grpc"
 	"github.com/situmorangbastian/skyros/userservice/api/validators"
 	mysqlRepo "github.com/situmorangbastian/skyros/userservice/internal/repository/mysql"
@@ -57,12 +57,12 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	grpcUserService := grpcHandler.NewUserGrpcServer(userService, cfg.GetString("SECRET_KEY"), validators.NewValidator())
-	skyrosgrpc.RegisterUserServiceServer(grpcServer, grpcUserService)
+	userGrpcSvc.RegisterUserServiceServer(grpcServer, grpcUserService)
 
 	mux := runtime.NewServeMux(
 		runtime.WithErrorHandler(middleware.ErrRestHandler(log)),
 	)
-	err = skyrosgrpc.RegisterUserServiceHandlerFromEndpoint(
+	err = userGrpcSvc.RegisterUserServiceHandlerFromEndpoint(
 		context.Background(),
 		mux,
 		cfg.GetString("GRPC_SERVICE_ENDPOINT"),

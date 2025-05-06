@@ -3,14 +3,14 @@ package grpc
 import (
 	"context"
 
-	grpcService "github.com/situmorangbastian/skyros/skyrosgrpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	userpb "github.com/situmorangbastian/skyros/proto/user"
 	"github.com/situmorangbastian/skyros/userservice/internal/models"
 )
 
-func (g *userGrpcHandler) RegisterUser(ctx context.Context, request *grpcService.RegisterUserRequest) (*grpcService.RegisterUserResponse, error) {
+func (g *userGrpcHandler) RegisterUser(ctx context.Context, request *userpb.RegisterUserRequest) (*userpb.RegisterUserResponse, error) {
 	switch request.GetUserType() {
 	case "buyer", "seller":
 	default:
@@ -40,7 +40,7 @@ func (g *userGrpcHandler) RegisterUser(ctx context.Context, request *grpcService
 		return nil, err
 	}
 
-	return &grpcService.RegisterUserResponse{
+	return &userpb.RegisterUserResponse{
 		AccessToken: accessToken,
 	}, nil
 }
