@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        (unknown)
-// source: general.proto
+// source: common/types.proto
 
-package skyrosgrpc
+package common
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -40,7 +40,7 @@ type Status struct {
 
 func (x *Status) Reset() {
 	*x = Status{}
-	mi := &file_general_proto_msgTypes[0]
+	mi := &file_common_types_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -52,7 +52,7 @@ func (x *Status) String() string {
 func (*Status) ProtoMessage() {}
 
 func (x *Status) ProtoReflect() protoreflect.Message {
-	mi := &file_general_proto_msgTypes[0]
+	mi := &file_common_types_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -65,7 +65,7 @@ func (x *Status) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Status.ProtoReflect.Descriptor instead.
 func (*Status) Descriptor() ([]byte, []int) {
-	return file_general_proto_rawDescGZIP(), []int{0}
+	return file_common_types_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Status) GetCode() int32 {
@@ -89,36 +89,35 @@ func (x *Status) GetDetails() []*anypb.Any {
 	return nil
 }
 
-var File_general_proto protoreflect.FileDescriptor
+var File_common_types_proto protoreflect.FileDescriptor
 
-const file_general_proto_rawDesc = "" +
+const file_common_types_proto_rawDesc = "" +
 	"\n" +
-	"\rgeneral.proto\x12\n" +
-	"skyrosgrpc\x1a\x19google/protobuf/any.proto\"f\n" +
+	"\x12common/types.proto\x12\x06common\x1a\x19google/protobuf/any.proto\"f\n" +
 	"\x06Status\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\x05R\x04code\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12.\n" +
-	"\adetails\x18\x03 \x03(\v2\x14.google.protobuf.AnyR\adetailsB\x0eZ\f./skyrosgrpcb\x06proto3"
+	"\adetails\x18\x03 \x03(\v2\x14.google.protobuf.AnyR\adetailsB9Z7github.com/situmorangbastian/skyros/proto/common;commonb\x06proto3"
 
 var (
-	file_general_proto_rawDescOnce sync.Once
-	file_general_proto_rawDescData []byte
+	file_common_types_proto_rawDescOnce sync.Once
+	file_common_types_proto_rawDescData []byte
 )
 
-func file_general_proto_rawDescGZIP() []byte {
-	file_general_proto_rawDescOnce.Do(func() {
-		file_general_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_general_proto_rawDesc), len(file_general_proto_rawDesc)))
+func file_common_types_proto_rawDescGZIP() []byte {
+	file_common_types_proto_rawDescOnce.Do(func() {
+		file_common_types_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_common_types_proto_rawDesc), len(file_common_types_proto_rawDesc)))
 	})
-	return file_general_proto_rawDescData
+	return file_common_types_proto_rawDescData
 }
 
-var file_general_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-var file_general_proto_goTypes = []any{
-	(*Status)(nil),    // 0: skyrosgrpc.Status
+var file_common_types_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_common_types_proto_goTypes = []any{
+	(*Status)(nil),    // 0: common.Status
 	(*anypb.Any)(nil), // 1: google.protobuf.Any
 }
-var file_general_proto_depIdxs = []int32{
-	1, // 0: skyrosgrpc.Status.details:type_name -> google.protobuf.Any
+var file_common_types_proto_depIdxs = []int32{
+	1, // 0: common.Status.details:type_name -> google.protobuf.Any
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -126,26 +125,26 @@ var file_general_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_general_proto_init() }
-func file_general_proto_init() {
-	if File_general_proto != nil {
+func init() { file_common_types_proto_init() }
+func file_common_types_proto_init() {
+	if File_common_types_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_general_proto_rawDesc), len(file_general_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_types_proto_rawDesc), len(file_common_types_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_general_proto_goTypes,
-		DependencyIndexes: file_general_proto_depIdxs,
-		MessageInfos:      file_general_proto_msgTypes,
+		GoTypes:           file_common_types_proto_goTypes,
+		DependencyIndexes: file_common_types_proto_depIdxs,
+		MessageInfos:      file_common_types_proto_msgTypes,
 	}.Build()
-	File_general_proto = out.File
-	file_general_proto_goTypes = nil
-	file_general_proto_depIdxs = nil
+	File_common_types_proto = out.File
+	file_common_types_proto_goTypes = nil
+	file_common_types_proto_depIdxs = nil
 }

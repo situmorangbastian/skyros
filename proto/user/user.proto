@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package skyrosgrpc;
+package user;
 
-import "general.proto";
+import "common/types.proto";
 
 import "google/api/annotations.proto";
 
-option go_package = "./skyrosgrpc";
+option go_package = "github.com/situmorangbastian/skyros/proto/user;user";
 
 message UserFilter {
   repeated string user_ids = 1;
@@ -21,7 +21,7 @@ message User {
 }
 
 message UsersResponse {
-  Status status = 1;
+  common.Status status = 1;
   map<string,User> users = 2;
 }
 

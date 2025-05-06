@@ -30,7 +30,7 @@ import (
 	mysqlRepo "github.com/situmorangbastian/skyros/productservice/internal/repository/mysql"
 	grpcService "github.com/situmorangbastian/skyros/productservice/internal/services/grpc"
 	"github.com/situmorangbastian/skyros/productservice/internal/usecase"
-	"github.com/situmorangbastian/skyros/skyrosgrpc"
+	productpb "github.com/situmorangbastian/skyros/proto/product"
 )
 
 func main() {
@@ -102,7 +102,7 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	grpcProductService := grpcHandler.NewProductGrpcServer(productService)
-	skyrosgrpc.RegisterProductServiceServer(grpcServer, grpcProductService)
+	productpb.RegisterProductServiceServer(grpcServer, grpcProductService)
 
 	go func() {
 		defer wg.Done()

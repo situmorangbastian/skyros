@@ -6,16 +6,17 @@ import (
 
 	"github.com/pkg/errors"
 
-	grpcService "github.com/situmorangbastian/skyros/skyrosgrpc"
+	commonpb "github.com/situmorangbastian/skyros/proto/common"
+	userpb "github.com/situmorangbastian/skyros/proto/user"
 )
 
-func (g *userGrpcHandler) GetUsers(ctx context.Context, filter *grpcService.UserFilter) (*grpcService.UsersResponse, error) {
-	response := &grpcService.UsersResponse{
-		Status: &grpcService.Status{
+func (g *userGrpcHandler) GetUsers(ctx context.Context, filter *userpb.UserFilter) (*userpb.UsersResponse, error) {
+	response := &userpb.UsersResponse{
+		Status: &commonpb.Status{
 			Code:    int32(http.StatusOK),
 			Message: "success",
 		},
-		Users: map[string]*grpcService.User{},
+		Users: map[string]*userpb.User{},
 	}
 
 	if len(filter.GetUserIds()) == 0 {
@@ -24,18 +25,18 @@ func (g *userGrpcHandler) GetUsers(ctx context.Context, filter *grpcService.User
 
 	users, err := g.userUsecase.FetchUsersByIDs(ctx, filter.GetUserIds())
 	if err != nil {
-		return &grpcService.UsersResponse{
-			Status: &grpcService.Status{
+		return &userpb.UsersResponse{
+			Status: &commonpb.Status{
 				Code:    int32(http.StatusInternalServerError),
 				Message: errors.Cause(err).Error(),
 			},
-			Users: map[string]*grpcService.User{},
+			Users: map[string]*userpb.User{},
 		}, nil
 	}
 
-	usersGrpc := map[string]*grpcService.User{}
+	usersGrpc := map[string]*userpb.User{}
 	for _, user := range users {
-		usersGrpc[user.ID] = &grpcService.User{
+		usersGrpc[user.ID] = &userpb.User{
 			Id:      user.ID,
 			Name:    user.Name,
 			Address: user.Address,
