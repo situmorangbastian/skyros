@@ -9,7 +9,7 @@ paths:
       tags:
         - User
       description: User Login
-      operationId: userLogin
+      operationId: User Login
       requestBody:
         required: true
         content:
@@ -52,7 +52,7 @@ paths:
       tags:
         - User
       description: User Register with type Buyer
-      operationId: registerUserBuyer
+      operationId: Register User Buyer
       requestBody:
         required: true
         content:
@@ -87,7 +87,7 @@ paths:
       tags:
         - User
       description: User Register with type Seller
-      operationId: registerUserSeller
+      operationId: Register User Seller
       requestBody:
         required: true
         content:
@@ -123,7 +123,7 @@ paths:
       tags:
         - Product
       description: Register New Product
-      operationId: addProduct
+      operationId: Add Product
       parameters:
         - $ref: "#/components/parameters/Authorization"
       requestBody:
@@ -167,7 +167,7 @@ paths:
       tags:
         - Product
       description: Fetch All Products
-      operationId: fetchAllProduct
+      operationId: Fetch All Products
       parameters:
         - $ref: "#/components/parameters/AuthorizationOptional"
         - $ref: "#/components/parameters/Num"
@@ -208,7 +208,7 @@ paths:
       tags:
         - Product
       description: Get Detail Product
-      operationId: getProduct
+      operationId: Get Product
       responses:
         "200":
           description: Return access token
@@ -241,7 +241,7 @@ paths:
       tags:
         - Order
       description: Add Order
-      operationId: addOrder
+      operationId: Add Order
       requestBody:
         required: true
         content:
@@ -275,7 +275,7 @@ paths:
       tags:
         - Order
       description: Fetch All Order
-      operationId: fetchAllOrder
+      operationId: Fetch All Orders
       parameters:
         - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/Num"
@@ -316,7 +316,7 @@ paths:
       tags:
         - Order
       description: Get Detail Order
-      operationId: getOrder
+      operationId: Get Order
       parameters:
         - $ref: "#/components/parameters/Authorization"
       responses:
@@ -346,7 +346,7 @@ paths:
       tags:
         - Order
       description: Patch Status Order
-      operationId: patchStatusOrder
+      operationId: Patch Status Order
       parameters:
         - $ref: "#/components/parameters/Authorization"
       requestBody:

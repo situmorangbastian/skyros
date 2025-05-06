@@ -2,54 +2,53 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
-	"os/signal"
-	"time"
+	"path/filepath"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/swagger"
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
+	cfg "github.com/spf13/viper"
 )
 
-func init() {
-	configFile := "config.toml"
-
-	viper.SetConfigFile(configFile)
-	err := viper.ReadInConfig()
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
-
-}
-
 func main() {
-	address := viper.GetString("server.address")
-	if address == "" {
-		log.Fatal("address is not well-set")
-	}
+	cfg.SetConfigFile(".env")
+	cfg.AutomaticEnv()
+	cfg.ReadInConfig()
 
-	app := fiber.New()
+	r := mux.NewRouter()
 
-	app.Static("/apidocs", "./docs.yaml")
-
-	app.Get("/docs/*", swagger.New(swagger.Config{
-		URL: fmt.Sprintf("http://localhost%s/apidocs", address),
-	}))
-
-	// Start server
-	go func() {
-		if err := app.Listen(address); err != nil {
-			log.Fatal(err)
+	r.HandleFunc("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
+		openapiPath := filepath.Join(".", "openapi.yaml")
+		if _, err := os.Stat(openapiPath); os.IsNotExist(err) {
+			http.Error(w, "openapi.yaml not found", http.StatusNotFound)
+			return
 		}
-	}()
+		http.ServeFile(w, r, openapiPath)
+	})
 
-	// Wait for interrupt signal to gracefully shutdown the server with
-	// a timeout of 10 seconds.
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
-	<-quit
-	if err := app.ShutdownWithTimeout(10 * time.Second); err != nil {
-		log.Fatal(err)
-	}
+	r.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>API Docs</title>
+    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+  </head>
+  <body>
+    <div id="redoc-container"></div> <!-- ReDoc container -->
+    <script>
+      // Ensure the ReDoc spec is loaded properly
+      Redoc.init('/openapi.yaml', {
+        scrollYOffset: 50,
+      }, document.getElementById('redoc-container'));
+    </script>
+  </body>
+</html>`))
+	})
+
+	log.Info("server running on port: ", cfg.GetInt("PORT"))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", cfg.GetInt("PORT")), r))
+
 }
