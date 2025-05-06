@@ -4,12 +4,13 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
-	restCtx "github.com/situmorangbastian/skyros/productservice/api/rest/context"
-	customErrors "github.com/situmorangbastian/skyros/productservice/internal/errors"
+	"github.com/situmorangbastian/skyros/productservice/internal/integration"
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
 	"github.com/situmorangbastian/skyros/productservice/internal/repository"
-	"github.com/situmorangbastian/skyros/productservice/internal/services"
+	"github.com/situmorangbastian/skyros/productservice/middleware"
 )
 
 type ProductUsecase interface {
@@ -21,27 +22,27 @@ type ProductUsecase interface {
 
 type usecase struct {
 	productRepo repository.ProductRepository
-	userGrpcSvc services.UserGrpcService
+	usrClient   integration.UserClient
 }
 
-func NewProductUsecase(productRepo repository.ProductRepository, userGrpcSvc services.UserGrpcService) ProductUsecase {
+func NewProductUsecase(productRepo repository.ProductRepository, usrClient integration.UserClient) ProductUsecase {
 	return &usecase{
 		productRepo: productRepo,
-		userGrpcSvc: userGrpcSvc,
+		usrClient:   usrClient,
 	}
 }
 
 func (u *usecase) Store(ctx context.Context, product models.Product) (models.Product, error) {
-	customCtx, ok := ctx.(restCtx.CustomContext)
+	claims, ok := middleware.GetUserClaims(ctx)
 	if !ok {
-		return models.Product{}, errors.Wrap(errors.New("invalid context"), "product.service.store: parse custom context")
+		return models.Product{}, status.Error(codes.Unauthenticated, "failed get user claims")
 	}
 
-	if customCtx.User()["type"].(string) != models.UserSellerType {
-		return models.Product{}, customErrors.NotFoundError("not found")
+	if claims["type"].(string) != models.UserSellerType {
+		return models.Product{}, status.Error(codes.NotFound, "Not Found")
 	}
 
-	product.Seller.ID = customCtx.User()["id"].(string)
+	product.Seller.ID = claims["id"].(string)
 
 	result, err := u.productRepo.Store(ctx, product)
 	if err != nil {
@@ -57,7 +58,7 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Product, error) {
 		return models.Product{}, errors.Wrap(err, "product.service.get: get from repository")
 	}
 
-	users, err := u.userGrpcSvc.FetchByIDs(ctx, []string{result.Seller.ID})
+	users, err := u.usrClient.FetchByIDs(ctx, []string{result.Seller.ID})
 	if err != nil {
 		return models.Product{}, errors.Wrap(err, "product.service.get: get user from userservice grpc")
 	}
@@ -68,10 +69,11 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Product, error) {
 }
 
 func (u *usecase) Fetch(ctx context.Context, filter models.ProductFilter) ([]models.Product, error) {
-	customCtx, ok := ctx.(restCtx.CustomContext)
+	claims, ok := middleware.GetUserClaims(ctx)
 	if ok {
-		if customCtx.User()["type"].(string) == models.UserSellerType {
-			filter.SellerID = customCtx.User()["id"].(string)
+		userType := claims["type"].(string)
+		if userType == models.UserSellerType {
+			filter.SellerID = claims["id"].(string)
 		}
 	}
 
@@ -85,7 +87,7 @@ func (u *usecase) Fetch(ctx context.Context, filter models.ProductFilter) ([]mod
 		userIDs = append(userIDs, product.Seller.ID)
 	}
 
-	users, err := u.userGrpcSvc.FetchByIDs(ctx, userIDs)
+	users, err := u.usrClient.FetchByIDs(ctx, userIDs)
 	if err != nil {
 		return make([]models.Product, 0), errors.Wrap(err, "product.service.get: get user from userservice grpc")
 	}
@@ -108,7 +110,7 @@ func (u *usecase) FetchByIds(ctx context.Context, ids []string) (map[string]mode
 		userIDs = append(userIDs, product.Seller.ID)
 	}
 
-	users, err := u.userGrpcSvc.FetchByIDs(ctx, userIDs)
+	users, err := u.usrClient.FetchByIDs(ctx, userIDs)
 	if err != nil {
 		return map[string]models.Product{}, errors.Wrap(err, "product.service.get: get user from userservice grpc")
 	}

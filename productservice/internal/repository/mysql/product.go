@@ -10,8 +10,9 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
-	customErrors "github.com/situmorangbastian/skyros/productservice/internal/errors"
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
 	"github.com/situmorangbastian/skyros/productservice/internal/repository"
 )
@@ -70,7 +71,7 @@ func (r productRepository) Get(ctx context.Context, ID string) (models.Product, 
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return models.Product{}, customErrors.NotFoundError("product not found")
+			return models.Product{}, status.Error(codes.NotFound, "product not found")
 		}
 		return models.Product{}, err
 	}
@@ -85,7 +86,10 @@ func (r productRepository) Fetch(ctx context.Context, filter models.ProductFilte
 		OrderBy("created_time DESC")
 
 	offset := (filter.Page - 1) * filter.PageSize
-	qBuilder = qBuilder.Limit(uint64(filter.PageSize)).Offset(uint64(offset))
+	qBuilder = qBuilder.Limit(uint64(filter.PageSize))
+	if offset > 0 {
+		qBuilder.Offset(uint64(offset))
+	}
 
 	if filter.Search != "" {
 		keywords := strings.Split(filter.Search, ",")

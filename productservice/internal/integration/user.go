@@ -1,4 +1,4 @@
-package services
+package integration
 
 import (
 	"context"
@@ -6,6 +6,6 @@ import (
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
 )
 
-type UserGrpcService interface {
+type UserClient interface {
 	FetchByIDs(ctx context.Context, ids []string) (map[string]models.User, error)
 }

@@ -9,9 +9,9 @@ const (
 
 type User struct {
 	ID      string `json:"id"`
-	Email   string `json:"email" validate:"required,email"`
-	Name    string `json:"name" validate:"required"`
-	Address string `json:"address" validate:"required"`
+	Email   string `json:"email"`
+	Name    string `json:"name"`
+	Address string `json:"address"`
 	Type    string `json:"type"`
 }
 

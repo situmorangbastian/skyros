@@ -8,7 +8,6 @@ It translates gRPC into RESTful JSON APIs.
 */
 package user
 
-
 import (
 	"context"
 	"errors"
