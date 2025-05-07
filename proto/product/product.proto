@@ -6,11 +6,9 @@ import "user/user.proto";
 
 import "common/types.proto";
 
-option go_package = "github.com/situmorangbastian/skyros/proto/product;product";
+import "google/api/annotations.proto";
 
-message ProductFilter {
-  repeated string ids = 1;
-}
+option go_package = "github.com/situmorangbastian/skyros/proto/product;product";
 
 message Product {
   string id = 1;
@@ -20,11 +18,43 @@ message Product {
   user.User seller = 5;
 }
 
-message ProductsResponse {
-    common.Status status = 1;
-    map<string,Product> products = 2;
+message GetProductRequest {
+  string id = 1;
+}
+
+message GetProductsRequest {
+  repeated string ids = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+  string search = 4;
+}
+
+message GetProductsResponse {
+  repeated Product result = 1;
+}
+
+message StoreProductRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int32 price = 4;
 }
 
 service ProductService {
-  rpc GetProducts(ProductFilter) returns (ProductsResponse) {}
+  rpc GetProduct(GetProductRequest) returns (Product) {
+    option (google.api.http) = {
+      get: "/v1/products/{id}"
+    };
+  }
+  rpc GetProducts(GetProductsRequest) returns (GetProductsResponse) {
+    option (google.api.http) = {
+      get: "/v1/products"
+    };
+  }
+  rpc StoreProduct(StoreProductRequest) returns (Product) {
+    option (google.api.http) = {
+      post: "/v1/products"
+      body: "*"
+    };
+  }
 }

@@ -2,8 +2,6 @@ package grpc
 
 import (
 	"context"
-	"errors"
-	"net/http"
 
 	"google.golang.org/grpc"
 
@@ -26,29 +24,24 @@ func NewProductService(grpcClient *grpc.ClientConn) services.ProductServiceGrpc 
 func (s productService) FetchByIDs(ctx context.Context, ids []string) (map[string]models.Product, error) {
 	c := productpb.NewProductServiceClient(s.grpcClient)
 
-	r, err := c.GetProducts(ctx, &productpb.ProductFilter{
+	r, err := c.GetProducts(ctx, &productpb.GetProductsRequest{
 		Ids: ids,
 	})
 	if err != nil {
 		return map[string]models.Product{}, err
 	}
 
-	status := r.GetStatus()
-	if status.Code != int32(http.StatusOK) {
-		return map[string]models.Product{}, errors.New(status.GetMessage())
+	if r.GetResult() == nil {
+		return map[string]models.Product{}, nil
 	}
 
 	result := map[string]models.Product{}
-	if len(r.GetProducts()) > 0 {
-		for _, productResponse := range r.GetProducts() {
-			product := models.Product{}
-			if err = helpers.CopyStructValue(productResponse, &product); err != nil {
-				return map[string]models.Product{}, err
-			}
-
-			result[product.ID] = product
+	for _, res := range r.GetResult() {
+		product := models.Product{}
+		if err = helpers.CopyStructValue(res, &product); err != nil {
+			return map[string]models.Product{}, err
 		}
+		result[product.ID] = product
 	}
-
 	return result, nil
 }

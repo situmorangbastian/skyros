@@ -8,25 +8,25 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/situmorangbastian/skyros/productservice/internal/helpers"
+	"github.com/situmorangbastian/skyros/productservice/internal/integration"
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
-	"github.com/situmorangbastian/skyros/productservice/internal/services"
-	userGrpcSvc "github.com/situmorangbastian/skyros/proto/user"
+	userpb "github.com/situmorangbastian/skyros/proto/user"
 )
 
-type userGrpcSvcImpl struct {
+type userClient struct {
 	grpcClient *grpc.ClientConn
 }
 
-func NewUserService(grpcClient *grpc.ClientConn) services.UserGrpcService {
-	return &userGrpcSvcImpl{
+func NewUserIntegrationClient(grpcClient *grpc.ClientConn) integration.UserClient {
+	return &userClient{
 		grpcClient: grpcClient,
 	}
 }
 
-func (s *userGrpcSvcImpl) FetchByIDs(ctx context.Context, ids []string) (map[string]models.User, error) {
-	c := userGrpcSvc.NewUserServiceClient(s.grpcClient)
+func (s *userClient) FetchByIDs(ctx context.Context, ids []string) (map[string]models.User, error) {
+	c := userpb.NewUserServiceClient(s.grpcClient)
 
-	r, err := c.GetUsers(ctx, &userGrpcSvc.UserFilter{
+	r, err := c.GetUsers(ctx, &userpb.UserFilter{
 		UserIds: ids,
 	})
 	if err != nil {
