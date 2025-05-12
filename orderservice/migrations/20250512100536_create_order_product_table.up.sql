@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS orders_products (
+    id UUID PRIMARY KEY,
+    order_id UUID NOT NULL,
+    product_id UUID NOT NULL,
+    quantity INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

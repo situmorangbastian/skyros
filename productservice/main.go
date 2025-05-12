@@ -24,8 +24,8 @@ import (
 	grpcIntg "github.com/situmorangbastian/skyros/productservice/internal/integration/grpc"
 	mysqlRepo "github.com/situmorangbastian/skyros/productservice/internal/repository/mysql"
 	"github.com/situmorangbastian/skyros/productservice/internal/usecase"
-	"github.com/situmorangbastian/skyros/productservice/middleware"
 	productpb "github.com/situmorangbastian/skyros/proto/product"
+	"github.com/situmorangbastian/skyros/serviceutils"
 )
 
 func main() {
@@ -65,13 +65,13 @@ func main() {
 	productService := usecase.NewProductUsecase(productRepo, usrIntgClient)
 
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(middleware.AuthInterceptor([]byte(cfg.GetString("SECRET_KEY")))),
+		grpc.UnaryInterceptor(serviceutils.AuthInterceptor(cfg.GetString("SECRET_KEY"))),
 	)
 	grpcProductService := grpcHandler.NewProductGrpcServer(productService, validators.NewValidator())
 	productpb.RegisterProductServiceServer(grpcServer, grpcProductService)
 
 	mux := runtime.NewServeMux(
-		runtime.WithErrorHandler(middleware.ErrRestHandler(log)),
+		runtime.WithErrorHandler(serviceutils.NewRestErrorHandler(log)),
 	)
 	err = productpb.RegisterProductServiceHandlerFromEndpoint(
 		context.Background(),

@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package order;
+
+import "user/user.proto";
+
+import "common/types.proto";
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/situmorangbastian/skyros/proto/order;order";
+
+message OrderProduct {
+  string product_id = 1;
+  int64 quantity = 2;
+}
+
+message Order {
+  string id = 1;
+  string description = 2;
+  string source_address = 3;
+  string destination_address = 4;
+  int64 total_price = 5;
+  user.User seller = 6;
+  user.User buyer = 7;
+  string status = 8;
+  repeated OrderProduct items = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+message CreateOrderRequest {
+  string description = 1;
+  string destination_address = 2;
+  repeated OrderProduct items = 3;
+}
+
+message GetOrderRequest {
+  string order_id = 1;
+}
+
+message GetOrdersRequest {
+  int32 limit = 2;
+  int32 offset = 3;
+  string search = 4;
+}
+
+message GetOrdersResponse {
+  repeated Order result = 1;
+}
+
+service OrderService {
+  rpc CreateOrder(CreateOrderRequest) returns (Order) {
+    option (google.api.http) = {
+      post: "/v1/orders"
+      body: "*"
+    };
+  }
+  rpc GetOrder(GetOrderRequest) returns (Order) {
+    option (google.api.http) = {
+      get: "/v1/orders/{order_id}"
+    };
+  }
+  rpc GetOrders(GetOrdersRequest) returns (GetOrdersResponse) {
+    option (google.api.http) = {
+      get: "/v1/orders"
+    };
+  }
+}
