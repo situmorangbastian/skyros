@@ -98,10 +98,9 @@ func (r *userRepo) FetchUsersByIDs(ctx context.Context, ids []string) (map[strin
 		"id",
 		"email",
 		"name",
-		"password",
 		"user_data",
 	).
-		From("user").
+		From("users").
 		Where(sq.Or{
 			sq.Eq{"email": ids},
 			sq.Eq{"id": ids},

@@ -10,7 +10,7 @@ import (
 	"github.com/situmorangbastian/skyros/productservice/internal/integration"
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
 	"github.com/situmorangbastian/skyros/productservice/internal/repository"
-	"github.com/situmorangbastian/skyros/productservice/middleware"
+	"github.com/situmorangbastian/skyros/serviceutils"
 )
 
 type ProductUsecase interface {
@@ -33,7 +33,7 @@ func NewProductUsecase(productRepo repository.ProductRepository, usrClient integ
 }
 
 func (u *usecase) Store(ctx context.Context, product models.Product) (models.Product, error) {
-	claims, ok := middleware.GetUserClaims(ctx)
+	claims, ok := serviceutils.GetUserClaims(ctx)
 	if !ok {
 		return models.Product{}, status.Error(codes.Unauthenticated, "failed get user claims")
 	}
@@ -69,7 +69,7 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Product, error) {
 }
 
 func (u *usecase) Fetch(ctx context.Context, filter models.ProductFilter) ([]models.Product, error) {
-	claims, ok := middleware.GetUserClaims(ctx)
+	claims, ok := serviceutils.GetUserClaims(ctx)
 	if ok {
 		userType := claims["type"].(string)
 		if userType == models.UserSellerType {

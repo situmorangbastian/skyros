@@ -21,13 +21,15 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/encoding/protojson"
 
-	userGrpcSvc "github.com/situmorangbastian/skyros/proto/user"
+	grpcClient "github.com/situmorangbastian/skyros/orderservice/internal/integration/grpc"
+	"github.com/situmorangbastian/skyros/orderservice/internal/repository/postgresql"
+	"github.com/situmorangbastian/skyros/orderservice/internal/service"
+	"github.com/situmorangbastian/skyros/orderservice/internal/usecase"
+	"github.com/situmorangbastian/skyros/orderservice/internal/validation"
+	orderpb "github.com/situmorangbastian/skyros/proto/order"
 	"github.com/situmorangbastian/skyros/serviceutils"
-	postgreRepo "github.com/situmorangbastian/skyros/userservice/internal/repository/postgresql"
-	"github.com/situmorangbastian/skyros/userservice/internal/service"
-	"github.com/situmorangbastian/skyros/userservice/internal/usecase"
-	"github.com/situmorangbastian/skyros/userservice/internal/validation"
 )
 
 func main() {
@@ -56,19 +58,41 @@ func main() {
 		}
 	}()
 
-	runMigrations(log, cfg.GetString("DATABASE_URL"))
+	err = runMigrations(log, cfg.GetString("DATABASE_URL"))
+	if err != nil {
+		log.Fatal("migrations failed applied: ", err)
+	}
+	log.Info("migrations applied successfull")
 
-	userRepo := postgreRepo.NewUserRepository(dbConn)
-	userUsecase := usecase.NewUserUsecase(userRepo)
+	userSvcClient, err := grpc.NewClient(cfg.GetString("USER_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(err)
+	}
+	productSvcClient, err := grpc.NewClient(cfg.GetString("PRODUCT_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(err)
+	}
+	userClient := grpcClient.NewUserClient(userSvcClient)
+	productClient := grpcClient.NewProductClient(productSvcClient)
 
-	grpcServer := grpc.NewServer()
-	userService := service.NewUserService(userUsecase, cfg.GetString("SECRET_KEY"), validation.NewValidator())
-	userGrpcSvc.RegisterUserServiceServer(grpcServer, userService)
+	orderRepo := postgresql.NewOrderRepository(dbConn)
+	orderUsecase := usecase.NewUsecase(orderRepo, userClient, productClient)
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(serviceutils.AuthInterceptor(cfg.GetString("SECRET_KEY"))),
+	)
+	orderService := service.NewOrderService(orderUsecase, validation.NewValidator())
+	orderpb.RegisterOrderServiceServer(grpcServer, orderService)
 
 	mux := runtime.NewServeMux(
 		runtime.WithErrorHandler(serviceutils.NewRestErrorHandler(log)),
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+			MarshalOptions: protojson.MarshalOptions{
+				UseProtoNames: true,
+			},
+		}),
 	)
-	err = userGrpcSvc.RegisterUserServiceHandlerFromEndpoint(
+	err = orderpb.RegisterOrderServiceHandlerFromEndpoint(
 		context.Background(),
 		mux,
 		cfg.GetString("GRPC_SERVICE_ENDPOINT"),
@@ -120,19 +144,19 @@ func main() {
 	grpcServer.GracefulStop()
 }
 
-func runMigrations(log *logrus.Entry, connStr string) {
+func runMigrations(log *logrus.Entry, connStr string) error {
 	m, err := migrate.New(
 		"file://migrations",
 		connStr,
 	)
 	if err != nil {
-		log.Fatal("failed to create migrate instance: ", err)
+		return err
 	}
 
 	err = m.Up()
 	if err != nil && err != migrate.ErrNoChange {
-		log.Fatal("failed to apply migrations: ", err)
+		return err
 	}
 
-	log.Info("migrations applied successfull")
+	return nil
 }
