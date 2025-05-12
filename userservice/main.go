@@ -17,65 +17,88 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/lib/pq"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	userGrpcSvc "github.com/situmorangbastian/skyros/proto/user"
-	"github.com/situmorangbastian/skyros/serviceutils"
-	postgreRepo "github.com/situmorangbastian/skyros/userservice/internal/repository/postgresql"
+	userpb "github.com/situmorangbastian/skyros/proto/user"
+	"github.com/situmorangbastian/skyros/userservice/internal/repository/postgresql"
 	"github.com/situmorangbastian/skyros/userservice/internal/service"
 	"github.com/situmorangbastian/skyros/userservice/internal/usecase"
 	"github.com/situmorangbastian/skyros/userservice/internal/validation"
 )
 
 func main() {
-	log := logrus.New().WithFields(logrus.Fields{"service": "userservice"})
+	log.Logger = zerolog.New(os.Stdout).
+		With().
+		Timestamp().
+		Str("service", "userservice").
+		Caller().
+		Logger()
+
 	cfg := viper.New()
 	cfg.SetConfigFile(".env")
 	cfg.AutomaticEnv()
 	err := cfg.ReadInConfig()
 	if err != nil {
-		log.Fatal("failed read config: ", err)
+		log.Fatal().Err(err).Msg("failed read config")
+	}
+
+	if cfg.GetString("APP_ENV") == "development" {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		output := zerolog.ConsoleWriter{
+			Out:        os.Stdout,
+			TimeFormat: zerolog.TimeFormatUnix,
+		}
+		log.Logger = zerolog.New(output).
+			With().
+			Timestamp().
+			Str("service", "userservice").
+			Caller().
+			Logger()
 	}
 
 	dbConn, err := sql.Open(`postgres`, cfg.GetString("DATABASE_URL"))
 	if err != nil {
-		log.Fatal("failed database connect: ", err)
+		log.Fatal().Err(err).Msg("failed connect database")
 	}
 
 	err = dbConn.Ping()
 	if err != nil {
-		log.Fatal("failed ping database: ", err)
+		log.Fatal().Err(err).Msg("failed ping database")
 	}
 	defer func() {
 		err := dbConn.Close()
 		if err != nil {
-			log.Fatal("failed close db connection: ", err)
+			log.Fatal().Err(err).Msg("failed close connection database")
 		}
 	}()
 
-	runMigrations(log, cfg.GetString("DATABASE_URL"))
+	err = runMigrations(cfg.GetString("DATABASE_URL"))
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed run migrations")
+	}
 
-	userRepo := postgreRepo.NewUserRepository(dbConn)
-	userUsecase := usecase.NewUserUsecase(userRepo)
+	log.Info().Msg("run migrations successfully")
+
+	userRepo := postgresql.NewUserRepository(dbConn)
+	userUsecase := usecase.NewUserUsecase(userRepo, log.Logger)
 
 	grpcServer := grpc.NewServer()
-	userService := service.NewUserService(userUsecase, cfg.GetString("SECRET_KEY"), validation.NewValidator())
-	userGrpcSvc.RegisterUserServiceServer(grpcServer, userService)
+	userService := service.NewUserService(userUsecase, cfg.GetString("SECRET_KEY"), validation.NewValidator(), log.Logger)
+	userpb.RegisterUserServiceServer(grpcServer, userService)
 
-	mux := runtime.NewServeMux(
-		runtime.WithErrorHandler(serviceutils.NewRestErrorHandler(log)),
-	)
-	err = userGrpcSvc.RegisterUserServiceHandlerFromEndpoint(
+	mux := runtime.NewServeMux()
+	err = userpb.RegisterUserServiceHandlerFromEndpoint(
 		context.Background(),
 		mux,
 		cfg.GetString("GRPC_SERVICE_ENDPOINT"),
 		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
 	)
 	if err != nil {
-		log.Fatal("failed register gRPC-Gateway handler: ", err)
+		log.Fatal().Err(err).Msg("failed register grpc-Gateway handler")
 	}
 
 	restServer := &http.Server{
@@ -89,25 +112,24 @@ func main() {
 		defer wg.Done()
 		listen, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GetInt("GRPC_SERVER_PORT")))
 		if err != nil {
-			log.Fatal("failed to listen on network: ", err)
+			log.Fatal().Err(err).Msg("failed listen on network")
 		}
 
-		log.Info("gRPC-Server listening on ", fmt.Sprintf(":%d", cfg.GetInt("GRPC_SERVER_PORT")))
+		log.Info().Str("port", cfg.GetString("GRPC_SERVER_PORT")).Msg("gRPC-Server starting")
 		if err := grpcServer.Serve(listen); err != nil {
-			log.Fatal("failed run gRPC-Server: ", err)
+			log.Fatal().Err(err).Msg("failed run gRPC-Server")
 		}
 	}()
 
 	if cfg.GetBool("ENABLE_GATEWAY_GRPC") {
 		wg.Add(1)
 		go func() {
-			log.Info("gRPC-Gateway server listening on ", fmt.Sprintf(":%d", cfg.GetInt("GRPC_GATEWAY_SERVER_PORT")))
+			log.Info().Str("port", cfg.GetString("GRPC_GATEWAY_SERVER_PORT")).Msg("gRPC-Gateway server starting")
 			if err := restServer.ListenAndServe(); err != nil {
-				log.Fatal("failed to serve gRPC-Gateway: ", err)
+				log.Fatal().Err(err).Msg("failed run gRPC-Gateway server")
 			}
 		}()
 	}
-
 	wg.Wait()
 
 	// wait for interrupt signal to gracefully shutdown the server with
@@ -115,28 +137,26 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
-	log.Info("shutting down servers...")
+	log.Info().Msg("shutting down servers...")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := restServer.Shutdown(ctx); err != nil {
-		log.Error("failed shutdown gRPC-Gateway")
+		log.Error().Err(err).Msg("failed shutdown gRPC-Gatewat")
 	}
 	grpcServer.GracefulStop()
 }
 
-func runMigrations(log *logrus.Entry, connStr string) {
+func runMigrations(connStr string) error {
 	m, err := migrate.New(
 		"file://migrations",
 		connStr,
 	)
 	if err != nil {
-		log.Fatal("failed to create migrate instance: ", err)
+		return err
 	}
-
 	err = m.Up()
 	if err != nil && err != migrate.ErrNoChange {
-		log.Fatal("failed to apply migrations: ", err)
+		return err
 	}
-
-	log.Info("migrations applied successfull")
+	return nil
 }
