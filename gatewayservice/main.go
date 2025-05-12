@@ -1,73 +1,60 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"os"
-	"os/signal"
-	"time"
+	"net/http"
 
-	"github.com/BurntSushi/toml"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/proxy"
-	log "github.com/sirupsen/logrus"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
+	orderpb "github.com/situmorangbastian/skyros/proto/order"
+	productpb "github.com/situmorangbastian/skyros/proto/product"
+	userpb "github.com/situmorangbastian/skyros/proto/user"
+	"github.com/situmorangbastian/skyros/serviceutils"
 )
-
-type Config struct {
-	Endpoint []Endpoint
-}
-
-type Endpoint struct {
-	Path    string
-	Service string
-}
-
-var (
-	config Config
-)
-
-func init() {
-	configFile := "config.toml"
-
-	viper.SetConfigFile(configFile)
-	err := viper.ReadInConfig()
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
-
-	if _, err := toml.DecodeFile(configFile, &config); err != nil {
-		log.Fatalln(err.Error())
-	}
-}
 
 func main() {
-	fiberApp := fiber.New()
-
-	for _, endpoint := range config.Endpoint {
-		fiberApp.All(endpoint.Path, func(c *fiber.Ctx) error {
-			target := fmt.Sprintf("%s/%s", endpoint.Service, endpoint.Path)
-			return proxy.Do(c, target)
-		})
+	log := logrus.New().WithFields(logrus.Fields{"service": "gatewayservice"})
+	cfg := viper.New()
+	cfg.SetConfigFile(".env")
+	cfg.AutomaticEnv()
+	err := cfg.ReadInConfig()
+	if err != nil {
+		log.Fatal("failed read config: ", err)
 	}
 
-	address := viper.GetString("server.address")
-	if address == "" {
-		log.Fatalln("address is not set")
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	mux := runtime.NewServeMux(
+		runtime.WithErrorHandler(serviceutils.NewRestErrorHandler(log)),
+	)
+
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+
+	err = userpb.RegisterUserServiceHandlerFromEndpoint(ctx, mux, cfg.GetString("USER_SERVICE_GRPC"), opts)
+	if err != nil {
+		log.Fatalf("Failed to register Service1: %v", err)
 	}
 
-	// Start server
-	go func() {
-		if err := fiberApp.Listen(address); err != nil {
-			log.Fatal("shutting down the server")
-		}
-	}()
+	err = productpb.RegisterProductServiceHandlerFromEndpoint(ctx, mux, cfg.GetString("PRODUCT_SERVICE_GRPC"), opts)
+	if err != nil {
+		log.Fatalf("Failed to register Service2: %v", err)
+	}
 
-	// Wait for interrupt signal to gracefully shutdown the server with
-	// a timeout of 10 seconds.
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
-	<-quit
-	if err := fiberApp.ShutdownWithTimeout(10 * time.Second); err != nil {
-		log.Fatal(err)
+	err = orderpb.RegisterOrderServiceHandlerFromEndpoint(ctx, mux, cfg.GetString("ORDER_SERVICE_GRPC"), opts)
+	if err != nil {
+		log.Fatalf("Failed to register Service2: %v", err)
+	}
+
+	// Start a single HTTP server for all routes
+	log.Info(fmt.Sprintf("Serving gRPC-Gateway on http://localhost:%s", cfg.GetString("PORT")))
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", cfg.GetInt("PORT")), mux); err != nil {
+		log.Fatalf("Failed to serve: %v", err)
 	}
 }

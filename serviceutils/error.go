@@ -26,6 +26,9 @@ func NewRestErrorHandler(log *logrus.Entry) runtime.ErrorHandlerFunc {
 
 		switch st.Code() {
 		case codes.InvalidArgument, codes.AlreadyExists, codes.NotFound, codes.Unauthenticated:
+		case codes.Unavailable:
+			log.WithError(err).Error("unhandled error")
+			message = "Service Unavailable"
 		default:
 			log.WithError(err).Error("unhandled error")
 			message = "Internal Server Error"
