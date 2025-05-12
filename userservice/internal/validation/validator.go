@@ -1,6 +1,7 @@
-package validators
+package validation
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -13,10 +14,8 @@ type CustomValidator struct {
 }
 
 func NewValidator() CustomValidator {
-	cv := validator.New()
-
 	return CustomValidator{
-		validator: cv,
+		validator: validator.New(),
 	}
 }
 
@@ -27,7 +26,7 @@ func (cv CustomValidator) Validate(data interface{}) error {
 			case "email":
 				return status.Error(codes.InvalidArgument, "invalid email")
 			default:
-				return status.Error(codes.InvalidArgument, strings.ToLower(err.Field())+" "+err.ActualTag())
+				return status.Error(codes.InvalidArgument, strings.ToLower(fmt.Sprintf("%s %s", err.Field(), err.ActualTag())))
 			}
 		}
 	}

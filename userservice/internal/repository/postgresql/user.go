@@ -1,46 +1,44 @@
-package mysql
+package postgresql
 
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/situmorangbastian/skyros/userservice/internal/models"
 	"github.com/situmorangbastian/skyros/userservice/internal/repository"
 )
 
-type userMysqlRepo struct {
+type userRepo struct {
 	db *sql.DB
 }
 
 func NewUserRepository(db *sql.DB) repository.UserRepository {
-	return &userMysqlRepo{
+	return &userRepo{
 		db: db,
 	}
 }
 
-func (r *userMysqlRepo) Register(ctx context.Context, user models.User) (models.User, error) {
+func (r *userRepo) Register(ctx context.Context, user models.User) (models.User, error) {
 	timeNow := time.Now()
-
 	user.ID = uuid.New().String()
-
-	query, args, err := sq.Insert("user").
+	userData, _ := json.Marshal(user.Data)
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	query, args, err := psql.Insert("users").
 		Columns(
 			"id",
 			"email",
 			"name",
-			"address",
 			"password",
-			"type",
-			"created_time",
-			"updated_time",
+			"user_data",
+			"created_at",
+			"updated_at",
 		).
-		Values(user.ID, user.Email, user.Name, user.Address, user.Password, user.Type, timeNow, timeNow).ToSql()
+		Values(user.ID, user.Email, user.Name, user.Password, userData, timeNow, timeNow).ToSql()
 	if err != nil {
 		return models.User{}, err
 	}
@@ -49,23 +47,21 @@ func (r *userMysqlRepo) Register(ctx context.Context, user models.User) (models.
 	if err != nil {
 		return models.User{}, err
 	}
-
 	return user, nil
 }
 
-func (r *userMysqlRepo) GetUser(ctx context.Context, identifier string) (models.User, error) {
-	query, args, err := sq.Select(
+func (r *userRepo) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	query, args, err := psql.Select(
 		"id",
-		"name",
 		"email",
+		"name",
 		"password",
-		"address",
-		"type",
+		"user_data",
 	).
-		From("user").
+		From("users").
 		Where(sq.Or{
-			sq.Eq{"email": identifier},
-			sq.Eq{"id": identifier},
+			sq.Eq{"email": email},
 		}).ToSql()
 	if err != nil {
 		return models.User{}, err
@@ -73,32 +69,37 @@ func (r *userMysqlRepo) GetUser(ctx context.Context, identifier string) (models.
 
 	rows := r.db.QueryRowContext(ctx, query, args...)
 
+	var userData []byte
+
 	user := models.User{}
 	err = rows.Scan(
 		&user.ID,
-		&user.Name,
 		&user.Email,
+		&user.Name,
 		&user.Password,
-		&user.Address,
-		&user.Type,
+		&userData,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return models.User{}, status.Error(codes.NotFound, "user not found")
+			return models.User{}, repository.ErrNotFound
 		}
 		return models.User{}, err
 	}
-
+	err = json.Unmarshal(userData, &user.Data)
+	if err != nil {
+		return models.User{}, err
+	}
 	return user, nil
 }
 
-func (r *userMysqlRepo) FetchUsersByIDs(ctx context.Context, ids []string) (map[string]models.User, error) {
-	query, args, err := sq.Select(
+func (r *userRepo) FetchUsersByIDs(ctx context.Context, ids []string) (map[string]models.User, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	query, args, err := psql.Select(
 		"id",
-		"name",
 		"email",
-		"address",
-		"type",
+		"name",
+		"password",
+		"user_data",
 	).
 		From("user").
 		Where(sq.Or{
@@ -117,19 +118,21 @@ func (r *userMysqlRepo) FetchUsersByIDs(ctx context.Context, ids []string) (map[
 	users := map[string]models.User{}
 	for rows.Next() {
 		user := models.User{}
+		var userData []byte
 		err = rows.Scan(
 			&user.ID,
-			&user.Name,
 			&user.Email,
-			&user.Address,
-			&user.Type,
+			&user.Name,
+			&userData,
 		)
 		if err != nil {
 			return map[string]models.User{}, err
 		}
-
+		err = json.Unmarshal(userData, &user.Data)
+		if err != nil {
+			return map[string]models.User{}, err
+		}
 		users[user.ID] = user
 	}
-
 	return users, nil
 }
