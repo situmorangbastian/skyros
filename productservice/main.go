@@ -89,7 +89,7 @@ func main() {
 	}
 
 	wg := sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		listen, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GetInt("GRPC_SERVER_PORT")))
@@ -103,12 +103,16 @@ func main() {
 		}
 	}()
 
-	go func() {
-		log.Info("gRPC-Gateway server listening on ", fmt.Sprintf(":%d", cfg.GetInt("GRPC_GATEWAY_SERVER_PORT")))
-		if err := restServer.ListenAndServe(); err != nil {
-			log.Fatal("Failed to serve gRPC-Gateway: ", err)
-		}
-	}()
+	if cfg.GetBool("ENABLE_GATEWAY_GRPC") {
+		wg.Add(1)
+		go func() {
+			log.Info("gRPC-Gateway server listening on ", fmt.Sprintf(":%d", cfg.GetInt("GRPC_GATEWAY_SERVER_PORT")))
+			if err := restServer.ListenAndServe(); err != nil {
+				log.Fatal("Failed to serve gRPC-Gateway: ", err)
+			}
+		}()
+	}
+
 	wg.Wait()
 
 	// wait for interrupt signal to gracefully shutdown the server with
