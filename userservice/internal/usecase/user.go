@@ -29,8 +29,11 @@ func NewUserUsecase(userRepo repository.UserRepository) UserUsecase {
 }
 
 func (u *userUsecase) Login(ctx context.Context, email, password string) (models.User, error) {
-	user, err := u.userRepo.GetUser(ctx, email)
+	user, err := u.userRepo.GetUserByEmail(ctx, email)
 	if err != nil {
+		if err == repository.ErrNotFound {
+			return models.User{}, status.Error(codes.NotFound, "user not found")
+		}
 		return models.User{}, err
 	}
 
@@ -43,8 +46,8 @@ func (u *userUsecase) Login(ctx context.Context, email, password string) (models
 }
 
 func (u *userUsecase) Register(ctx context.Context, user models.User) (models.User, error) {
-	currentUser, err := u.userRepo.GetUser(ctx, user.Email)
-	if err != nil {
+	currentUser, err := u.userRepo.GetUserByEmail(ctx, user.Email)
+	if err != nil && err != repository.ErrNotFound {
 		return models.User{}, err
 	}
 

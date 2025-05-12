@@ -11,24 +11,28 @@ import (
 	"sync"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/golang-migrate/migrate/source/file"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
-	cfg "github.com/spf13/viper"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/situmorangbastian/skyros/productservice/middleware"
 	userGrpcSvc "github.com/situmorangbastian/skyros/proto/user"
-	grpcHandler "github.com/situmorangbastian/skyros/userservice/api/grpc"
-	"github.com/situmorangbastian/skyros/userservice/api/validators"
-	mysqlRepo "github.com/situmorangbastian/skyros/userservice/internal/repository/mysql"
+	postgreRepo "github.com/situmorangbastian/skyros/userservice/internal/repository/postgresql"
+	"github.com/situmorangbastian/skyros/userservice/internal/service"
 	"github.com/situmorangbastian/skyros/userservice/internal/usecase"
-	"github.com/situmorangbastian/skyros/userservice/middleware"
+	"github.com/situmorangbastian/skyros/userservice/internal/validation"
 )
 
 func main() {
 	log := logrus.New().WithFields(logrus.Fields{"service": "userservice"})
+	cfg := viper.New()
 	cfg.SetConfigFile(".env")
 	cfg.AutomaticEnv()
 	err := cfg.ReadInConfig()
@@ -36,7 +40,7 @@ func main() {
 		log.Fatal("failed read config: ", err)
 	}
 
-	dbConn, err := sql.Open(`mysql`, cfg.GetString("DATABASE_URL"))
+	dbConn, err := sql.Open(`postgres`, cfg.GetString("DATABASE_URL"))
 	if err != nil {
 		log.Fatal("failed database connect: ", err)
 	}
@@ -52,12 +56,14 @@ func main() {
 		}
 	}()
 
-	userRepo := mysqlRepo.NewUserRepository(dbConn)
-	userService := usecase.NewUserUsecase(userRepo)
+	runMigrations(log, cfg.GetString("DATABASE_URL"))
+
+	userRepo := postgreRepo.NewUserRepository(dbConn)
+	userUsecase := usecase.NewUserUsecase(userRepo)
 
 	grpcServer := grpc.NewServer()
-	grpcUserService := grpcHandler.NewUserGrpcServer(userService, cfg.GetString("SECRET_KEY"), validators.NewValidator())
-	userGrpcSvc.RegisterUserServiceServer(grpcServer, grpcUserService)
+	userService := service.NewUserService(userUsecase, cfg.GetString("SECRET_KEY"), validation.NewValidator())
+	userGrpcSvc.RegisterUserServiceServer(grpcServer, userService)
 
 	mux := runtime.NewServeMux(
 		runtime.WithErrorHandler(middleware.ErrRestHandler(log)),
@@ -74,7 +80,7 @@ func main() {
 
 	restServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.GetInt("GRPC_GATEWAY_SERVER_PORT")),
-		Handler: middleware.RestMiddleware(mux),
+		Handler: mux,
 	}
 
 	wg := sync.WaitGroup{}
@@ -95,7 +101,7 @@ func main() {
 	go func() {
 		log.Info("gRPC-Gateway server listening on ", fmt.Sprintf(":%d", cfg.GetInt("GRPC_GATEWAY_SERVER_PORT")))
 		if err := restServer.ListenAndServe(); err != nil {
-			log.Fatal("Failed to serve gRPC-Gateway: ", err)
+			log.Fatal("failed to serve gRPC-Gateway: ", err)
 		}
 	}()
 	wg.Wait()
@@ -112,4 +118,21 @@ func main() {
 		log.Error("failed shutdown gRPC-Gateway")
 	}
 	grpcServer.GracefulStop()
+}
+
+func runMigrations(log *logrus.Entry, connStr string) {
+	m, err := migrate.New(
+		"file://migrations",
+		connStr,
+	)
+	if err != nil {
+		log.Fatal("failed to create migrate instance: ", err)
+	}
+
+	err = m.Up()
+	if err != nil && err != migrate.ErrNoChange {
+		log.Fatal("failed to apply migrations: ", err)
+	}
+
+	log.Info("migrations applied successfull")
 }
