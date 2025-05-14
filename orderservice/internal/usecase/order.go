@@ -4,7 +4,7 @@ package usecase
 import (
 	"context"
 
-	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -25,20 +25,25 @@ type usecase struct {
 	orderRepo     repository.OrderRepository
 	userClient    integration.UserClient
 	productClient integration.ProductClient
+	logger        zerolog.Logger
 }
 
 func NewUsecase(
 	orderRepo repository.OrderRepository,
 	userClient integration.UserClient,
-	productClient integration.ProductClient) OrderUsecase {
+	productClient integration.ProductClient,
+	logger zerolog.Logger) OrderUsecase {
 	return &usecase{
 		orderRepo:     orderRepo,
 		userClient:    userClient,
 		productClient: productClient,
+		logger:        logger,
 	}
 }
 
 func (u *usecase) Store(ctx context.Context, order models.Order) (models.Order, error) {
+	log := u.logger.With().Str("func", "internal.usecase.user.Store").Logger()
+
 	claims, ok := serviceutils.GetUserClaims(ctx)
 	if !ok {
 		return models.Order{}, status.Error(codes.Unauthenticated, "failed get user claims")
@@ -57,7 +62,8 @@ func (u *usecase) Store(ctx context.Context, order models.Order) (models.Order, 
 
 	products, err := u.productClient.FetchByIDs(ctx, productIds)
 	if err != nil {
-		return models.Order{}, errors.Wrap(err, "order.service.store: fetch product")
+		log.Error().Err(err).Msg("failed FetchByIDs")
+		return models.Order{}, status.Error(codes.Internal, "Internal Server Error")
 	}
 
 	for index := range order.Items {
@@ -71,13 +77,16 @@ func (u *usecase) Store(ctx context.Context, order models.Order) (models.Order, 
 
 	result, err := u.orderRepo.Store(ctx, order)
 	if err != nil {
-		return models.Order{}, errors.Wrap(err, "order.service.store: store from repository")
+		log.Error().Err(err).Msg("failed Store")
+		return models.Order{}, status.Error(codes.Internal, "Internal Server Error")
 	}
 
 	return result, nil
 }
 
 func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
+	log := u.logger.With().Str("func", "internal.usecase.user.Get").Logger()
+
 	claims, ok := serviceutils.GetUserClaims(ctx)
 	if !ok {
 		return models.Order{}, status.Error(codes.Unauthenticated, "failed get user claims")
@@ -99,7 +108,8 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
 
 	result, err := u.orderRepo.Fetch(ctx, filter)
 	if err != nil {
-		return models.Order{}, errors.Wrap(err, "order.service.get: fetch from repository")
+		log.Error().Err(err).Msg("failed Fetch")
+		return models.Order{}, status.Error(codes.Internal, "Internal Server Error")
 	}
 
 	if len(result) == 0 {
@@ -108,7 +118,8 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
 
 	users, err := u.userClient.FetchByIDs(ctx, []string{result[0].Seller.ID, result[0].Buyer.ID})
 	if err != nil {
-		return models.Order{}, errors.Wrap(err, "order.service.get: fetch users")
+		log.Error().Err(err).Msg("failed FetchByIDs")
+		return models.Order{}, status.Error(codes.Internal, "Internal Server Error")
 	}
 
 	result[0].Buyer = users[result[0].Buyer.ID]
@@ -123,7 +134,8 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
 
 	products, err := u.productClient.FetchByIDs(ctx, productIds)
 	if err != nil {
-		return models.Order{}, errors.Wrap(err, "order.service.get: fetch product")
+		log.Error().Err(err).Msg("failed FetchByIDs")
+		return models.Order{}, status.Error(codes.Internal, "Internal Server Error")
 	}
 
 	for index, order := range result {
@@ -137,6 +149,8 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
 }
 
 func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Order, error) {
+	log := u.logger.With().Str("func", "internal.usecase.user.Fetch").Logger()
+
 	claims, ok := serviceutils.GetUserClaims(ctx)
 	if !ok {
 		return []models.Order{}, status.Error(codes.Unauthenticated, "failed get user claims")
@@ -153,7 +167,8 @@ func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Ord
 
 	result, err := u.orderRepo.Fetch(ctx, filter)
 	if err != nil {
-		return []models.Order{}, errors.Wrap(err, "order.service.fetch: fetch from repository")
+		log.Error().Err(err).Msg("failed Fetch")
+		return []models.Order{}, status.Error(codes.Internal, "Internal Server Error")
 	}
 
 	userIds := []string{}
@@ -167,12 +182,14 @@ func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Ord
 
 	users, err := u.userClient.FetchByIDs(ctx, userIds)
 	if err != nil {
-		return []models.Order{}, errors.Wrap(err, "order.service.fetch: fetch users")
+		log.Error().Err(err).Msg("failed FetchByIDs")
+		return []models.Order{}, status.Error(codes.Internal, "Internal Server Error")
 	}
 
 	products, err := u.productClient.FetchByIDs(ctx, productIds)
 	if err != nil {
-		return []models.Order{}, errors.Wrap(err, "order.service.fetch: fetch products")
+		log.Error().Err(err).Msg("failed FetchByIDs")
+		return []models.Order{}, status.Error(codes.Internal, "Internal Server Error")
 	}
 
 	for index, order := range result {
@@ -188,6 +205,8 @@ func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Ord
 }
 
 func (u *usecase) PatchStatus(ctx context.Context, ID string, statusOrder int) error {
+	log := u.logger.With().Str("func", "internal.usecase.user.PatchStatus").Logger()
+
 	claims, ok := serviceutils.GetUserClaims(ctx)
 	if !ok {
 		return status.Error(codes.Unauthenticated, "failed get user claims")
@@ -197,5 +216,11 @@ func (u *usecase) PatchStatus(ctx context.Context, ID string, statusOrder int) e
 		return status.Error(codes.NotFound, "Not Found")
 	}
 
-	return u.orderRepo.PatchStatus(ctx, ID, statusOrder)
+	err := u.orderRepo.PatchStatus(ctx, ID, statusOrder)
+	if err != nil {
+		log.Error().Err(err).Msg("failed PatchStatus")
+		return status.Error(codes.Internal, "Internal Server Error")
+	}
+
+	return nil
 }

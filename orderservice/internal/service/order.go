@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/rs/zerolog"
 	"github.com/situmorangbastian/skyros/orderservice/internal/models"
 	"github.com/situmorangbastian/skyros/orderservice/internal/usecase"
 	"github.com/situmorangbastian/skyros/orderservice/internal/validation"
@@ -16,16 +17,20 @@ import (
 type service struct {
 	usecase   usecase.OrderUsecase
 	validator validation.CustomValidator
+	logger    zerolog.Logger
 }
 
-func NewOrderService(usecase usecase.OrderUsecase, validator validation.CustomValidator) orderpb.OrderServiceServer {
+func NewOrderService(usecase usecase.OrderUsecase, validator validation.CustomValidator, logger zerolog.Logger) orderpb.OrderServiceServer {
 	return &service{
 		usecase:   usecase,
 		validator: validator,
+		logger:    logger,
 	}
 }
 
 func (s *service) CreateOrder(ctx context.Context, request *orderpb.CreateOrderRequest) (*orderpb.Order, error) {
+	log := s.logger.With().Str("func", "internal.service.order.CreateOrder").Logger()
+
 	req := models.Order{
 		Description:        request.GetDescription(),
 		DestinationAddress: request.GetDestinationAddreess(),
@@ -51,6 +56,7 @@ func (s *service) CreateOrder(ctx context.Context, request *orderpb.CreateOrderR
 
 	res, err := s.usecase.Store(ctx, req)
 	if err != nil {
+		log.Error().Err(err).Msg("failed Store")
 		return nil, err
 	}
 
@@ -91,8 +97,11 @@ func (s *service) CreateOrder(ctx context.Context, request *orderpb.CreateOrderR
 }
 
 func (s *service) GetOrder(ctx context.Context, request *orderpb.GetOrderRequest) (*orderpb.Order, error) {
+	log := s.logger.With().Str("func", "internal.service.order.GetOrder").Logger()
+
 	res, err := s.usecase.Get(ctx, request.GetOrderId())
 	if err != nil {
+		log.Error().Err(err).Msg("failed Get")
 		return nil, err
 	}
 
@@ -133,6 +142,8 @@ func (s *service) GetOrder(ctx context.Context, request *orderpb.GetOrderRequest
 }
 
 func (s *service) GetOrders(ctx context.Context, request *orderpb.GetOrdersRequest) (*orderpb.GetOrdersResponse, error) {
+	log := s.logger.With().Str("func", "internal.service.order.GetOrders").Logger()
+
 	limit := request.GetLimit()
 	if limit == 0 {
 		limit = 20
@@ -144,6 +155,7 @@ func (s *service) GetOrders(ctx context.Context, request *orderpb.GetOrdersReque
 		Search:   request.GetSearch(),
 	})
 	if err != nil {
+		log.Error().Err(err).Msg("failed Fetch")
 		return nil, err
 	}
 
