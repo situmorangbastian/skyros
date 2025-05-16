@@ -2,9 +2,13 @@ FROM golang:1.24.2-alpine AS build
 
 WORKDIR /skyros-gateway-service
 
-COPY gatewayservice .
+COPY ./gatewayservice ./gatewayservice
 
-RUN go mod vendor
+COPY ./proto ./proto
+
+COPY go.mod go.sum ./
+
+RUN go mod tidy
 
 RUN CGO_ENABLED=0 go build -o skyros-gateway-service github.com/situmorangbastian/skyros/gatewayservice
 
@@ -13,8 +17,6 @@ FROM gcr.io/distroless/static
 WORKDIR /skyros-gateway-service
 
 COPY --from=build /skyros-gateway-service /app
-
-COPY --from=build /skyros-gateway-service/config.toml .
 
 EXPOSE 4000
 

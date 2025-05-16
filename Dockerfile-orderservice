@@ -4,20 +4,24 @@ WORKDIR /skyros-order-service
 
 COPY ./orderservice ./orderservice
 
-COPY ./skyrosgrpc ./skyrosgrpc
+COPY ./proto ./proto
+
+COPY ./serviceutils ./serviceutils
 
 COPY go.mod go.sum ./
 
 RUN go mod tidy
 
-RUN CGO_ENABLED=0 go build -o skyros-order-service github.com/situmorangbastian/skyros/orderservice/cmd
+RUN CGO_ENABLED=0 go build -o skyros-order-service github.com/situmorangbastian/skyros/orderservice
 
 FROM gcr.io/distroless/static
 
-WORKDIR /skyros-order-service
+WORKDIR /app
 
-COPY --from=build /skyros-order-service /app
+COPY --from=build /skyros-order-service/orderservice/migrations migrations
 
-EXPOSE 4002
+COPY --from=build /skyros-order-service .
+
+EXPOSE 4033
 
 CMD ["/app/skyros-order-service"]
