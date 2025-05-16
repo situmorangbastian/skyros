@@ -40,11 +40,12 @@ func main() {
 
 	cfg := viper.New()
 	cfg.SetConfigFile(".env")
-	cfg.AutomaticEnv()
-	err := cfg.ReadInConfig()
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed read config")
+	if err := cfg.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			log.Fatal().Err(err).Msg("failed read config")
+		}
 	}
+	cfg.AutomaticEnv()
 
 	if cfg.GetString("APP_ENV") == "development" {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
