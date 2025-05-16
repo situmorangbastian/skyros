@@ -4,7 +4,7 @@ WORKDIR /skyros-user-service
 
 COPY ./userservice ./userservice
 
-COPY ./skyrosgrpc ./skyrosgrpc
+COPY ./proto ./proto
 
 COPY go.mod go.sum ./
 
@@ -14,10 +14,12 @@ RUN CGO_ENABLED=0 go build -o skyros-user-service github.com/situmorangbastian/s
 
 FROM gcr.io/distroless/static
 
-WORKDIR /skyros-user-service
+WORKDIR /app
 
-COPY --from=build /skyros-user-service /app
+COPY --from=build /skyros-user-service/userservice/migrations migrations
 
-EXPOSE 4001
+COPY --from=build /skyros-user-service .
+
+EXPOSE 4011
 
 CMD ["/app/skyros-user-service"]

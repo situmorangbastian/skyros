@@ -1,27 +1,30 @@
-version: "3"
-
 services:
-  skyros.mysql:
-    image: mysql:5.7
+  skyros.postgres:
+    image: postgres:16
     platform: linux/x86_64
-    container_name: "skyros.mysql.database"
+    container_name: "skyros.postgres.database"
     restart: always
-    command: --default-authentication-plugin=mysql_native_password
     environment:
-      MYSQL_ROOT_PASSWORD: my-secret-pw
+      POSTGRES_PASSWORD: my-secret-pw
+      POSTGRES_USER: root
     ports:
-      - "3306:3306"
+      - "5432:5432"
     expose:
-      - "3306"
+      - "5432"
     networks:
       - default
     volumes:
-      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
   skyros.gatewayservice:
     image: skyros-gateway-service:latest
     container_name: skyros.gatewayservice.svc
     command: /app/skyros-gateway-service
+    environment:
+      - PORT=4000
+      - USER_SERVICE_GRPC=skyros.userservice.svc:4011
+      - PRODUCT_SERVICE_GRPC=skyros.productservice.svc:4022
+      - ORDER_SERVICE_GRPC=skyros.orderservice.svc:4033
     ports:
       - "4000:4000"
     networks:
@@ -35,16 +38,16 @@ services:
     container_name: skyros.userservice.svc
     command: /app/skyros-user-service
     ports:
-      - "4001:4001"
+      - "4011:4011"
     restart: always
     environment:
-      - DATABASE_URL=root:my-secret-pw@tcp(skyros.mysql.database:3306)/userservice?charset=utf8mb4&parseTime=true
+      - DATABASE_URL=postgresql://root:my-secret-pw@skyros.postgres.database:5432/userservice?sslmode=disable&connect_timeout=30000
       - SECRET_KEY=userservice-secret-key
       - GRPC_SERVER_PORT=4011
       - GRPC_SERVICE_ENDPOINT=skyros.userservice.svc:4011
       - GRPC_GATEWAY_SERVER_PORT=4001
-    depends_on:
-      - skyros.mysql
+      - ENABLE_GATEWAY_GRPC=false
+      - APP_ENV=development
     networks:
       - default
     build:
@@ -56,18 +59,17 @@ services:
     container_name: skyros.productservice.svc
     command: /app/skyros-product-service
     ports:
-      - "4002:4002"
+      - "4022:4022"
     restart: always
     environment:
-      - DATABASE_URL=root:my-secret-pw@tcp(skyros.mysql.database:3306)/productservice?charset=utf8mb4&parseTime=true
+      - DATABASE_URL=postgresql://root:my-secret-pw@skyros.postgres.database:5432/productservice?sslmode=disable&connect_timeout=30000
       - SECRET_KEY=userservice-secret-key
       - GRPC_SERVER_PORT=4022
       - GRPC_SERVICE_ENDPOINT=skyros.productservice.svc:4022
       - GRPC_GATEWAY_SERVER_PORT=4002
       - USER_SERVICE_GRPC=skyros.userservice.svc:4011
-    depends_on:
-      - skyros.mysql
-      - skyros.userservice
+      - ENABLE_GATEWAY_GRPC=false
+      - APP_ENV=development
     networks:
       - default
     build:
@@ -79,22 +81,18 @@ services:
     container_name: skyros.orderservice.svc
     command: /app/skyros-order-service
     ports:
-      - "4003:4003"
+      - "4033:4033"
     restart: always
     environment:
-      - MYSQL_HOST=skyros.mysql.database
-      - MYSQL_PORT=3306
-      - MYSQL_USER=root
-      - MYSQL_PASS=my-secret-pw
-      - MYSQL_DBNAME=orderservice
+      - DATABASE_URL=postgresql://root:my-secret-pw@skyros.postgres.database:5432/orderservice?sslmode=disable&connect_timeout=30000
       - SECRET_KEY=userservice-secret-key
-      - SERVER_ADDRESS=:4003
+      - GRPC_SERVER_PORT=4033
+      - GRPC_SERVICE_ENDPOINT=skyros.orderservice.svc:4033
+      - GRPC_GATEWAY_SERVER_PORT=4003
       - USER_SERVICE_GRPC=skyros.userservice.svc:4011
       - PRODUCT_SERVICE_GRPC=skyros.productservice.svc:4022
-    depends_on:
-      - skyros.mysql
-      - skyros.userservice
-      - skyros.productservice
+      - ENABLE_GATEWAY_GRPC=false
+      - APP_ENV=development
     networks:
       - default
     build:

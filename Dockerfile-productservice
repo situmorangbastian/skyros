@@ -4,7 +4,9 @@ WORKDIR /skyros-product-service
 
 COPY ./productservice ./productservice
 
-COPY ./skyrosgrpc ./skyrosgrpc
+COPY ./proto ./proto
+
+COPY ./serviceutils ./serviceutils
 
 COPY go.mod go.sum ./
 
@@ -14,10 +16,12 @@ RUN CGO_ENABLED=0 go build -o skyros-product-service github.com/situmorangbastia
 
 FROM gcr.io/distroless/static
 
-WORKDIR /skyros-product-service
+WORKDIR /app
 
-COPY --from=build /skyros-product-service /app
+COPY --from=build /skyros-product-service/productservice/migrations migrations
 
-EXPOSE 4002
+COPY --from=build /skyros-product-service .
+
+EXPOSE 4022
 
 CMD ["/app/skyros-product-service"]
