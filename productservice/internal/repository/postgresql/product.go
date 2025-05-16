@@ -1,4 +1,4 @@
-package mysql
+package postgresql
 
 import (
 	"context"
@@ -22,19 +22,20 @@ type productRepository struct {
 }
 
 func NewProductRepository(db *sql.DB) repository.ProductRepository {
-	return productRepository{
+	return &productRepository{
 		db: db,
 	}
 }
 
-func (r productRepository) Store(ctx context.Context, product models.Product) (models.Product, error) {
+func (r *productRepository) Store(ctx context.Context, product models.Product) (models.Product, error) {
 	timeNow := time.Now()
 
 	product.ID = uuid.New().String()
 	product.CreatedTime = timeNow
 	product.UpdatedTime = timeNow
 
-	query, args, err := sq.Insert("product").
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	query, args, err := psql.Insert("product").
 		Columns("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
 		Values(product.ID, product.Name, product.Description, product.Price, product.Seller.ID, product.CreatedTime, product.UpdatedTime).ToSql()
 	if err != nil {
@@ -49,8 +50,9 @@ func (r productRepository) Store(ctx context.Context, product models.Product) (m
 	return product, nil
 }
 
-func (r productRepository) Get(ctx context.Context, ID string) (models.Product, error) {
-	query, args, err := sq.Select("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
+func (r *productRepository) Get(ctx context.Context, ID string) (models.Product, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	query, args, err := psql.Select("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
 		From("product").
 		Where(sq.Eq{"id": ID}).ToSql()
 	if err != nil {
@@ -79,8 +81,9 @@ func (r productRepository) Get(ctx context.Context, ID string) (models.Product, 
 	return product, nil
 }
 
-func (r productRepository) Fetch(ctx context.Context, filter models.ProductFilter) ([]models.Product, error) {
-	qBuilder := sq.Select("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
+func (r *productRepository) Fetch(ctx context.Context, filter models.ProductFilter) ([]models.Product, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	qBuilder := psql.Select("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
 		From("product").
 		Where("deleted_time IS NULL").
 		OrderBy("created_time DESC")
@@ -134,8 +137,9 @@ func (r productRepository) Fetch(ctx context.Context, filter models.ProductFilte
 	return products, nil
 }
 
-func (r productRepository) FetchByIds(ctx context.Context, ids []string) (map[string]models.Product, error) {
-	qBuilder := sq.Select("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
+func (r *productRepository) FetchByIds(ctx context.Context, ids []string) (map[string]models.Product, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	qBuilder := psql.Select("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
 		From("product").
 		Where(sq.Eq{"id": ids})
 

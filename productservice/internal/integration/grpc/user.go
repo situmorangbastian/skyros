@@ -7,10 +7,10 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/situmorangbastian/skyros/productservice/internal/helpers"
 	"github.com/situmorangbastian/skyros/productservice/internal/integration"
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
 	userpb "github.com/situmorangbastian/skyros/proto/user"
+	"github.com/situmorangbastian/skyros/serviceutils"
 )
 
 type userClient struct {
@@ -42,7 +42,7 @@ func (s *userClient) FetchByIDs(ctx context.Context, ids []string) (map[string]m
 	if len(r.GetUsers()) > 0 {
 		for _, userResponse := range r.GetUsers() {
 			user := models.User{}
-			if err = helpers.CopyStructValue(userResponse, &user); err != nil {
+			if err = serviceutils.CopyStructValue(userResponse, &user); err != nil {
 				return map[string]models.User{}, err
 			}
 			result[user.ID] = user
