@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	userpb "github.com/situmorangbastian/skyros/proto/user"
+	"github.com/situmorangbastian/skyros/serviceutils"
 	"github.com/situmorangbastian/skyros/userservice/internal/repository/postgresql"
 	"github.com/situmorangbastian/skyros/userservice/internal/service"
 	"github.com/situmorangbastian/skyros/userservice/internal/usecase"
@@ -91,7 +92,9 @@ func main() {
 	userService := service.NewUserService(userUsecase, cfg.GetString("SECRET_KEY"), validation.NewValidator(), log.Logger)
 	userpb.RegisterUserServiceServer(grpcServer, userService)
 
-	mux := runtime.NewServeMux()
+	mux := runtime.NewServeMux(
+		runtime.WithErrorHandler(serviceutils.NewRestErrorHandler()),
+	)
 	err = userpb.RegisterUserServiceHandlerFromEndpoint(
 		context.Background(),
 		mux,
