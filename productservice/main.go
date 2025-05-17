@@ -105,7 +105,9 @@ func main() {
 	productService := service.NewProductService(productUsecase, validation.NewValidator())
 	productpb.RegisterProductServiceServer(grpcServer, productService)
 
-	mux := runtime.NewServeMux()
+	mux := runtime.NewServeMux(
+		runtime.WithErrorHandler(serviceutils.NewRestErrorHandler()),
+	)
 	err = productpb.RegisterProductServiceHandlerFromEndpoint(
 		context.Background(),
 		mux,
@@ -145,7 +147,6 @@ func main() {
 			}
 		}()
 	}
-
 	wg.Wait()
 
 	// wait for interrupt signal to gracefully shutdown the server with

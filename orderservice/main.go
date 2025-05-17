@@ -113,6 +113,7 @@ func main() {
 				UseProtoNames: true,
 			},
 		}),
+		runtime.WithErrorHandler(serviceutils.NewRestErrorHandler()),
 	)
 	err = orderpb.RegisterOrderServiceHandlerFromEndpoint(
 		context.Background(),
@@ -131,7 +132,6 @@ func main() {
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-
 	go func() {
 		defer wg.Done()
 		listen, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GetInt("GRPC_SERVER_PORT")))
@@ -154,7 +154,6 @@ func main() {
 			}
 		}()
 	}
-
 	wg.Wait()
 
 	// wait for interrupt signal to gracefully shutdown the server with
