@@ -5,8 +5,6 @@ This project demonstrates a Go-based microservices architecture using **gRPC** a
 ## Table of Contents
 
 - [Project Structure](#project-structure)
-- [Features](#features)
-- [Technologies Used](#technologies-used)
 - [Documentation](#documentation)
 - [Getting Started](#getting-started)
 
@@ -14,29 +12,13 @@ This project demonstrates a Go-based microservices architecture using **gRPC** a
 
 ```bash
 ├── docs                        # API Docs
-├── postgres                    # Init Database for microservice
-├── orderservice                # Service for handle order
-├── productservice              # Service for handle product
 ├── gatewayservice              # Service for API Gateway
-├── skyrosgrpc                  # Package for Grpc Library
-├── userservice                 # Service for handle user
-├── docker-compose.yml          # Docker compose file for all service
-├── Dockerfile-orderservice     # Docker file for orderservice
-├── Dockerfile-productservice   # Docker file for productservice
-└── Dockerfile-userservice      # Docker file for userservice
+├── orderservice                # Service for handle order
+├── postgres                    # Init Database for microservice
+├── productservice              # Service for handle product
+├── proto                       # Package for Grpc Library
+└── userservice                 # Service for handle user
 ```
-
-## Features
-
-- **gRPC Microservices**: Each service is defined using protobuf and communicates via gRPC.
-- **Modular Structure**: Separation of concerns with independent REST and gRPC entry points.
-
-## Technologies Used
-
-- [Go](https://golang.org/)
-- [gRPC](https://grpc.io/)
-- [Protobuf](https://developers.google.com/protocol-buffers) (Service Definitions)
-- [Mockery](https://github.com/vektra/mockery) (Mocks for Unit Testing)
 
 ## Documentation
 
