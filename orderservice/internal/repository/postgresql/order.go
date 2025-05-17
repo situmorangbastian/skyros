@@ -2,12 +2,12 @@ package postgresql
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
@@ -16,17 +16,17 @@ import (
 )
 
 type orderRepository struct {
-	db *sql.DB
+	dbpool *pgxpool.Pool
 }
 
-func NewOrderRepository(db *sql.DB) repository.OrderRepository {
+func NewOrderRepository(dbpool *pgxpool.Pool) repository.OrderRepository {
 	return &orderRepository{
-		db: db,
+		dbpool: dbpool,
 	}
 }
 
 func (r *orderRepository) Store(ctx context.Context, order models.Order) (models.Order, error) {
-	tx, err := r.db.BeginTx(ctx, nil)
+	tx, err := r.dbpool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return models.Order{}, err
 	}
@@ -66,17 +66,7 @@ func (r *orderRepository) Store(ctx context.Context, order models.Order) (models
 		return models.Order{}, err
 	}
 
-	stmt, err := tx.PrepareContext(ctx, query)
-	if err != nil {
-		return models.Order{}, err
-	}
-	defer func() {
-		if err := stmt.Close(); err != nil {
-			log.Error(errors.Wrap(err, "close prepared statement"))
-		}
-	}()
-
-	_, err = stmt.ExecContext(ctx, args...)
+	_, err = tx.Exec(ctx, query, args...)
 	if err != nil {
 		return models.Order{}, err
 	}
@@ -104,23 +94,13 @@ func (r *orderRepository) Store(ctx context.Context, order models.Order) (models
 			return models.Order{}, err
 		}
 
-		stmt, err := tx.PrepareContext(ctx, query)
-		if err != nil {
-			return models.Order{}, err
-		}
-		defer func() {
-			if err := stmt.Close(); err != nil {
-				log.Error(errors.Wrap(err, "close prepared statement"))
-			}
-		}()
-
-		_, err = stmt.ExecContext(ctx, args...)
+		_, err = tx.Exec(ctx, query, args...)
 		if err != nil {
 			return models.Order{}, err
 		}
 	}
 
-	if err = tx.Commit(); err != nil {
+	if err = tx.Commit(ctx); err != nil {
 		return models.Order{}, err
 	}
 
@@ -161,7 +141,7 @@ func (r *orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]mo
 		return []models.Order{}, err
 	}
 
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	rows, err := r.dbpool.Query(ctx, query, args...)
 	if err != nil {
 		return []models.Order{}, err
 	}
@@ -207,7 +187,7 @@ func (r *orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]mo
 				return err
 			}
 
-			rows, err := r.db.QueryContext(ctx, query, args...)
+			rows, err := r.dbpool.Query(ctx, query, args...)
 			if err != nil {
 				return err
 			}
@@ -256,17 +236,12 @@ func (r *orderRepository) PatchStatus(ctx context.Context, ID string, status int
 		return err
 	}
 
-	result, err := r.db.ExecContext(ctx, query, args...)
+	result, err := r.dbpool.Exec(ctx, query, args...)
 	if err != nil {
 		return err
 	}
 
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if affected == 0 {
+	if result.RowsAffected() == 0 {
 		return repository.ErrNotFound
 	}
 

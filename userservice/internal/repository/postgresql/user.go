@@ -8,18 +8,19 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/situmorangbastian/skyros/userservice/internal/models"
 	"github.com/situmorangbastian/skyros/userservice/internal/repository"
 )
 
 type userRepo struct {
-	db *sql.DB
+	dbpool *pgxpool.Pool
 }
 
-func NewUserRepository(db *sql.DB) repository.UserRepository {
+func NewUserRepository(dbpool *pgxpool.Pool) repository.UserRepository {
 	return &userRepo{
-		db: db,
+		dbpool: dbpool,
 	}
 }
 
@@ -43,7 +44,7 @@ func (r *userRepo) Register(ctx context.Context, user models.User) (models.User,
 		return models.User{}, err
 	}
 
-	_, err = r.db.ExecContext(ctx, query, args...)
+	_, err = r.dbpool.Exec(ctx, query, args...)
 	if err != nil {
 		return models.User{}, err
 	}
@@ -67,7 +68,7 @@ func (r *userRepo) GetUserByEmail(ctx context.Context, email string) (models.Use
 		return models.User{}, err
 	}
 
-	rows := r.db.QueryRowContext(ctx, query, args...)
+	rows := r.dbpool.QueryRow(ctx, query, args...)
 
 	var userData []byte
 
@@ -109,7 +110,7 @@ func (r *userRepo) FetchUsersByIDs(ctx context.Context, ids []string) (map[strin
 		return map[string]models.User{}, err
 	}
 
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	rows, err := r.dbpool.Query(ctx, query, args...)
 	if err != nil {
 		return map[string]models.User{}, err
 	}

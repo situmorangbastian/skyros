@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net"
 	"net/http"
@@ -16,6 +15,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -62,21 +62,19 @@ func main() {
 			Logger()
 	}
 
-	dbConn, err := sql.Open(`postgres`, cfg.GetString("DATABASE_URL"))
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	dbpool, err := pgxpool.New(ctx, cfg.GetString("DATABASE_URL"))
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed connect database")
 	}
+	defer dbpool.Close()
 
-	err = dbConn.Ping()
+	err = dbpool.Ping(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed ping database")
 	}
-	defer func() {
-		err := dbConn.Close()
-		if err != nil {
-			log.Fatal().Err(err).Msg("failed close connection database")
-		}
-	}()
 
 	err = runMigrations(cfg.GetString("DATABASE_URL"))
 	if err != nil {
@@ -85,7 +83,7 @@ func main() {
 
 	log.Info().Msg("run migrations successfully")
 
-	userRepo := postgresql.NewUserRepository(dbConn)
+	userRepo := postgresql.NewUserRepository(dbpool)
 	userUsecase := usecase.NewUserUsecase(userRepo, log.Logger)
 
 	grpcServer := grpc.NewServer()
@@ -142,7 +140,7 @@ func main() {
 	signal.Notify(quit, os.Interrupt)
 	<-quit
 	log.Info().Msg("shutting down servers...")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := restServer.Shutdown(ctx); err != nil {
 		log.Error().Err(err).Msg("failed shutdown gRPC-Gatewat")

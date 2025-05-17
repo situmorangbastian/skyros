@@ -10,6 +10,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -18,12 +19,12 @@ import (
 )
 
 type productRepository struct {
-	db *sql.DB
+	dbpool *pgxpool.Pool
 }
 
-func NewProductRepository(db *sql.DB) repository.ProductRepository {
+func NewProductRepository(dbpool *pgxpool.Pool) repository.ProductRepository {
 	return &productRepository{
-		db: db,
+		dbpool: dbpool,
 	}
 }
 
@@ -42,7 +43,7 @@ func (r *productRepository) Store(ctx context.Context, product models.Product) (
 		return models.Product{}, err
 	}
 
-	_, err = r.db.ExecContext(ctx, query, args...)
+	_, err = r.dbpool.Exec(ctx, query, args...)
 	if err != nil {
 		return models.Product{}, err
 	}
@@ -59,8 +60,7 @@ func (r *productRepository) Get(ctx context.Context, ID string) (models.Product,
 		return models.Product{}, err
 	}
 
-	rows := r.db.QueryRowContext(ctx, query, args...)
-
+	rows := r.dbpool.QueryRow(ctx, query, args...)
 	product := models.Product{}
 	err = rows.Scan(
 		&product.ID,
@@ -110,7 +110,7 @@ func (r *productRepository) Fetch(ctx context.Context, filter models.ProductFilt
 		return []models.Product{}, err
 	}
 
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	rows, err := r.dbpool.Query(ctx, query, args...)
 	if err != nil {
 		return []models.Product{}, err
 	}
@@ -148,7 +148,7 @@ func (r *productRepository) FetchByIds(ctx context.Context, ids []string) (map[s
 		return map[string]models.Product{}, err
 	}
 
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	rows, err := r.dbpool.Query(ctx, query, args...)
 	if err != nil {
 		return map[string]models.Product{}, err
 	}
