@@ -14,7 +14,7 @@ This project demonstrates a Go-based microservices architecture using **gRPC** a
 
 ```bash
 ├── docs                        # API Docs
-├── init                        # Init Migration for Database
+├── postgres                    # Init Database for microservice
 ├── orderservice                # Service for handle order
 ├── productservice              # Service for handle product
 ├── gatewayservice              # Service for API Gateway
@@ -30,24 +30,20 @@ This project demonstrates a Go-based microservices architecture using **gRPC** a
 
 - **gRPC Microservices**: Each service is defined using protobuf and communicates via gRPC.
 - **Modular Structure**: Separation of concerns with independent REST and gRPC entry points.
-- **Custom Middleware**: Custom Echo middleware for request handling.
-- **Unit Testing**: Mocks and golden files for testing services and APIs.
 
 ## Technologies Used
 
 - [Go](https://golang.org/)
 - [gRPC](https://grpc.io/)
-- [Echo](https://echo.labstack.com/) (HTTP Framework for REST)
 - [Protobuf](https://developers.google.com/protocol-buffers) (Service Definitions)
 - [Mockery](https://github.com/vektra/mockery) (Mocks for Unit Testing)
 
 ## Documentation
 
-Documentation using swagger
-
-Go to `docs` folder, and run this
+Documentation using ReDoc
 
 ```bash
+cd docs
 go run main.go
 ```
 
@@ -65,33 +61,9 @@ Using CLI version of <https://github.com/golang-migrate/migrate>
 
 ### Running
 
-Make sure to set the .env file (see: .env.example).
-
 To start and stop the Services, run:
 
 ```bash
 make service-up
 make service-down
-```
-
-Run migration.
-
-```bash
-make migrate-up
-```
-
-### Dummy User
-
-User Seller
-
-```bash
-"email": "user-seller@example.com",
-"password": "password"
-```
-
-User Buyer
-
-```bash
-"email": "user-buyer@example.com",
-"password": "password"
 ```
