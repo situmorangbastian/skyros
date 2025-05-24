@@ -16,6 +16,7 @@ import (
 	orderpb "github.com/situmorangbastian/skyros/proto/order"
 	productpb "github.com/situmorangbastian/skyros/proto/product"
 	userpb "github.com/situmorangbastian/skyros/proto/user"
+	"github.com/situmorangbastian/skyros/serviceutils"
 )
 
 func main() {
@@ -39,7 +40,9 @@ func main() {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	mux := runtime.NewServeMux()
+	mux := runtime.NewServeMux(
+		runtime.WithErrorHandler(serviceutils.NewRestErrorHandler()),
+	)
 
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
