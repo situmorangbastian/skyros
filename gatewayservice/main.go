@@ -31,10 +31,11 @@ func main() {
 	cfg.SetConfigFile(".env")
 	if err := cfg.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			log.Fatal().Err(err).Msg("failed read config")
+			log.Error().Err(err).Msg("failed read config")
+			log.Info().Msg("configure using automatic env")
+			cfg.AutomaticEnv()
 		}
 	}
-	cfg.AutomaticEnv()
 
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
