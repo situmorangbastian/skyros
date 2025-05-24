@@ -6,6 +6,8 @@ COPY ./userservice ./userservice
 
 COPY ./proto ./proto
 
+COPY ./serviceutils ./serviceutils
+
 COPY go.mod go.sum ./
 
 RUN go mod tidy
