@@ -11,7 +11,7 @@ import (
 	"github.com/situmorangbastian/skyros/orderservice/internal/integration"
 	"github.com/situmorangbastian/skyros/orderservice/internal/models"
 	"github.com/situmorangbastian/skyros/orderservice/internal/repository"
-	"github.com/situmorangbastian/skyros/serviceutils"
+	"github.com/situmorangbastian/skyros/serviceutils/auth"
 )
 
 type OrderUsecase interface {
@@ -23,14 +23,14 @@ type OrderUsecase interface {
 
 type usecase struct {
 	orderRepo     repository.OrderRepository
-	userClient    integration.UserClient
+	userClient    auth.UserClient
 	productClient integration.ProductClient
 	logger        zerolog.Logger
 }
 
 func NewUsecase(
 	orderRepo repository.OrderRepository,
-	userClient integration.UserClient,
+	userClient auth.UserClient,
 	productClient integration.ProductClient,
 	logger zerolog.Logger) OrderUsecase {
 	return &usecase{
@@ -44,16 +44,16 @@ func NewUsecase(
 func (u *usecase) Store(ctx context.Context, order models.Order) (models.Order, error) {
 	log := u.logger.With().Str("func", "internal.usecase.user.Store").Logger()
 
-	claims, ok := serviceutils.GetUserClaims(ctx)
-	if !ok {
-		return models.Order{}, status.Error(codes.Unauthenticated, "failed get user claims")
+	user, err := auth.GetUserClaims(ctx)
+	if err != nil {
+		return models.Order{}, err
 	}
 
-	if claims["type"].(string) != models.UserBuyerType {
+	if user.Type != auth.UserBuyerType {
 		return models.Order{}, status.Error(codes.NotFound, "Not Found")
 	}
 
-	order.Buyer.ID = claims["id"].(string)
+	order.Buyer.ID = user.ID
 	order.TotalPrice = 0
 	productIds := []string{}
 	for _, item := range order.Items {
@@ -87,9 +87,9 @@ func (u *usecase) Store(ctx context.Context, order models.Order) (models.Order, 
 func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
 	log := u.logger.With().Str("func", "internal.usecase.user.Get").Logger()
 
-	claims, ok := serviceutils.GetUserClaims(ctx)
-	if !ok {
-		return models.Order{}, status.Error(codes.Unauthenticated, "failed get user claims")
+	user, err := auth.GetUserClaims(ctx)
+	if err != nil {
+		return models.Order{}, err
 	}
 
 	filter := models.Filter{
@@ -97,11 +97,11 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
 		PageSize: 20,
 	}
 
-	switch claims["type"].(string) {
-	case models.UserBuyerType:
-		filter.BuyerID = claims["id"].(string)
-	case models.UserSellerType:
-		filter.SellerID = claims["id"].(string)
+	switch user.Type {
+	case auth.UserBuyerType:
+		filter.BuyerID = user.ID
+	case auth.UserSellerType:
+		filter.SellerID = user.ID
 	default:
 		return models.Order{}, status.Error(codes.NotFound, "Not Found")
 	}
@@ -151,16 +151,16 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
 func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Order, error) {
 	log := u.logger.With().Str("func", "internal.usecase.user.Fetch").Logger()
 
-	claims, ok := serviceutils.GetUserClaims(ctx)
-	if !ok {
-		return []models.Order{}, status.Error(codes.Unauthenticated, "failed get user claims")
+	user, err := auth.GetUserClaims(ctx)
+	if err != nil {
+		return []models.Order{}, err
 	}
 
-	switch claims["type"].(string) {
-	case models.UserBuyerType:
-		filter.BuyerID = claims["id"].(string)
-	case models.UserSellerType:
-		filter.SellerID = claims["id"].(string)
+	switch user.Type {
+	case auth.UserBuyerType:
+		filter.BuyerID = user.ID
+	case auth.UserSellerType:
+		filter.SellerID = user.ID
 	default:
 		return []models.Order{}, status.Error(codes.NotFound, "Not Found")
 	}
@@ -207,16 +207,16 @@ func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Ord
 func (u *usecase) PatchStatus(ctx context.Context, ID string, statusOrder int) error {
 	log := u.logger.With().Str("func", "internal.usecase.user.PatchStatus").Logger()
 
-	claims, ok := serviceutils.GetUserClaims(ctx)
-	if !ok {
-		return status.Error(codes.Unauthenticated, "failed get user claims")
+	user, err := auth.GetUserClaims(ctx)
+	if err != nil {
+		return err
 	}
 
-	if claims["type"].(string) != models.UserSellerType {
+	if user.Type != auth.UserSellerType {
 		return status.Error(codes.NotFound, "Not Found")
 	}
 
-	err := u.orderRepo.PatchStatus(ctx, ID, statusOrder)
+	err = u.orderRepo.PatchStatus(ctx, ID, statusOrder)
 	if err != nil {
 		log.Error().Err(err).Msg("failed PatchStatus")
 		return status.Error(codes.Internal, "Internal Server Error")

@@ -30,6 +30,7 @@ import (
 	"github.com/situmorangbastian/skyros/productservice/internal/validation"
 	productpb "github.com/situmorangbastian/skyros/proto/product"
 	"github.com/situmorangbastian/skyros/serviceutils"
+	"github.com/situmorangbastian/skyros/serviceutils/auth"
 )
 
 func main() {
@@ -99,7 +100,7 @@ func main() {
 	productUsecase := usecase.NewProductUsecase(productRepo, usrIntgClient)
 
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(serviceutils.AuthInterceptor(cfg.GetString("SECRET_KEY"))),
+		grpc.UnaryInterceptor(auth.AuthInterceptor(cfg.GetString("SECRET_KEY"), usrIntgClient)),
 	)
 	productService := service.NewProductService(productUsecase, validation.NewValidator())
 	productpb.RegisterProductServiceServer(grpcServer, productService)

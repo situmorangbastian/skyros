@@ -1,10 +1,13 @@
-package models
+package auth
 
-import "encoding/json"
+import (
+	"context"
+	"encoding/json"
+)
 
 const (
-	UserSellerType = "seller"
-	UserBuyerType  = "buyer"
+	UserSellerType string = "seller"
+	UserBuyerType         = "buyer"
 )
 
 type User struct {
@@ -25,4 +28,8 @@ func (u User) MarshalJSON() ([]byte, error) {
 		Name:    u.Name,
 		Address: u.Address,
 	})
+}
+
+type UserClient interface {
+	FetchByIDs(ctx context.Context, ids []string) (map[string]User, error)
 }

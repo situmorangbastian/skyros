@@ -159,10 +159,6 @@ func generateToken(user models.User, secretKey string, log zerolog.Logger) (stri
 
 	claims := token.Claims.(jwt.MapClaims)
 	claims["id"] = user.ID
-	claims["name"] = user.Name
-	claims["email"] = user.Email
-	claims["address"] = user.Data.Address
-	claims["type"] = user.Data.Type
 	claims["exp"] = time.Now().Add(time.Hour * 1).Unix()
 
 	accessToken, err := token.SignedString([]byte(secretKey))
