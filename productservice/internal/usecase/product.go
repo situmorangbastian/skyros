@@ -7,10 +7,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/situmorangbastian/skyros/productservice/internal/integration"
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
 	"github.com/situmorangbastian/skyros/productservice/internal/repository"
-	"github.com/situmorangbastian/skyros/serviceutils"
+	"github.com/situmorangbastian/skyros/serviceutils/auth"
 )
 
 type ProductUsecase interface {
@@ -22,10 +21,10 @@ type ProductUsecase interface {
 
 type usecase struct {
 	productRepo repository.ProductRepository
-	usrClient   integration.UserClient
+	usrClient   auth.UserClient
 }
 
-func NewProductUsecase(productRepo repository.ProductRepository, usrClient integration.UserClient) ProductUsecase {
+func NewProductUsecase(productRepo repository.ProductRepository, usrClient auth.UserClient) ProductUsecase {
 	return &usecase{
 		productRepo: productRepo,
 		usrClient:   usrClient,
@@ -33,17 +32,16 @@ func NewProductUsecase(productRepo repository.ProductRepository, usrClient integ
 }
 
 func (u *usecase) Store(ctx context.Context, product models.Product) (models.Product, error) {
-	claims, ok := serviceutils.GetUserClaims(ctx)
-	if !ok {
-		return models.Product{}, status.Error(codes.Unauthenticated, "failed get user claims")
+	user, err := auth.GetUserClaims(ctx)
+	if err != nil {
+		return models.Product{}, err
 	}
 
-	if claims["type"].(string) != models.UserSellerType {
-		return models.Product{}, status.Error(codes.NotFound, "Not Found")
+	if user.Type != auth.UserSellerType {
+		return models.Product{}, status.Error(codes.Unauthenticated, "invalid user ")
 	}
 
-	product.Seller.ID = claims["id"].(string)
-
+	product.Seller.ID = user.ID
 	result, err := u.productRepo.Store(ctx, product)
 	if err != nil {
 		return models.Product{}, errors.Wrap(err, "product.service.store: store from repository")
@@ -69,11 +67,10 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Product, error) {
 }
 
 func (u *usecase) Fetch(ctx context.Context, filter models.ProductFilter) ([]models.Product, error) {
-	claims, ok := serviceutils.GetUserClaims(ctx)
-	if ok {
-		userType := claims["type"].(string)
-		if userType == models.UserSellerType {
-			filter.SellerID = claims["id"].(string)
+	user, err := auth.GetUserClaims(ctx)
+	if err == nil {
+		if user.Type == auth.UserSellerType {
+			filter.SellerID = user.ID
 		}
 	}
 

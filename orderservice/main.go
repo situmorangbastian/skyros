@@ -31,6 +31,7 @@ import (
 	"github.com/situmorangbastian/skyros/orderservice/internal/validation"
 	orderpb "github.com/situmorangbastian/skyros/proto/order"
 	"github.com/situmorangbastian/skyros/serviceutils"
+	"github.com/situmorangbastian/skyros/serviceutils/auth"
 )
 
 func main() {
@@ -101,7 +102,7 @@ func main() {
 	orderUsecase := usecase.NewUsecase(orderRepo, userClient, productClient, log.Logger)
 
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(serviceutils.AuthInterceptor(cfg.GetString("SECRET_KEY"))),
+		grpc.UnaryInterceptor(auth.AuthInterceptor(cfg.GetString("SECRET_KEY"), userClient)),
 	)
 	orderService := service.NewOrderService(orderUsecase, validation.NewValidator(), log.Logger)
 	orderpb.RegisterOrderServiceServer(grpcServer, orderService)

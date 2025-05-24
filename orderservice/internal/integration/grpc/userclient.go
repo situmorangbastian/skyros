@@ -7,43 +7,42 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/situmorangbastian/skyros/orderservice/internal/integration"
-	"github.com/situmorangbastian/skyros/orderservice/internal/models"
 	userpb "github.com/situmorangbastian/skyros/proto/user"
 	svcutils "github.com/situmorangbastian/skyros/serviceutils"
+	"github.com/situmorangbastian/skyros/serviceutils/auth"
 )
 
 type userClient struct {
 	grpcClient *grpc.ClientConn
 }
 
-func NewUserClient(grpcClient *grpc.ClientConn) integration.UserClient {
+func NewUserClient(grpcClient *grpc.ClientConn) auth.UserClient {
 	return &userClient{
 		grpcClient: grpcClient,
 	}
 }
 
-func (uc *userClient) FetchByIDs(ctx context.Context, ids []string) (map[string]models.User, error) {
+func (uc *userClient) FetchByIDs(ctx context.Context, ids []string) (map[string]auth.User, error) {
 	c := userpb.NewUserServiceClient(uc.grpcClient)
 
 	r, err := c.GetUsers(ctx, &userpb.UserFilter{
 		UserIds: ids,
 	})
 	if err != nil {
-		return map[string]models.User{}, err
+		return map[string]auth.User{}, err
 	}
 
 	status := r.GetStatus()
 	if status.Code != int32(http.StatusOK) {
-		return map[string]models.User{}, errors.New(status.GetMessage())
+		return map[string]auth.User{}, errors.New(status.GetMessage())
 	}
 
-	result := map[string]models.User{}
+	result := map[string]auth.User{}
 	if len(r.GetUsers()) > 0 {
 		for _, userResponse := range r.GetUsers() {
-			user := models.User{}
+			user := auth.User{}
 			if err = svcutils.CopyStructValue(userResponse, &user); err != nil {
-				return map[string]models.User{}, err
+				return map[string]auth.User{}, err
 			}
 
 			result[user.ID] = user
