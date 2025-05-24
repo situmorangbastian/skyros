@@ -36,8 +36,8 @@ func (r *productRepository) Store(ctx context.Context, product models.Product) (
 	product.UpdatedTime = timeNow
 
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	query, args, err := psql.Insert("product").
-		Columns("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
+	query, args, err := psql.Insert("products").
+		Columns("id", "name", "description", "price", "seller_id", "created_at", "updated_at").
 		Values(product.ID, product.Name, product.Description, product.Price, product.Seller.ID, product.CreatedTime, product.UpdatedTime).ToSql()
 	if err != nil {
 		return models.Product{}, err
@@ -53,8 +53,8 @@ func (r *productRepository) Store(ctx context.Context, product models.Product) (
 
 func (r *productRepository) Get(ctx context.Context, ID string) (models.Product, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	query, args, err := psql.Select("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
-		From("product").
+	query, args, err := psql.Select("id", "name", "description", "price", "seller_id", "created_at", "updated_at").
+		From("products").
 		Where(sq.Eq{"id": ID}).ToSql()
 	if err != nil {
 		return models.Product{}, err
@@ -83,10 +83,10 @@ func (r *productRepository) Get(ctx context.Context, ID string) (models.Product,
 
 func (r *productRepository) Fetch(ctx context.Context, filter models.ProductFilter) ([]models.Product, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	qBuilder := psql.Select("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
-		From("product").
-		Where("deleted_time IS NULL").
-		OrderBy("created_time DESC")
+	qBuilder := psql.Select("id", "name", "description", "price", "seller_id", "created_at", "updated_at").
+		From("products").
+		Where("deleted_at IS NULL").
+		OrderBy("created_at DESC")
 
 	offset := (filter.Page - 1) * filter.PageSize
 	qBuilder = qBuilder.Limit(uint64(filter.PageSize))
@@ -139,8 +139,8 @@ func (r *productRepository) Fetch(ctx context.Context, filter models.ProductFilt
 
 func (r *productRepository) FetchByIds(ctx context.Context, ids []string) (map[string]models.Product, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	qBuilder := psql.Select("id", "name", "description", "price", "seller_id", "created_time", "updated_time").
-		From("product").
+	qBuilder := psql.Select("id", "name", "description", "price", "seller_id", "created_at", "updated_at").
+		From("products").
 		Where(sq.Eq{"id": ids})
 
 	query, args, err := qBuilder.ToSql()
