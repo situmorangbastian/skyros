@@ -77,20 +77,20 @@ func (x *OrderProduct) GetQuantity() int64 {
 }
 
 type Order struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Description         string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	SourceAddress       string                 `protobuf:"bytes,3,opt,name=source_address,json=sourceAddress,proto3" json:"source_address,omitempty"`
-	DestinationAddreess string                 `protobuf:"bytes,4,opt,name=destination_addreess,json=destinationAddreess,proto3" json:"destination_addreess,omitempty"`
-	TotalPrice          int64                  `protobuf:"varint,5,opt,name=total_price,json=totalPrice,proto3" json:"total_price,omitempty"`
-	Seller              *user.User             `protobuf:"bytes,6,opt,name=seller,proto3" json:"seller,omitempty"`
-	Buyer               *user.User             `protobuf:"bytes,7,opt,name=buyer,proto3" json:"buyer,omitempty"`
-	Status              string                 `protobuf:"bytes,8,opt,name=status,proto3" json:"status,omitempty"`
-	Items               []*OrderProduct        `protobuf:"bytes,9,rep,name=items,proto3" json:"items,omitempty"`
-	CreatedAt           string                 `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt           string                 `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Id                 string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Description        string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	SourceAddress      string                 `protobuf:"bytes,3,opt,name=source_address,json=sourceAddress,proto3" json:"source_address,omitempty"`
+	DestinationAddress string                 `protobuf:"bytes,4,opt,name=destination_address,json=destinationAddress,proto3" json:"destination_address,omitempty"`
+	TotalPrice         int64                  `protobuf:"varint,5,opt,name=total_price,json=totalPrice,proto3" json:"total_price,omitempty"`
+	Seller             *user.User             `protobuf:"bytes,6,opt,name=seller,proto3" json:"seller,omitempty"`
+	Buyer              *user.User             `protobuf:"bytes,7,opt,name=buyer,proto3" json:"buyer,omitempty"`
+	Status             string                 `protobuf:"bytes,8,opt,name=status,proto3" json:"status,omitempty"`
+	Items              []*OrderProduct        `protobuf:"bytes,9,rep,name=items,proto3" json:"items,omitempty"`
+	CreatedAt          string                 `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt          string                 `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *Order) Reset() {
@@ -144,9 +144,9 @@ func (x *Order) GetSourceAddress() string {
 	return ""
 }
 
-func (x *Order) GetDestinationAddreess() string {
+func (x *Order) GetDestinationAddress() string {
 	if x != nil {
-		return x.DestinationAddreess
+		return x.DestinationAddress
 	}
 	return ""
 }
@@ -201,12 +201,12 @@ func (x *Order) GetUpdatedAt() string {
 }
 
 type CreateOrderRequest struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	Description         string                 `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
-	DestinationAddreess string                 `protobuf:"bytes,2,opt,name=destination_addreess,json=destinationAddreess,proto3" json:"destination_addreess,omitempty"`
-	Items               []*OrderProduct        `protobuf:"bytes,3,rep,name=items,proto3" json:"items,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Description        string                 `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
+	DestinationAddress string                 `protobuf:"bytes,2,opt,name=destination_address,json=destinationAddress,proto3" json:"destination_address,omitempty"`
+	Items              []*OrderProduct        `protobuf:"bytes,3,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *CreateOrderRequest) Reset() {
@@ -246,9 +246,9 @@ func (x *CreateOrderRequest) GetDescription() string {
 	return ""
 }
 
-func (x *CreateOrderRequest) GetDestinationAddreess() string {
+func (x *CreateOrderRequest) GetDestinationAddress() string {
 	if x != nil {
-		return x.DestinationAddreess
+		return x.DestinationAddress
 	}
 	return ""
 }
@@ -416,12 +416,12 @@ const file_order_order_proto_rawDesc = "" +
 	"\fOrderProduct\x12\x1d\n" +
 	"\n" +
 	"product_id\x18\x01 \x01(\tR\tproductId\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\x03R\bquantity\"\xfb\x02\n" +
+	"\bquantity\x18\x02 \x01(\x03R\bquantity\"\xf9\x02\n" +
 	"\x05Order\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12%\n" +
-	"\x0esource_address\x18\x03 \x01(\tR\rsourceAddress\x121\n" +
-	"\x14destination_addreess\x18\x04 \x01(\tR\x13destinationAddreess\x12\x1f\n" +
+	"\x0esource_address\x18\x03 \x01(\tR\rsourceAddress\x12/\n" +
+	"\x13destination_address\x18\x04 \x01(\tR\x12destinationAddress\x12\x1f\n" +
 	"\vtotal_price\x18\x05 \x01(\x03R\n" +
 	"totalPrice\x12\"\n" +
 	"\x06seller\x18\x06 \x01(\v2\n" +
@@ -434,10 +434,10 @@ const file_order_order_proto_rawDesc = "" +
 	"created_at\x18\n" +
 	" \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\v \x01(\tR\tupdatedAt\"\x94\x01\n" +
+	"updated_at\x18\v \x01(\tR\tupdatedAt\"\x92\x01\n" +
 	"\x12CreateOrderRequest\x12 \n" +
-	"\vdescription\x18\x01 \x01(\tR\vdescription\x121\n" +
-	"\x14destination_addreess\x18\x02 \x01(\tR\x13destinationAddreess\x12)\n" +
+	"\vdescription\x18\x01 \x01(\tR\vdescription\x12/\n" +
+	"\x13destination_address\x18\x02 \x01(\tR\x12destinationAddress\x12)\n" +
 	"\x05items\x18\x03 \x03(\v2\x13.order.OrderProductR\x05items\",\n" +
 	"\x0fGetOrderRequest\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\"X\n" +
