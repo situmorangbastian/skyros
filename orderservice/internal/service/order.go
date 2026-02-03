@@ -33,7 +33,7 @@ func (s *service) CreateOrder(ctx context.Context, request *orderpb.CreateOrderR
 
 	req := models.Order{
 		Description:        request.GetDescription(),
-		DestinationAddress: request.GetDestinationAddreess(),
+		DestinationAddress: request.GetDestinationAddress(),
 	}
 
 	if request.GetItems() == nil || (request.GetItems() != nil && len(request.GetItems()) == 0) {
@@ -61,11 +61,11 @@ func (s *service) CreateOrder(ctx context.Context, request *orderpb.CreateOrderR
 	}
 
 	return &orderpb.Order{
-		Id:                  res.ID,
-		Description:         res.Description,
-		SourceAddress:       res.SourceAddress,
-		DestinationAddreess: res.DestinationAddress,
-		TotalPrice:          res.TotalPrice,
+		Id:                 res.ID,
+		Description:        res.Description,
+		SourceAddress:      res.SourceAddress,
+		DestinationAddress: res.DestinationAddress,
+		TotalPrice:         res.TotalPrice,
 		Status: func() string {
 			status := "pending"
 			if res.Status == 1 {
@@ -106,11 +106,11 @@ func (s *service) GetOrder(ctx context.Context, request *orderpb.GetOrderRequest
 	}
 
 	return &orderpb.Order{
-		Id:                  res.ID,
-		Description:         res.Description,
-		SourceAddress:       res.SourceAddress,
-		DestinationAddreess: res.DestinationAddress,
-		TotalPrice:          res.TotalPrice,
+		Id:                 res.ID,
+		Description:        res.Description,
+		SourceAddress:      res.SourceAddress,
+		DestinationAddress: res.DestinationAddress,
+		TotalPrice:         res.TotalPrice,
 		Status: func() string {
 			status := "pending"
 			if res.Status == 1 {
@@ -162,11 +162,11 @@ func (s *service) GetOrders(ctx context.Context, request *orderpb.GetOrdersReque
 	result := []*orderpb.Order{}
 	for _, order := range orders {
 		result = append(result, &orderpb.Order{
-			Id:                  order.ID,
-			Description:         order.Description,
-			SourceAddress:       order.SourceAddress,
-			DestinationAddreess: order.DestinationAddress,
-			TotalPrice:          order.TotalPrice,
+			Id:                 order.ID,
+			Description:        order.Description,
+			SourceAddress:      order.SourceAddress,
+			DestinationAddress: order.DestinationAddress,
+			TotalPrice:         order.TotalPrice,
 			Status: func() string {
 				status := "pending"
 				if order.Status == 1 {
