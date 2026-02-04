@@ -114,7 +114,9 @@ func (s *service) UserLogin(ctx context.Context, request *userpb.UserLoginReques
 }
 
 func (s *service) RegisterUser(ctx context.Context, request *userpb.RegisterUserRequest) (*userpb.RegisterUserResponse, error) {
-	log := s.logger.With().Str("func", "internal.service.user.RegisterUser").Logger()
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.service.user.RegisterUser").Logger()
+	log.Info().Msg("request received")
 
 	switch request.GetUserType() {
 	case "buyer", "seller":
@@ -143,7 +145,7 @@ func (s *service) RegisterUser(ctx context.Context, request *userpb.RegisterUser
 		return nil, err
 	}
 
-	accessToken, err := generateToken(res, s.tokenSecretKey, log)
+	accessToken, err := generateToken(res, s.tokenSecretKey, *log)
 	if err != nil {
 		log.Error().Err(err).Msg("failed generateToken")
 		return nil, err

@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package errors;
+
+option go_package = "github.com/situmorangbastian/skyros/proto/errors;errors";
+
+message Errors {
+  string trace_id = 1;
+}

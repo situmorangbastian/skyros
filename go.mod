@@ -12,6 +12,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.7
 	github.com/jackc/pgx/v5 v5.8.0
+	github.com/kenshaw/stringid v0.1.1
 	github.com/lib/pq v1.11.1
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.34.0
