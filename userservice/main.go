@@ -87,7 +87,12 @@ func main() {
 	userRepo := postgresql.NewUserRepository(dbpool)
 	userUsecase := usecase.NewUserUsecase(userRepo, log.Logger)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			serviceutils.UnaryServerInterceptorWithLogging(),
+			serviceutils.TraceErrors(),
+		),
+	)
 	userService := service.NewUserService(userUsecase, cfg.GetString("SECRET_KEY"), validation.NewValidator(), log.Logger)
 	userpb.RegisterUserServiceServer(grpcServer, userService)
 
