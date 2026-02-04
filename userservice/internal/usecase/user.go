@@ -39,7 +39,7 @@ func (u *userUsecase) Login(ctx context.Context, email, password string) (models
 			return models.User{}, status.Error(codes.NotFound, "user not found")
 		}
 		log.Error().Err(err).Msg("failed GetUserByEmail")
-		return models.User{}, err
+		return models.User{}, status.Error(codes.Internal, "Internal Server Error")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
@@ -56,7 +56,7 @@ func (u *userUsecase) Register(ctx context.Context, user models.User) (models.Us
 	currentUser, err := u.userRepo.GetUserByEmail(ctx, user.Email)
 	if err != nil && err != repository.ErrNotFound {
 		log.Error().Err(err).Msg("failed GetUserByEmail")
-		return models.User{}, err
+		return models.User{}, status.Error(codes.Internal, "Internal Server Error")
 	}
 
 	if currentUser.Email == user.Email {
@@ -74,7 +74,7 @@ func (u *userUsecase) Register(ctx context.Context, user models.User) (models.Us
 	result, err := u.userRepo.Register(ctx, user)
 	if err != nil {
 		log.Error().Err(err).Msg("failed Register")
-		return models.User{}, err
+		return models.User{}, status.Error(codes.Internal, "Internal Server Error")
 	}
 
 	return result, nil
@@ -86,7 +86,7 @@ func (u *userUsecase) FetchUsersByIDs(ctx context.Context, ids []string) (map[st
 	users, err := u.userRepo.FetchUsersByIDs(ctx, ids)
 	if err != nil {
 		log.Error().Err(err).Msg("failed FetchUsersByIDs")
-		return map[string]models.User{}, err
+		return map[string]models.User{}, status.Error(codes.Internal, "Internal Server Error")
 	}
 
 	return users, nil
