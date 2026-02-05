@@ -35,7 +35,9 @@ func NewUserService(userUsecase usecase.UserUsecase, tokenSecretKey string, vali
 }
 
 func (s *service) GetUsers(ctx context.Context, filter *userpb.UserFilter) (*userpb.UsersResponse, error) {
-	log := s.logger.With().Str("func", "internal.service.user.GetUsers").Logger()
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.service.user.GetUsers").Logger()
+	log.Info().Msg("request received")
 
 	response := &userpb.UsersResponse{
 		Status: &commonpb.Status{
@@ -77,7 +79,9 @@ func (s *service) GetUsers(ctx context.Context, filter *userpb.UserFilter) (*use
 }
 
 func (s *service) UserLogin(ctx context.Context, request *userpb.UserLoginRequest) (*userpb.UserLoginResponse, error) {
-	log := s.logger.With().Str("func", "internal.service.user.UserLogin").Logger()
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.service.user.UserLogin").Logger()
+	log.Info().Msg("request received")
 
 	if request.GetEmail() == "" {
 		return nil, status.Error(codes.InvalidArgument, "email is required")
@@ -145,7 +149,7 @@ func (s *service) RegisterUser(ctx context.Context, request *userpb.RegisterUser
 		return nil, err
 	}
 
-	accessToken, err := generateToken(res, s.tokenSecretKey, *log)
+	accessToken, err := generateToken(res, s.tokenSecretKey, log)
 	if err != nil {
 		log.Error().Err(err).Msg("failed generateToken")
 		return nil, err
@@ -156,7 +160,7 @@ func (s *service) RegisterUser(ctx context.Context, request *userpb.RegisterUser
 	}, nil
 }
 
-func generateToken(user models.User, secretKey string, log zerolog.Logger) (string, error) {
+func generateToken(user models.User, secretKey string, log *zerolog.Logger) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
