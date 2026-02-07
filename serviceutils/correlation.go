@@ -20,16 +20,6 @@ type contextKey string
 
 const correlationIDContextKey = contextKey(CorrelationIDKey)
 
-func extractOrGenerateCorrelationID(ctx context.Context) string {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if ok {
-		if ids := md.Get(CorrelationIDKey); len(ids) > 0 {
-			return ids[0]
-		}
-	}
-	return stringid.Generate()
-}
-
 func setCorrelationID(ctx context.Context, correlationID string) context.Context {
 	return context.WithValue(ctx, correlationIDContextKey, correlationID)
 }
@@ -41,14 +31,21 @@ func GetCorrelationID(ctx context.Context) string {
 	return ""
 }
 
-func UnaryServerInterceptorWithLogging() grpc.UnaryServerInterceptor {
+func CorrelationServerInterceptorWithLogging() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		correlationID := extractOrGenerateCorrelationID(ctx)
+		md, _ := metadata.FromIncomingContext(ctx)
+		var correlationID string
+		if values := md.Get(CorrelationIDKey); len(values) > 0 {
+			correlationID = values[0]
+		}
+		if correlationID == "" {
+			correlationID = stringid.Generate()
+		}
 
 		ctx = setCorrelationID(ctx, correlationID)
 
@@ -61,7 +58,6 @@ func UnaryServerInterceptorWithLogging() grpc.UnaryServerInterceptor {
 		logger.Info().Msg("gRPC request received")
 
 		resp, err := handler(ctx, req)
-
 		if err != nil {
 			logger.Error().Err(err).Msg("gRPC request failed")
 		} else {
@@ -82,8 +78,6 @@ func TraceErrors() grpc.UnaryServerInterceptor {
 			case !ok:
 				return resp, err
 			default:
-
-				// if st.Details is already populated, we don't want to overwrite
 				if len(st.Details()) > 0 {
 					return resp, err
 				}
@@ -104,4 +98,27 @@ func WithTraceID(ctx context.Context, st *status.Status) error {
 		return st.Err()
 	}
 	return newSt.Err()
+}
+
+func CorrelationClientInterceptor() grpc.UnaryClientInterceptor {
+	return func(
+		ctx context.Context,
+		method string,
+		req, reply interface{},
+		cc *grpc.ClientConn,
+		invoker grpc.UnaryInvoker,
+		opts ...grpc.CallOption,
+	) error {
+		corrID := GetCorrelationID(ctx)
+		if corrID != "" {
+			md, ok := metadata.FromOutgoingContext(ctx)
+			if !ok {
+				md = metadata.New(nil)
+			}
+			md = md.Copy()
+			md.Set(CorrelationIDKey, corrID)
+			ctx = metadata.NewOutgoingContext(ctx, md)
+		}
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
 }
