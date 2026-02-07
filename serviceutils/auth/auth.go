@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	UserSellerType string = "seller"
-	UserBuyerType         = "buyer"
+	UserSellerType = "seller"
+	UserBuyerType  = "buyer"
 )
 
 type User struct {
