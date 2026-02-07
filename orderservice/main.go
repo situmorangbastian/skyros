@@ -87,11 +87,19 @@ func main() {
 
 	log.Info().Msg("run migrations successfully")
 
-	userSvcClient, err := grpc.NewClient(cfg.GetString("USER_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	userSvcClient, err := grpc.NewClient(
+		cfg.GetString("USER_SERVICE_GRPC"),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(serviceutils.CorrelationClientInterceptor()),
+	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed init userservice client")
 	}
-	productSvcClient, err := grpc.NewClient(cfg.GetString("PRODUCT_SERVICE_GRPC"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	productSvcClient, err := grpc.NewClient(
+		cfg.GetString("PRODUCT_SERVICE_GRPC"),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(serviceutils.CorrelationClientInterceptor()),
+	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed init productservice client")
 	}
@@ -102,7 +110,11 @@ func main() {
 	orderUsecase := usecase.NewUsecase(orderRepo, userClient, productClient, log.Logger)
 
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(auth.AuthInterceptor(cfg.GetString("SECRET_KEY"), userClient)),
+		grpc.ChainUnaryInterceptor(
+			serviceutils.CorrelationServerInterceptorWithLogging(),
+			serviceutils.TraceErrors(),
+			auth.AuthInterceptor(cfg.GetString("SECRET_KEY"), userClient),
+		),
 	)
 	orderService := service.NewOrderService(orderUsecase, validation.NewValidator(), log.Logger)
 	orderpb.RegisterOrderServiceServer(grpcServer, orderService)
@@ -111,6 +123,9 @@ func main() {
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
 			MarshalOptions: protojson.MarshalOptions{
 				UseProtoNames: true,
+			},
+			UnmarshalOptions: protojson.UnmarshalOptions{
+				DiscardUnknown: true,
 			},
 		}),
 		runtime.WithErrorHandler(serviceutils.NewRestErrorHandler()),

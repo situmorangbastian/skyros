@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	grpcIntg "github.com/situmorangbastian/skyros/productservice/internal/integration/grpc"
 	"github.com/situmorangbastian/skyros/productservice/internal/repository/postgresql"
@@ -88,7 +89,9 @@ func main() {
 
 	userClient, err := grpc.NewClient(
 		cfg.GetString("USER_SERVICE_GRPC"),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(serviceutils.CorrelationClientInterceptor()),
+	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed init userservice client")
 	}
@@ -100,12 +103,24 @@ func main() {
 	productUsecase := usecase.NewProductUsecase(productRepo, usrIntgClient)
 
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(auth.AuthInterceptor(cfg.GetString("SECRET_KEY"), usrIntgClient)),
+		grpc.ChainUnaryInterceptor(
+			serviceutils.CorrelationServerInterceptorWithLogging(),
+			serviceutils.TraceErrors(),
+			auth.AuthInterceptor(cfg.GetString("SECRET_KEY"), usrIntgClient),
+		),
 	)
 	productService := service.NewProductService(productUsecase, validation.NewValidator())
 	productpb.RegisterProductServiceServer(grpcServer, productService)
 
 	mux := runtime.NewServeMux(
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+			MarshalOptions: protojson.MarshalOptions{
+				UseProtoNames: true,
+			},
+			UnmarshalOptions: protojson.UnmarshalOptions{
+				DiscardUnknown: true,
+			},
+		}),
 		runtime.WithErrorHandler(serviceutils.NewRestErrorHandler()),
 	)
 	err = productpb.RegisterProductServiceHandlerFromEndpoint(

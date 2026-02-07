@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	userpb "github.com/situmorangbastian/skyros/proto/user"
 	"github.com/situmorangbastian/skyros/serviceutils"
@@ -89,7 +90,7 @@ func main() {
 
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			serviceutils.UnaryServerInterceptorWithLogging(),
+			serviceutils.CorrelationServerInterceptorWithLogging(),
 			serviceutils.TraceErrors(),
 		),
 	)
@@ -97,6 +98,14 @@ func main() {
 	userpb.RegisterUserServiceServer(grpcServer, userService)
 
 	mux := runtime.NewServeMux(
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+			MarshalOptions: protojson.MarshalOptions{
+				UseProtoNames: true,
+			},
+			UnmarshalOptions: protojson.UnmarshalOptions{
+				DiscardUnknown: true,
+			},
+		}),
 		runtime.WithErrorHandler(serviceutils.NewRestErrorHandler()),
 	)
 	err = userpb.RegisterUserServiceHandlerFromEndpoint(
