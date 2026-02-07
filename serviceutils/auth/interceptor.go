@@ -52,7 +52,7 @@ func AuthInterceptor(secretKey string, userClient UserClient) grpc.UnaryServerIn
 			if err != nil {
 				return nil, err
 			}
-			if user[userId].Email != "" {
+			if user[userId].Email == "" {
 				return nil, status.Error(codes.Unauthenticated, "invalid token")
 			}
 
