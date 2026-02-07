@@ -2,12 +2,12 @@ package postgresql
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/situmorangbastian/skyros/userservice/internal/models"
@@ -81,7 +81,7 @@ func (r *userRepo) GetUserByEmail(ctx context.Context, email string) (models.Use
 		&userData,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			return models.User{}, repository.ErrNotFound
 		}
 		return models.User{}, err
