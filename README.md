@@ -89,9 +89,8 @@ go run main.go
 
 ### Running
 
-To start and stop the Services, run:
-
 ```bash
+cp .env.example .env
+# edit .env with your values, then:
 make service-up
-make service-down
 ```

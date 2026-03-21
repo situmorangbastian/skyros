@@ -4,15 +4,15 @@ services:
     container_name: skyros.postgres.database
     restart: always
     environment:
-      POSTGRES_PASSWORD: my-secret-pw
-      POSTGRES_USER: root
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
     ports:
       - "5432:5432"
     volumes:
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U root"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -24,12 +24,12 @@ services:
       context: .
       dockerfile: Dockerfile-gatewayservice
     environment:
-      - PORT=4000
-      - USER_SERVICE_GRPC=skyros.userservice.svc:4011
-      - PRODUCT_SERVICE_GRPC=skyros.productservice.svc:4022
-      - ORDER_SERVICE_GRPC=skyros.orderservice.svc:4033
+      - PORT=${GATEWAY_PORT}
+      - USER_SERVICE_GRPC=${USER_GRPC_SERVICE_ENDPOINT}
+      - PRODUCT_SERVICE_GRPC=${PRODUCT_GRPC_SERVICE_ENDPOINT}
+      - ORDER_SERVICE_GRPC=${ORDER_GRPC_SERVICE_ENDPOINT}
     ports:
-      - "4000:4000"
+      - "${GATEWAY_PORT}:${GATEWAY_PORT}"
     depends_on:
       skyros.userservice:
         condition: service_started
@@ -46,15 +46,15 @@ services:
       dockerfile: Dockerfile-userservice
     restart: always
     environment:
-      - DATABASE_URL=postgresql://root:my-secret-pw@skyros.postgres.database:5432/userservice?sslmode=disable&connect_timeout=30000
-      - SECRET_KEY=userservice-secret-key
-      - GRPC_SERVER_PORT=4011
-      - GRPC_SERVICE_ENDPOINT=skyros.userservice.svc:4011
-      - GRPC_GATEWAY_SERVER_PORT=4001
-      - ENABLE_GATEWAY_GRPC=false
-      - APP_ENV=development
+      - DATABASE_URL=${USER_DATABASE_URL}
+      - SECRET_KEY=${USER_SECRET_KEY}
+      - GRPC_SERVER_PORT=${USER_GRPC_SERVER_PORT}
+      - GRPC_SERVICE_ENDPOINT=${USER_GRPC_SERVICE_ENDPOINT}
+      - GRPC_GATEWAY_SERVER_PORT=${USER_GRPC_GATEWAY_SERVER_PORT}
+      - ENABLE_GATEWAY_GRPC=${ENABLE_GATEWAY_GRPC}
+      - APP_ENV=${APP_ENV}
     ports:
-      - "4011:4011"
+      - "${USER_GRPC_SERVER_PORT}:${USER_GRPC_SERVER_PORT}"
     depends_on:
       skyros.postgres:
         condition: service_healthy
@@ -67,16 +67,16 @@ services:
       dockerfile: Dockerfile-productservice
     restart: always
     environment:
-      - DATABASE_URL=postgresql://root:my-secret-pw@skyros.postgres.database:5432/productservice?sslmode=disable&connect_timeout=30000
-      - SECRET_KEY=productservice-secret-key
-      - GRPC_SERVER_PORT=4022
-      - GRPC_SERVICE_ENDPOINT=skyros.productservice.svc:4022
-      - GRPC_GATEWAY_SERVER_PORT=4002
-      - USER_SERVICE_GRPC=skyros.userservice.svc:4011
-      - ENABLE_GATEWAY_GRPC=false
-      - APP_ENV=development
+      - DATABASE_URL=${PRODUCT_DATABASE_URL}
+      - SECRET_KEY=${PRODUCT_SECRET_KEY}
+      - GRPC_SERVER_PORT=${PRODUCT_GRPC_SERVER_PORT}
+      - GRPC_SERVICE_ENDPOINT=${PRODUCT_GRPC_SERVICE_ENDPOINT}
+      - GRPC_GATEWAY_SERVER_PORT=${PRODUCT_GRPC_GATEWAY_SERVER_PORT}
+      - USER_SERVICE_GRPC=${USER_GRPC_SERVICE_ENDPOINT}
+      - ENABLE_GATEWAY_GRPC=${ENABLE_GATEWAY_GRPC}
+      - APP_ENV=${APP_ENV}
     ports:
-      - "4022:4022"
+      - "${PRODUCT_GRPC_SERVER_PORT}:${PRODUCT_GRPC_SERVER_PORT}"
     depends_on:
       skyros.postgres:
         condition: service_healthy
@@ -89,17 +89,17 @@ services:
       dockerfile: Dockerfile-orderservice
     restart: always
     environment:
-      - DATABASE_URL=postgresql://root:my-secret-pw@skyros.postgres.database:5432/orderservice?sslmode=disable&connect_timeout=30000
-      - SECRET_KEY=orderservice-secret-key
-      - GRPC_SERVER_PORT=4033
-      - GRPC_SERVICE_ENDPOINT=skyros.orderservice.svc:4033
-      - GRPC_GATEWAY_SERVER_PORT=4003
-      - USER_SERVICE_GRPC=skyros.userservice.svc:4011
-      - PRODUCT_SERVICE_GRPC=skyros.productservice.svc:4022
-      - ENABLE_GATEWAY_GRPC=false
-      - APP_ENV=development
+      - DATABASE_URL=${ORDER_DATABASE_URL}
+      - SECRET_KEY=${ORDER_SECRET_KEY}
+      - GRPC_SERVER_PORT=${ORDER_GRPC_SERVER_PORT}
+      - GRPC_SERVICE_ENDPOINT=${ORDER_GRPC_SERVICE_ENDPOINT}
+      - GRPC_GATEWAY_SERVER_PORT=${ORDER_GRPC_GATEWAY_SERVER_PORT}
+      - USER_SERVICE_GRPC=${USER_GRPC_SERVICE_ENDPOINT}
+      - PRODUCT_SERVICE_GRPC=${PRODUCT_GRPC_SERVICE_ENDPOINT}
+      - ENABLE_GATEWAY_GRPC=${ENABLE_GATEWAY_GRPC}
+      - APP_ENV=${APP_ENV}
     ports:
-      - "4033:4033"
+      - "${ORDER_GRPC_SERVER_PORT}:${ORDER_GRPC_SERVER_PORT}"
     depends_on:
       skyros.postgres:
         condition: service_healthy
