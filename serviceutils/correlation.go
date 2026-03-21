@@ -12,9 +12,7 @@ import (
 	errpb "github.com/situmorangbastian/skyros/proto/errors"
 )
 
-const (
-	CorrelationIDKey = "x-correlation-id"
-)
+const CorrelationIDKey = "x-correlation-id"
 
 type contextKey string
 
@@ -34,11 +32,12 @@ func GetCorrelationID(ctx context.Context) string {
 func CorrelationServerInterceptorWithLogging() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
-		req interface{},
+		req any,
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
-	) (interface{}, error) {
+	) (any, error) {
 		md, _ := metadata.FromIncomingContext(ctx)
+
 		var correlationID string
 		if values := md.Get(CorrelationIDKey); len(values) > 0 {
 			correlationID = values[0]
@@ -69,28 +68,20 @@ func CorrelationServerInterceptorWithLogging() grpc.UnaryServerInterceptor {
 }
 
 func TraceErrors() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		resp, err := handler(ctx, req)
 		if err != nil {
-
 			st, ok := status.FromError(err)
-			switch {
-			case !ok:
+			if !ok || len(st.Details()) > 0 {
 				return resp, err
-			default:
-				if len(st.Details()) > 0 {
-					return resp, err
-				}
-				newErr := WithTraceID(ctx, st)
-				return resp, newErr
 			}
+			return resp, withTraceID(ctx, st)
 		}
-
-		return resp, err
+		return resp, nil
 	}
 }
 
-func WithTraceID(ctx context.Context, st *status.Status) error {
+func withTraceID(ctx context.Context, st *status.Status) error {
 	newSt, err := st.WithDetails(&errpb.Errors{
 		TraceId: GetCorrelationID(ctx),
 	})
@@ -104,21 +95,24 @@ func CorrelationClientInterceptor() grpc.UnaryClientInterceptor {
 	return func(
 		ctx context.Context,
 		method string,
-		req, reply interface{},
+		req, reply any,
 		cc *grpc.ClientConn,
 		invoker grpc.UnaryInvoker,
 		opts ...grpc.CallOption,
 	) error {
 		corrID := GetCorrelationID(ctx)
-		if corrID != "" {
-			md, ok := metadata.FromOutgoingContext(ctx)
-			if !ok {
-				md = metadata.New(nil)
-			}
-			md = md.Copy()
-			md.Set(CorrelationIDKey, corrID)
-			ctx = metadata.NewOutgoingContext(ctx, md)
+		if corrID == "" {
+			corrID = stringid.Generate()
 		}
+
+		md, ok := metadata.FromOutgoingContext(ctx)
+		if !ok {
+			md = metadata.New(nil)
+		}
+		md = md.Copy()
+		md.Set(CorrelationIDKey, corrID)
+		ctx = metadata.NewOutgoingContext(ctx, md)
+
 		return invoker(ctx, method, req, reply, cc, opts...)
 	}
 }
