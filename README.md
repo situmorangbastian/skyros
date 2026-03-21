@@ -52,6 +52,7 @@ A production-ready e-commerce backend built with **Go microservices**, **gRPC** 
 - [Go 1.26+](https://golang.org/)
 - [golang-migrate](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
 - [protoc](https://grpc.io/docs/protoc-installation/) (only needed to regenerate proto files)
+- [golangci-lint](https://golangci-lint.run/usage/install/) (for linting)
 
 ### Setup
 
@@ -112,10 +113,16 @@ See [`.env.example`](.env.example) for all available configuration options. Key 
 
 ## Available Make Commands
 
-```bash
-make service-up     # Start all services via Docker Compose
-make service-down   # Stop all services
-```
+| Command | Description |
+| --- | --- |
+| `make service-up` | Start all services via Docker Compose |
+| `make service-down` | Stop all services |
+| `make build` | Compile all services |
+| `make test` | Run tests with race detector and coverage |
+| `make lint` | Run golangci-lint |
+| `make tidy` | Tidy and verify go modules |
+| `make migrate-up` | Run all database migrations |
+| `make migrate-down` | Rollback all database migrations |
 
 ## 🎯 Project Goals
 
