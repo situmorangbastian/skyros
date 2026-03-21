@@ -40,6 +40,14 @@ The project demonstrates a scalable and maintainable approach to backend develop
 | Authentication     | JWT                                     |
 | Containerization   | Docker / Docker Compose                 |
 
+## 🏗 Architecture
+
+![Architecture](docs/assets/architecture.png)
+
+## Request flow — place an order
+
+![Request flow](docs/assets/request-flow.png)
+
 ## 🎯 Project Goals
 
 - Build a modular, maintainable, and scalable e-commerce backend
