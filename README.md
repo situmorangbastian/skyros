@@ -1,44 +1,27 @@
 # skyros
 
-This project aims to build a simple e-commerce backend system using a **microservices architecture**, with **gRPC for inter-service communication**and an **API Gateway** to expose a unified RESTful interface to clients. Each core functionality of the e-commerce system is encapsulated in its own microservice to ensure modularity, scalability, and maintainability.
-
-## 📌 Project Overview
-
-This project is a simple e-commerce backend system built using a **microservices architecture**, where each core functionality is isolated into independent services. These microservices communicate using **gRPC**, and a centralized **API Gateway** exposes a unified RESTful API interface to external clients.
-
-The project demonstrates a scalable and maintainable approach to backend development suitable for modern distributed systems.
+A production-ready e-commerce backend built with **Go microservices**, **gRPC** inter-service communication, and an **API Gateway** exposing a unified REST interface to clients.
 
 ## 🧩 Key Features
 
-- **API Gateway**
-  - Acts as a single entry point for all client requests
-  - Routes requests to corresponding microservices using gRPC
-  - Handles authentication and request validation
-
-- **Microservices**
-  - **User Service**: User registration, login and authentication (JWT)
-  - **Product Service**: Product management
-  - **Order Service**: Order management
-
-- **gRPC Communication**
-  - All internal service communication uses high-performance gRPC
-  - Service contracts defined via Protocol Buffers (Protobuf)
-
-- **Database per Service**
-  - Each microservice maintains its own isolated database
-  - Promotes data encapsulation and service independence
+- **API Gateway** — single entry point, JWT authentication, request routing via gRPC
+- **User Service** — registration, login, JWT issuance
+- **Product Service** — product catalog management
+- **Order Service** — order creation and management
+- **Database per service** — isolated PostgreSQL databases per microservice
+- **Containerised** — full Docker Compose setup with health checks and dependency ordering
 
 ## 🛠 Tech Stack
 
-| Layer              | Technology                              |
-|--------------------|-----------------------------------------|
-| API Gateway        | gRPC-Gateway                            |
-| Service Comm       | gRPC                                    |
-| Service Definition | Protocol Buffers (Protobuf)             |
-| Language           | Go                                      |
-| Database           | PostgreSQL                              |
-| Authentication     | JWT                                     |
-| Containerization   | Docker / Docker Compose                 |
+| Layer | Technology |
+| --- | --- |
+| Language | Go 1.26 |
+| API Gateway | gRPC-Gateway |
+| Inter-service comm | gRPC / Protocol Buffers |
+| Database | PostgreSQL 16 |
+| Authentication | JWT |
+| Containerisation | Docker / Docker Compose |
+| Migration | golang-migrate |
 
 ## 🏗 Architecture
 
@@ -48,34 +31,98 @@ The project demonstrates a scalable and maintainable approach to backend develop
 
 ![Request flow](docs/assets/request-flow.png)
 
-## 🎯 Project Goals
-
-- Build a modular, maintainable, and scalable e-commerce backend
-- Showcase the use of gRPC for efficient inter-service communication
-- Use an API Gateway to unify and secure public-facing API access
-- Provide a real-world example architecture to extend into production
-
 ## Project Structure
 
-```bash
-├── docs                        # API Docs
-├── gatewayservice              # Service for API Gateway
-├── orderservice                # Service for handle order
-├── postgres                    # Init Database for microservice
-├── productservice              # Service for handle product
-├── proto                       # Package for Grpc Library
-└── userservice                 # Service for handle user
+```text
+├── gatewayservice        # REST API gateway, routes to microservices via gRPC
+├── userservice           # User registration, login, JWT auth
+├── productservice        # Product catalog CRUD
+├── orderservice          # Order management, calls user + product service
+├── proto                 # Shared Protobuf definitions
+├── serviceutils          # Shared utilities across services
+├── postgres              # PostgreSQL init scripts
+└── docs                  # API documentation (ReDoc)
 ```
 
 ## Getting Started
 
 ### Prerequisites
 
-- [Docker](https://www.docker.com/)
-- [Docker Compose](https://docs.docker.com/compose/)
-- [Go](https://golang.org/)
-- [Protobuf Compiler (protoc)](https://grpc.io/docs/protoc-installation/)
-- [Database Migration](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
+- [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/)
+- [Go 1.26+](https://golang.org/)
+- [golang-migrate](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
+- [protoc](https://grpc.io/docs/protoc-installation/) (only needed to regenerate proto files)
+
+### Setup
+
+#### 1. Clone the repo
+
+```bash
+git clone https://github.com/situmorangbastian/skyros.git
+cd skyros
+```
+
+#### 2. Configure environment**
+
+```bash
+cp .env.example .env
+# edit .env if needed — defaults work out of the box
+```
+
+#### 3. Start all services**
+
+```bash
+make service-up
+```
+
+#### 4. Verify services are running**
+
+```bash
+docker compose ps
+```
+
+The gateway is available at `http://localhost:4000`.
+
+### Stopping
+
+```bash
+make service-down
+```
+
+## API Documentation
+
+Interactive API docs powered by ReDoc:
+
+```bash
+cd docs
+cp .env.example .env
+go run main.go
+```
+
+## Environment Variables
+
+See [`.env.example`](.env.example) for all available configuration options. Key variables:
+
+| Variable | Description |
+| --- | --- |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` | Database credentials |
+| `USER_SECRET_KEY` | JWT signing key for user service |
+| `APP_ENV` | `development` or `production` |
+| `ENABLE_GATEWAY_GRPC` | Enable gRPC gateway passthrough |
+
+## Available Make Commands
+
+```bash
+make service-up     # Start all services via Docker Compose
+make service-down   # Stop all services
+```
+
+## 🎯 Project Goals
+
+- Demonstrate a modular, production-aware microservice architecture in Go
+- Showcase gRPC for efficient, type-safe inter-service communication
+- Use an API Gateway pattern to unify and secure public-facing API access
+- Serve as a reference architecture for real-world distributed backend systems
 
 ## Documentation
 
