@@ -38,7 +38,7 @@ func (h *handler) GetProduct(ctx context.Context, req *productpb.GetProductReque
 			Email:   product.Seller.Email,
 			Name:    product.Seller.Name,
 			Address: product.Seller.Address,
-			Type:    product.Seller.Type,
+			Type:    string(product.Seller.Type),
 		},
 	}, nil
 }
@@ -62,7 +62,7 @@ func (h *handler) GetProducts(ctx context.Context, filter *productpb.GetProducts
 					Email:   product.Seller.Email,
 					Name:    product.Seller.Name,
 					Address: product.Seller.Address,
-					Type:    product.Seller.Type,
+					Type:    string(product.Seller.Type),
 				},
 			})
 		}
@@ -98,7 +98,7 @@ func (h *handler) GetProducts(ctx context.Context, filter *productpb.GetProducts
 				Email:   product.Seller.Email,
 				Name:    product.Seller.Name,
 				Address: product.Seller.Address,
-				Type:    product.Seller.Type,
+				Type:    string(product.Seller.Type),
 			},
 		})
 	}
@@ -135,7 +135,7 @@ func (h *handler) StoreProduct(ctx context.Context, request *productpb.StoreProd
 			Email:   product.Seller.Email,
 			Name:    product.Seller.Name,
 			Address: product.Seller.Address,
-			Type:    product.Seller.Type,
+			Type:    string(product.Seller.Type),
 		},
 	}
 

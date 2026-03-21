@@ -8,18 +8,16 @@ import (
 )
 
 type Product struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name" validate:"required"`
-	Description string    `json:"description" validate:"required"`
-	Price       int64     `json:"price" validate:"required"`
-	Seller      auth.User `json:"seller" validate:"-"`
-	CreatedTime time.Time `json:"created_time"`
-	UpdatedTime time.Time `json:"updated_time"`
+	ID          string      `json:"id"`
+	Name        string      `json:"name" validate:"required"`
+	Description string      `json:"description" validate:"required"`
+	Price       int32       `json:"price" validate:"required"`
+	Seller      auth.Claims `json:"seller" validate:"-"`
 }
 type Order struct {
 	ID                 string         `json:"id"`
-	Buyer              auth.User      `json:"buyer" validate:"-"`
-	Seller             auth.User      `json:"seller" validate:"-"`
+	Buyer              auth.Claims    `json:"buyer" validate:"-"`
+	Seller             auth.Claims    `json:"seller" validate:"-"`
 	Description        string         `json:"description"`
 	SourceAddress      string         `json:"source_address"`
 	DestinationAddress string         `json:"destination_address" validate:"required"`
@@ -38,8 +36,8 @@ func (o Order) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(&struct {
 		ID                 string         `json:"id"`
-		Buyer              auth.User      `json:"buyer" validate:"-"`
-		Seller             auth.User      `json:"seller" validate:"-"`
+		Buyer              auth.Claims    `json:"buyer" validate:"-"`
+		Seller             auth.Claims    `json:"seller" validate:"-"`
 		Description        string         `json:"description"`
 		SourceAddress      string         `json:"source_address"`
 		DestinationAddress string         `json:"destination_address" validate:"required"`

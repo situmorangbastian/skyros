@@ -8,7 +8,7 @@ import (
 	"github.com/situmorangbastian/skyros/orderservice/internal/integration"
 	"github.com/situmorangbastian/skyros/orderservice/internal/models"
 	productpb "github.com/situmorangbastian/skyros/proto/product"
-	svcutils "github.com/situmorangbastian/skyros/serviceutils"
+	"github.com/situmorangbastian/skyros/serviceutils/auth"
 )
 
 type productClient struct {
@@ -37,11 +37,23 @@ func (pc *productClient) FetchByIDs(ctx context.Context, ids []string) (map[stri
 
 	result := map[string]models.Product{}
 	for _, res := range r.GetResult() {
-		product := models.Product{}
-		if err = svcutils.CopyStructValue(res, &product); err != nil {
-			return map[string]models.Product{}, err
-		}
+		product := toProductModel(res)
 		result[product.ID] = product
 	}
 	return result, nil
+}
+
+func toProductModel(p *productpb.Product) models.Product {
+	return models.Product{
+		ID:          p.GetId(),
+		Name:        p.GetName(),
+		Description: p.GetDescription(),
+		Price:       p.GetPrice(),
+		Seller: auth.Claims{
+			ID:      p.GetSeller().Id,
+			Email:   p.GetSeller().Email,
+			Name:    p.GetSeller().Name,
+			Address: p.GetSeller().Address,
+		},
+	}
 }

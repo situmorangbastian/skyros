@@ -72,7 +72,7 @@ func (u *usecase) Store(ctx context.Context, order models.Order) (models.Order, 
 			return models.Order{}, status.Error(codes.NotFound, "product not found")
 		}
 		order.Seller = order.Items[index].Product.Seller
-		order.TotalPrice += order.Items[index].Product.Price * order.Items[index].Quantity
+		order.TotalPrice += int64(order.Items[index].Product.Price) * order.Items[index].Quantity
 	}
 
 	result, err := u.orderRepo.Store(ctx, order)
