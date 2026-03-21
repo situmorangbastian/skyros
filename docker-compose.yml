@@ -1,25 +1,28 @@
 services:
   skyros.postgres:
     image: postgres:16
-    platform: linux/x86_64
-    container_name: "skyros.postgres.database"
+    container_name: skyros.postgres.database
     restart: always
     environment:
       POSTGRES_PASSWORD: my-secret-pw
       POSTGRES_USER: root
     ports:
       - "5432:5432"
-    expose:
-      - "5432"
-    networks:
-      - default
     volumes:
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   skyros.gatewayservice:
     image: skyros-gateway-service:latest
     container_name: skyros.gatewayservice.svc
-    command: /app/skyros-gateway-service
+    build:
+      context: .
+      dockerfile: Dockerfile-gatewayservice
     environment:
       - PORT=4000
       - USER_SERVICE_GRPC=skyros.userservice.svc:4011
@@ -27,18 +30,20 @@ services:
       - ORDER_SERVICE_GRPC=skyros.orderservice.svc:4033
     ports:
       - "4000:4000"
-    networks:
-      - default
-    build:
-      context: .
-      dockerfile: Dockerfile-gatewayservice
+    depends_on:
+      skyros.userservice:
+        condition: service_started
+      skyros.productservice:
+        condition: service_started
+      skyros.orderservice:
+        condition: service_started
 
   skyros.userservice:
     image: skyros-user-service:latest
     container_name: skyros.userservice.svc
-    command: /app/skyros-user-service
-    ports:
-      - "4011:4011"
+    build:
+      context: .
+      dockerfile: Dockerfile-userservice
     restart: always
     environment:
       - DATABASE_URL=postgresql://root:my-secret-pw@skyros.postgres.database:5432/userservice?sslmode=disable&connect_timeout=30000
@@ -48,44 +53,44 @@ services:
       - GRPC_GATEWAY_SERVER_PORT=4001
       - ENABLE_GATEWAY_GRPC=false
       - APP_ENV=development
-    networks:
-      - default
-    build:
-      context: .
-      dockerfile: Dockerfile-userservice
+    ports:
+      - "4011:4011"
+    depends_on:
+      skyros.postgres:
+        condition: service_healthy
 
   skyros.productservice:
     image: skyros-product-service:latest
     container_name: skyros.productservice.svc
-    command: /app/skyros-product-service
-    ports:
-      - "4022:4022"
+    build:
+      context: .
+      dockerfile: Dockerfile-productservice
     restart: always
     environment:
       - DATABASE_URL=postgresql://root:my-secret-pw@skyros.postgres.database:5432/productservice?sslmode=disable&connect_timeout=30000
-      - SECRET_KEY=userservice-secret-key
+      - SECRET_KEY=productservice-secret-key
       - GRPC_SERVER_PORT=4022
       - GRPC_SERVICE_ENDPOINT=skyros.productservice.svc:4022
       - GRPC_GATEWAY_SERVER_PORT=4002
       - USER_SERVICE_GRPC=skyros.userservice.svc:4011
       - ENABLE_GATEWAY_GRPC=false
       - APP_ENV=development
-    networks:
-      - default
-    build:
-      context: .
-      dockerfile: Dockerfile-productservice
+    ports:
+      - "4022:4022"
+    depends_on:
+      skyros.postgres:
+        condition: service_healthy
 
   skyros.orderservice:
     image: skyros-order-service:latest
     container_name: skyros.orderservice.svc
-    command: /app/skyros-order-service
-    ports:
-      - "4033:4033"
+    build:
+      context: .
+      dockerfile: Dockerfile-orderservice
     restart: always
     environment:
       - DATABASE_URL=postgresql://root:my-secret-pw@skyros.postgres.database:5432/orderservice?sslmode=disable&connect_timeout=30000
-      - SECRET_KEY=userservice-secret-key
+      - SECRET_KEY=orderservice-secret-key
       - GRPC_SERVER_PORT=4033
       - GRPC_SERVICE_ENDPOINT=skyros.orderservice.svc:4033
       - GRPC_GATEWAY_SERVER_PORT=4003
@@ -93,8 +98,11 @@ services:
       - PRODUCT_SERVICE_GRPC=skyros.productservice.svc:4022
       - ENABLE_GATEWAY_GRPC=false
       - APP_ENV=development
-    networks:
-      - default
-    build:
-      context: .
-      dockerfile: Dockerfile-orderservice
+    ports:
+      - "4033:4033"
+    depends_on:
+      skyros.postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

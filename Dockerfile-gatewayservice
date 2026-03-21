@@ -1,25 +1,36 @@
-FROM golang:1.25.6-alpine AS build
+# ── deps: download modules separately so this layer is cached
 
-WORKDIR /skyros-gateway-service
+# as long as go.mod / go.sum don't change
 
-COPY ./gatewayservice ./gatewayservice
+FROM golang:1.26.1-alpine AS deps
 
-COPY ./proto ./proto
-
-COPY ./serviceutils ./serviceutils
+WORKDIR /build
 
 COPY go.mod go.sum ./
+RUN go mod download && go mod verify
 
-RUN go mod tidy
+# ── build: compile the binary
 
-RUN CGO_ENABLED=0 go build -o skyros-gateway-service github.com/situmorangbastian/skyros/gatewayservice
+FROM deps AS build
 
-FROM gcr.io/distroless/static
+COPY ./gatewayservice ./gatewayservice
+COPY ./proto          ./proto
+COPY ./serviceutils   ./serviceutils
 
-WORKDIR /skyros-gateway-service
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w" \
+    -trimpath \
+    -o /out/skyros-gateway-service \
+    github.com/situmorangbastian/skyros/gatewayservice
 
-COPY --from=build /skyros-gateway-service /app
+# ── final: minimal distroless image
+
+FROM gcr.io/distroless/static:nonroot
+
+COPY --from=build /out/skyros-gateway-service /skyros-gateway-service
 
 EXPOSE 4000
 
-CMD ["/app/skyros-gateway-service"]
+USER nonroot:nonroot
+
+ENTRYPOINT ["/skyros-gateway-service"]
