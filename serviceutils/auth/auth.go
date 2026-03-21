@@ -2,34 +2,37 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
+
+	userpb "github.com/situmorangbastian/skyros/proto/user"
 )
+
+type UserType string
 
 const (
-	UserSellerType = "seller"
-	UserBuyerType  = "buyer"
+	UserSellerType UserType = "seller"
+	UserBuyerType  UserType = "buyer"
 )
 
-type User struct {
-	ID      string `json:"id"`
-	Email   string `json:"email"`
-	Name    string `json:"name"`
-	Address string `json:"address"`
-	Type    string `json:"type"`
-}
-
-func (u User) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		Email   string `json:"email"`
-		Name    string `json:"name"`
-		Address string `json:"address"`
-	}{
-		Email:   u.Email,
-		Name:    u.Name,
-		Address: u.Address,
-	})
+// Claims holds only what other services need to know about an authenticated user.
+// It is NOT the full user domain model — password and internal data are never included.
+type Claims struct {
+	ID      string   `json:"id"`
+	Email   string   `json:"email"`
+	Name    string   `json:"name"`
+	Address string   `json:"address"`
+	Type    UserType `json:"type"`
 }
 
 type UserClient interface {
-	FetchByIDs(ctx context.Context, ids []string) (map[string]User, error)
+	FetchByIDs(ctx context.Context, ids []string) (map[string]Claims, error)
+}
+
+func ToAuthClaims(u *userpb.User) Claims {
+	return Claims{
+		ID:      u.GetId(),
+		Email:   u.GetEmail(),
+		Name:    u.GetName(),
+		Address: u.GetAddress(),
+		Type:    UserType(u.GetType()),
+	}
 }

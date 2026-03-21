@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -19,10 +18,10 @@ const userClaimsKey contextKey = "userClaims"
 func AuthInterceptor(secretKey string, userClient UserClient) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
-		req interface{},
+		req any,
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
-	) (interface{}, error) {
+	) (any, error) {
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
 			return nil, status.Error(codes.Unauthenticated, "missing metadata")
@@ -35,7 +34,10 @@ func AuthInterceptor(secretKey string, userClient UserClient) grpc.UnaryServerIn
 			}
 
 			tokenStr := strings.TrimPrefix(authHeaders[0], "Bearer ")
-			token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+			token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, status.Errorf(codes.Unauthenticated, "unexpected signing method: %v", token.Header["alg"])
+				}
 				return []byte(secretKey), nil
 			})
 			if err != nil || !token.Valid {
@@ -44,49 +46,45 @@ func AuthInterceptor(secretKey string, userClient UserClient) grpc.UnaryServerIn
 
 			claims, ok := token.Claims.(jwt.MapClaims)
 			if !ok {
-				return nil, status.Error(codes.Unauthenticated, "invalid token")
+				return nil, status.Error(codes.Unauthenticated, "invalid token claims")
 			}
 
-			userId := claims["id"].(string)
-			user, err := userClient.FetchByIDs(ctx, []string{userId})
+			userID, ok := claims["id"].(string)
+			if !ok || userID == "" {
+				return nil, status.Error(codes.Unauthenticated, "invalid token claims")
+			}
+
+			users, err := userClient.FetchByIDs(ctx, []string{userID})
 			if err != nil {
 				return nil, err
 			}
-			if user[userId].Email == "" {
+
+			user, exists := users[userID]
+			if !exists || user.Email == "" {
 				return nil, status.Error(codes.Unauthenticated, "invalid token")
 			}
 
-			claims["type"] = user[userId].Type
-			ctx = context.WithValue(ctx, userClaimsKey, claims)
+			ctx = context.WithValue(ctx, userClaimsKey, Claims{
+				ID:      userID,
+				Email:   user.Email,
+				Name:    user.Name,
+				Address: user.Address,
+				Type:    UserType(user.Type),
+			})
 		}
+
 		return handler(ctx, req)
 	}
 }
 
-func GetUserClaims(ctx context.Context) (*User, error) {
-	claims, ok := ctx.Value(userClaimsKey).(jwt.MapClaims)
+func GetUserClaims(ctx context.Context) (*Claims, error) {
+	claims, ok := ctx.Value(userClaimsKey).(Claims)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "invalid user")
 	}
-
-	jsonData, err := json.Marshal(claims)
-	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, "invalid user")
-	}
-
-	var user User
-	err = json.Unmarshal(jsonData, &user)
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, nil
+	return &claims, nil
 }
 
 func isGRPCGatewayRequest(md metadata.MD) bool {
-	// grpc-gateway adds this header automatically
-	if vals := md.Get("grpcgateway-user-agent"); len(vals) > 0 {
-		return true
-	}
-	return false
+	return len(md.Get("grpcgateway-user-agent")) > 0
 }
