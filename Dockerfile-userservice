@@ -1,27 +1,33 @@
-FROM golang:1.25.6-alpine AS build
+# ── deps: download modules separately so this layer is cached
+#         as long as go.mod / go.sum don't change
+FROM golang:1.26.1-alpine AS deps
 
-WORKDIR /skyros-user-service
-
-COPY ./userservice ./userservice
-
-COPY ./proto ./proto
-
-COPY ./serviceutils ./serviceutils
+WORKDIR /build
 
 COPY go.mod go.sum ./
+RUN go mod download && go mod verify
 
-RUN go mod tidy
+# ── build: compile the binary
+FROM deps AS build
 
-RUN CGO_ENABLED=0 go build -o skyros-user-service github.com/situmorangbastian/skyros/userservice
+COPY ./userservice  ./userservice
+COPY ./proto        ./proto
+COPY ./serviceutils ./serviceutils
 
-FROM gcr.io/distroless/static
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w" \
+    -trimpath \
+    -o /out/skyros-user-service \
+    github.com/situmorangbastian/skyros/userservice
 
-WORKDIR /app
+# ── final: minimal distroless image
+FROM gcr.io/distroless/static:nonroot
 
-COPY --from=build /skyros-user-service/userservice/migrations migrations
-
-COPY --from=build /skyros-user-service .
+COPY --from=build /out/skyros-user-service      /skyros-user-service
+COPY --from=build /build/userservice/migrations /migrations
 
 EXPOSE 4011
 
-CMD ["/app/skyros-user-service"]
+USER nonroot:nonroot
+
+ENTRYPOINT ["/skyros-user-service"]

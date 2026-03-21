@@ -1,0 +1,18 @@
+# git
+.git
+.gitignore
+
+# docs
+docs/
+README.md
+
+# local env files
+.env
+.env.*
+
+# Go test artifacts
+**/*_test.go
+**/testdata/
+
+# Postgres init (only needed at runtime via volume mount)
+postgres/
