@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	_ "github.com/golang-migrate/migrate/source/file"
@@ -38,67 +39,63 @@ func main() {
 	log.Logger = zerolog.New(os.Stdout).
 		With().
 		Timestamp().
-		Str("service", "orderservice").
+		Str("service", "productservice").
 		Caller().
 		Logger()
 
 	cfg := viper.New()
+	cfg.AutomaticEnv()
 	cfg.SetConfigFile(".env")
 	if err := cfg.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			log.Error().Err(err).Msg("failed read config")
-			log.Info().Msg("configure using automatic env")
-			cfg.AutomaticEnv()
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			log.Info().Msg(".env not found, using environment variables")
+		} else {
+			log.Fatal().Err(err).Msg("failed to read config file")
 		}
 	}
 
 	if cfg.GetString("APP_ENV") == "development" {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-		output := zerolog.ConsoleWriter{
+		log.Logger = zerolog.New(zerolog.ConsoleWriter{
 			Out:        os.Stdout,
 			TimeFormat: zerolog.TimeFormatUnix,
-		}
-		log.Logger = zerolog.New(output).
-			With().
-			Timestamp().
-			Str("service", "orderservice").
-			Caller().
-			Logger()
+		}).With().Timestamp().Str("service", "productservice").Caller().Logger()
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	required := []string{"DATABASE_URL", "SECRET_KEY", "GRPC_SERVER_PORT", "GRPC_SERVICE_ENDPOINT", "USER_SERVICE_GRPC"}
+	for _, key := range required {
+		if cfg.GetString(key) == "" {
+			log.Fatal().Str("key", key).Msg("missing required config")
+		}
+	}
 
-	dbpool, err := pgxpool.New(ctx, cfg.GetString("DATABASE_URL"))
+	dbpool, err := pgxpool.New(context.Background(), cfg.GetString("DATABASE_URL"))
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed connect database")
+		log.Fatal().Err(err).Msg("failed to connect to database")
 	}
 	defer dbpool.Close()
 
-	err = dbpool.Ping(ctx)
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed ping database")
+	pingCtx, pingCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer pingCancel()
+	if err := dbpool.Ping(pingCtx); err != nil {
+		log.Fatal().Err(err).Msg("failed to ping database")
 	}
 
-	err = runMigrations(cfg.GetString("DATABASE_URL"))
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed run migrations")
+	if err := runMigrations(cfg.GetString("DATABASE_URL")); err != nil {
+		log.Fatal().Err(err).Msg("failed to run migrations")
 	}
+	log.Info().Msg("migrations applied successfully")
 
-	log.Info().Msg("run migrations successfully")
-
-	userClient, err := grpc.NewClient(
+	userSvcConn, err := grpc.NewClient(
 		cfg.GetString("USER_SERVICE_GRPC"),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(serviceutils.CorrelationClientInterceptor()),
 	)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed init userservice client")
+		log.Fatal().Err(err).Msg("failed to init user service client")
 	}
-	defer userClient.Close()
 
-	usrIntgClient := grpcIntg.NewUserIntegrationClient(userClient)
-
+	usrIntgClient := grpcIntg.NewUserIntegrationClient(userSvcConn)
 	productRepo := postgresql.NewProductRepository(dbpool)
 	productUsecase := usecase.NewProductUsecase(productRepo, usrIntgClient)
 
@@ -123,14 +120,13 @@ func main() {
 		}),
 		runtime.WithErrorHandler(serviceutils.NewRestErrorHandler()),
 	)
-	err = productpb.RegisterProductServiceHandlerFromEndpoint(
+	if err := productpb.RegisterProductServiceHandlerFromEndpoint(
 		context.Background(),
 		mux,
 		cfg.GetString("GRPC_SERVICE_ENDPOINT"),
 		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
-	)
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed register gRPC-Gateway")
+	); err != nil {
+		log.Fatal().Err(err).Msg("failed to register gRPC-Gateway")
 	}
 
 	restServer := &http.Server{
@@ -139,56 +135,55 @@ func main() {
 	}
 
 	wg := sync.WaitGroup{}
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		listen, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GetInt("GRPC_SERVER_PORT")))
 		if err != nil {
-			log.Fatal().Err(err).Msg("failed listen on network")
+			log.Fatal().Err(err).Msg("failed to listen on network")
 		}
-
-		log.Info().Str("port", cfg.GetString("GRPC_SERVER_PORT")).Msg("gRPC-Server starting")
+		log.Info().Str("port", cfg.GetString("GRPC_SERVER_PORT")).Msg("gRPC server starting")
 		if err := grpcServer.Serve(listen); err != nil {
-			log.Fatal().Err(err).Msg("failed run gRPC-Server")
+			log.Fatal().Err(err).Msg("failed to run gRPC server")
 		}
 	}()
 
 	if cfg.GetBool("ENABLE_GATEWAY_GRPC") {
 		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			log.Info().Str("port", cfg.GetString("GRPC_GATEWAY_SERVER_PORT")).Msg("gRPC-Gateway server starting")
-			if err := restServer.ListenAndServe(); err != nil {
-				log.Fatal().Err(err).Msg("failed run gRPC-Gateway server")
+			if err := restServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Fatal().Err(err).Msg("failed to run gRPC-Gateway server")
 			}
 		}()
 	}
-	wg.Wait()
 
-	// wait for interrupt signal to gracefully shutdown the server with
-	// a timeout of 10 seconds.
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
+
 	log.Info().Msg("shutting down servers...")
-	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := restServer.Shutdown(ctx); err != nil {
-		log.Error().Err(err).Msg("failed shutdown gRPC-Gatewat")
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
+
+	if err := restServer.Shutdown(shutdownCtx); err != nil {
+		log.Error().Err(err).Msg("failed to shutdown gRPC-Gateway")
 	}
 	grpcServer.GracefulStop()
+	userSvcConn.Close()
+	wg.Wait()
+	log.Info().Msg("servers exited")
 }
 
 func runMigrations(connStr string) error {
-	m, err := migrate.New(
-		"file://migrations",
-		connStr,
-	)
+	m, err := migrate.New("file://migrations", connStr)
 	if err != nil {
 		return err
 	}
 
-	err = m.Up()
-	if err != nil && err != migrate.ErrNoChange {
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		return err
 	}
 
