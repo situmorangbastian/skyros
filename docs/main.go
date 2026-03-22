@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -30,25 +31,28 @@ func main() {
 		http.ServeFile(w, r, openapiPath)
 	})
 
-	r.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`
-<!DOCTYPE html>
+	const docsHTML = `<!DOCTYPE html>
 <html>
   <head>
     <title>API Docs</title>
     <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
   </head>
   <body>
-    <div id="redoc-container"></div> <!-- ReDoc container -->
+    <div id="redoc-container"></div>
     <script>
-      // Ensure the ReDoc spec is loaded properly
       Redoc.init('/openapi.yaml', {
         scrollYOffset: 50,
       }, document.getElementById('redoc-container'));
     </script>
   </body>
-</html>`))
+</html>`
+
+	r.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+
+		if _, err := io.WriteString(w, docsHTML); err != nil {
+			log.Printf("failed to write response: %v", err)
+		}
 	})
 
 	log.Info("server running on port: ", cfg.GetInt("PORT"))

@@ -11,7 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -46,6 +45,7 @@ func main() {
 	cfg := viper.New()
 	cfg.AutomaticEnv()
 	cfg.SetConfigFile(".env")
+
 	if err := cfg.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			log.Info().Msg(".env not found, using environment variables")
@@ -62,7 +62,14 @@ func main() {
 		}).With().Timestamp().Str("service", "productservice").Caller().Logger()
 	}
 
-	required := []string{"DATABASE_URL", "SECRET_KEY", "GRPC_SERVER_PORT", "GRPC_SERVICE_ENDPOINT", "USER_SERVICE_GRPC"}
+	required := []string{
+		"DATABASE_URL",
+		"SECRET_KEY",
+		"GRPC_SERVER_PORT",
+		"GRPC_SERVICE_ENDPOINT",
+		"USER_SERVICE_GRPC",
+	}
+
 	for _, key := range required {
 		if cfg.GetString(key) == "" {
 			log.Fatal().Str("key", key).Msg("missing required config")
@@ -75,8 +82,9 @@ func main() {
 	}
 	defer dbpool.Close()
 
-	pingCtx, pingCancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer pingCancel()
+	pingCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	if err := dbpool.Ping(pingCtx); err != nil {
 		log.Fatal().Err(err).Msg("failed to ping database")
 	}
@@ -96,6 +104,7 @@ func main() {
 	}
 
 	usrIntgClient := grpcIntg.NewUserIntegrationClient(userSvcConn)
+
 	productRepo := postgresql.NewProductRepository(dbpool)
 	productUsecase := usecase.NewProductUsecase(productRepo, usrIntgClient)
 
@@ -106,6 +115,7 @@ func main() {
 			auth.AuthInterceptor(cfg.GetString("SECRET_KEY"), usrIntgClient),
 		),
 	)
+
 	productService := service.NewProductService(productUsecase, validation.NewValidator())
 	productpb.RegisterProductServiceServer(grpcServer, productService)
 
@@ -120,6 +130,7 @@ func main() {
 		}),
 		runtime.WithErrorHandler(serviceutils.NewRestErrorHandler()),
 	)
+
 	if err := productpb.RegisterProductServiceHandlerFromEndpoint(
 		context.Background(),
 		mux,
@@ -134,18 +145,21 @@ func main() {
 		Handler: mux,
 	}
 
-	wg := sync.WaitGroup{}
+	var wg sync.WaitGroup
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		listen, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GetInt("GRPC_SERVER_PORT")))
+
+		listener, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GetInt("GRPC_SERVER_PORT")))
 		if err != nil {
 			log.Fatal().Err(err).Msg("failed to listen on network")
 		}
+
 		log.Info().Str("port", cfg.GetString("GRPC_SERVER_PORT")).Msg("gRPC server starting")
-		if err := grpcServer.Serve(listen); err != nil {
-			log.Fatal().Err(err).Msg("failed to run gRPC server")
+
+		if err := grpcServer.Serve(listener); err != nil {
+			log.Fatal().Err(err).Msg("gRPC server failed")
 		}
 	}()
 
@@ -153,9 +167,11 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			log.Info().Str("port", cfg.GetString("GRPC_GATEWAY_SERVER_PORT")).Msg("gRPC-Gateway server starting")
+
+			log.Info().Str("port", cfg.GetString("GRPC_GATEWAY_SERVER_PORT")).Msg("gRPC-Gateway starting")
+
 			if err := restServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				log.Fatal().Err(err).Msg("failed to run gRPC-Gateway server")
+				log.Fatal().Err(err).Msg("gRPC-Gateway failed")
 			}
 		}()
 	}
@@ -165,14 +181,20 @@ func main() {
 	<-quit
 
 	log.Info().Msg("shutting down servers...")
+
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
 	if err := restServer.Shutdown(shutdownCtx); err != nil {
 		log.Error().Err(err).Msg("failed to shutdown gRPC-Gateway")
 	}
+
 	grpcServer.GracefulStop()
-	userSvcConn.Close()
+
+	if err := userSvcConn.Close(); err != nil {
+		log.Error().Err(err).Msg("failed to close user service gRPC connection")
+	}
+
 	wg.Wait()
 	log.Info().Msg("servers exited")
 }
