@@ -1,6 +1,6 @@
 # skyros
 
-A production-ready e-commerce backend built with **Go microservices**, **gRPC** inter-service communication, and an **API Gateway** exposing a unified REST interface to clients.
+A portfolio project demonstrating a **Go microservices** architecture with **gRPC** inter-service communication and an **API Gateway** exposing a unified REST interface to clients. Built to showcase backend engineering practices including service decomposition, JWT authentication, database-per-service pattern, and containerised local development
 
 ## 🧩 Key Features
 
