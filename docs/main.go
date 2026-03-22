@@ -8,13 +8,16 @@ import (
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
-	cfg "github.com/spf13/viper"
+	"github.com/spf13/viper"
 )
 
 func main() {
-	cfg.SetConfigFile(".env")
+	cfg := viper.New()
 	cfg.AutomaticEnv()
-	cfg.ReadInConfig()
+	cfg.SetConfigFile(".env")
+	if err := cfg.ReadInConfig(); err != nil {
+		log.Fatal("failed to read config file")
+	}
 
 	r := mux.NewRouter()
 
