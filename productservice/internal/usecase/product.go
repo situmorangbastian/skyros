@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -32,18 +33,23 @@ func NewProductUsecase(productRepo repository.ProductRepository, usrClient auth.
 }
 
 func (u *usecase) Store(ctx context.Context, product models.Product) (models.Product, error) {
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.usecase.product.Store").Logger()
+
 	user, err := auth.GetUserClaims(ctx)
 	if err != nil {
+		log.Error().Err(err).Msg("failed GetUserClaims")
 		return models.Product{}, err
 	}
 
 	if user.Type != auth.UserSellerType {
-		return models.Product{}, status.Error(codes.Unauthenticated, "invalid user ")
+		return models.Product{}, status.Error(codes.Unauthenticated, "invalid user")
 	}
 
 	product.Seller.ID = user.ID
 	result, err := u.productRepo.Store(ctx, product)
 	if err != nil {
+		log.Error().Err(err).Msg("failed store product")
 		return models.Product{}, errors.Wrap(err, "product.service.store: store from repository")
 	}
 
@@ -51,22 +57,29 @@ func (u *usecase) Store(ctx context.Context, product models.Product) (models.Pro
 }
 
 func (u *usecase) Get(ctx context.Context, ID string) (models.Product, error) {
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.usecase.product.Get").Logger()
+
 	result, err := u.productRepo.Get(ctx, ID)
 	if err != nil {
+		log.Error().Err(err).Msg("failed get product")
 		return models.Product{}, errors.Wrap(err, "product.service.get: get from repository")
 	}
 
 	users, err := u.usrClient.FetchByIDs(ctx, []string{result.Seller.ID})
 	if err != nil {
+		log.Error().Err(err).Msg("failed fetch user by ids")
 		return models.Product{}, errors.Wrap(err, "product.service.get: get user from userservice grpc")
 	}
 
 	result.Seller = users[result.Seller.ID]
-
 	return result, nil
 }
 
 func (u *usecase) Fetch(ctx context.Context, filter models.ProductFilter) ([]models.Product, error) {
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.usecase.product.Fetch").Logger()
+
 	user, err := auth.GetUserClaims(ctx)
 	if err == nil {
 		if user.Type == auth.UserSellerType {
@@ -76,6 +89,7 @@ func (u *usecase) Fetch(ctx context.Context, filter models.ProductFilter) ([]mod
 
 	result, err := u.productRepo.Fetch(ctx, filter)
 	if err != nil {
+		log.Error().Err(err).Msg("failed fetch product")
 		return make([]models.Product, 0), errors.Wrap(err, "product.service.fetch: fetch from repository")
 	}
 
@@ -86,6 +100,7 @@ func (u *usecase) Fetch(ctx context.Context, filter models.ProductFilter) ([]mod
 
 	users, err := u.usrClient.FetchByIDs(ctx, userIDs)
 	if err != nil {
+		log.Error().Err(err).Msg("failed fetch user by ids")
 		return make([]models.Product, 0), errors.Wrap(err, "product.service.get: get user from userservice grpc")
 	}
 
@@ -97,8 +112,12 @@ func (u *usecase) Fetch(ctx context.Context, filter models.ProductFilter) ([]mod
 }
 
 func (u *usecase) FetchByIds(ctx context.Context, ids []string) (map[string]models.Product, error) {
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.usecase.product.FetchByIds").Logger()
+
 	result, err := u.productRepo.FetchByIds(ctx, ids)
 	if err != nil {
+		log.Error().Err(err).Msg("failed fetch product by ids")
 		return map[string]models.Product{}, errors.Wrap(err, "product.service.fetch: fetch from repository")
 	}
 
@@ -109,6 +128,7 @@ func (u *usecase) FetchByIds(ctx context.Context, ids []string) (map[string]mode
 
 	users, err := u.usrClient.FetchByIDs(ctx, userIDs)
 	if err != nil {
+		log.Error().Err(err).Msg("failed fetch user by ids")
 		return map[string]models.Product{}, errors.Wrap(err, "product.service.get: get user from userservice grpc")
 	}
 
