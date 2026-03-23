@@ -31,6 +31,8 @@ import (
 	"github.com/situmorangbastian/skyros/orderservice/internal/usecase"
 	"github.com/situmorangbastian/skyros/orderservice/internal/validation"
 	orderpb "github.com/situmorangbastian/skyros/proto/order"
+	productpb "github.com/situmorangbastian/skyros/proto/product"
+	userpb "github.com/situmorangbastian/skyros/proto/user"
 	"github.com/situmorangbastian/skyros/serviceutils"
 	"github.com/situmorangbastian/skyros/serviceutils/auth"
 )
@@ -86,16 +88,17 @@ func main() {
 	}
 	log.Info().Msg("migrations applied successfully")
 
-	userSvcClient, err := grpc.NewClient(
+	userConn, err := grpc.NewClient(
 		cfg.GetString("USER_SERVICE_GRPC"),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(serviceutils.CorrelationClientInterceptor()),
 	)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to init user service client")
+		log.Fatal().Err(err).Msg("failed to connect user service")
 	}
+	userSvcClient := userpb.NewUserServiceClient(userConn)
 
-	productSvcClient, err := grpc.NewClient(
+	productConn, err := grpc.NewClient(
 		cfg.GetString("PRODUCT_SERVICE_GRPC"),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(serviceutils.CorrelationClientInterceptor()),
@@ -103,6 +106,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init product service client")
 	}
+	productSvcClient := productpb.NewProductServiceClient(productConn)
 
 	userClient := grpcClient.NewUserClient(userSvcClient)
 	productClient := grpcClient.NewProductClient(productSvcClient)
@@ -175,13 +179,24 @@ func main() {
 	<-quit
 
 	log.Info().Msg("shutting down servers...")
+
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
 	if err := restServer.Shutdown(shutdownCtx); err != nil {
 		log.Error().Err(err).Msg("failed to shutdown gRPC-Gateway")
 	}
+
 	grpcServer.GracefulStop()
+
+	if err := userConn.Close(); err != nil {
+		log.Error().Err(err).Msg("failed to close user service gRPC connection")
+	}
+
+	if err := productConn.Close(); err != nil {
+		log.Error().Err(err).Msg("failed to close product service gRPC connection")
+	}
+
 	wg.Wait()
 	log.Info().Msg("servers exited")
 }

@@ -5,44 +5,48 @@ import (
 	"errors"
 	"net/http"
 
-	"google.golang.org/grpc"
-
+	"github.com/situmorangbastian/skyros/proto/common"
 	userpb "github.com/situmorangbastian/skyros/proto/user"
 	"github.com/situmorangbastian/skyros/serviceutils/auth"
 )
 
 type userClient struct {
-	grpcClient *grpc.ClientConn
+	userSvcClient userpb.UserServiceClient
 }
 
-func NewUserClient(grpcClient *grpc.ClientConn) auth.UserClient {
+func NewUserClient(userSvcClient userpb.UserServiceClient) auth.UserClient {
 	return &userClient{
-		grpcClient: grpcClient,
+		userSvcClient: userSvcClient,
 	}
 }
 
 func (uc *userClient) FetchByIDs(ctx context.Context, ids []string) (map[string]auth.Claims, error) {
-	c := userpb.NewUserServiceClient(uc.grpcClient)
-
-	r, err := c.GetUsers(ctx, &userpb.UserFilter{
+	resp, err := uc.userSvcClient.GetUsers(ctx, &userpb.UserFilter{
 		UserIds: ids,
 	})
 	if err != nil {
-		return map[string]auth.Claims{}, err
+		return nil, err
 	}
 
-	status := r.GetStatus()
-	if status.Code != int32(http.StatusOK) {
-		return map[string]auth.Claims{}, errors.New(status.GetMessage())
+	if err := validateStatus(resp.GetStatus()); err != nil {
+		return nil, err
 	}
 
-	result := map[string]auth.Claims{}
-	if len(r.GetUsers()) > 0 {
-		for _, userResponse := range r.GetUsers() {
-			user := auth.ToAuthClaims(userResponse)
-			result[user.ID] = user
-		}
-	}
+	return toClaimsMap(resp.GetUsers()), nil
+}
 
-	return result, nil
+func validateStatus(status *common.Status) error {
+	if status == nil || status.Code == int32(http.StatusOK) {
+		return nil
+	}
+	return errors.New(status.GetMessage())
+}
+
+func toClaimsMap(users map[string]*userpb.User) map[string]auth.Claims {
+	result := make(map[string]auth.Claims, len(users))
+	for _, u := range users {
+		claim := auth.ToAuthClaims(u)
+		result[claim.ID] = claim
+	}
+	return result
 }
