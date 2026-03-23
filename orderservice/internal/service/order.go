@@ -29,7 +29,9 @@ func NewOrderService(usecase usecase.OrderUsecase, validator serviceutils.Custom
 }
 
 func (s *service) CreateOrder(ctx context.Context, request *orderpb.CreateOrderRequest) (*orderpb.Order, error) {
-	log := s.logger.With().Str("func", "internal.service.order.CreateOrder").Logger()
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.service.order.CreateOrder").Logger()
+	log.Info().Msg("request received")
 
 	req := models.Order{
 		Description:        request.GetDescription(),
@@ -97,7 +99,9 @@ func (s *service) CreateOrder(ctx context.Context, request *orderpb.CreateOrderR
 }
 
 func (s *service) GetOrder(ctx context.Context, request *orderpb.GetOrderRequest) (*orderpb.Order, error) {
-	log := s.logger.With().Str("func", "internal.service.order.GetOrder").Logger()
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.service.order.GetOrder").Logger()
+	log.Info().Msg("request received")
 
 	res, err := s.usecase.Get(ctx, request.GetOrderId())
 	if err != nil {
@@ -142,7 +146,9 @@ func (s *service) GetOrder(ctx context.Context, request *orderpb.GetOrderRequest
 }
 
 func (s *service) GetOrders(ctx context.Context, request *orderpb.GetOrdersRequest) (*orderpb.GetOrdersResponse, error) {
-	log := s.logger.With().Str("func", "internal.service.order.GetOrders").Logger()
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.service.order.GetOrders").Logger()
+	log.Info().Msg("request received")
 
 	limit := request.GetLimit()
 	if limit == 0 {
