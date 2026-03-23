@@ -29,7 +29,6 @@ import (
 	"github.com/situmorangbastian/skyros/orderservice/internal/repository/postgresql"
 	"github.com/situmorangbastian/skyros/orderservice/internal/service"
 	"github.com/situmorangbastian/skyros/orderservice/internal/usecase"
-	"github.com/situmorangbastian/skyros/orderservice/internal/validation"
 	orderpb "github.com/situmorangbastian/skyros/proto/order"
 	productpb "github.com/situmorangbastian/skyros/proto/product"
 	userpb "github.com/situmorangbastian/skyros/proto/user"
@@ -120,7 +119,7 @@ func main() {
 			auth.AuthInterceptor(cfg.GetString("SECRET_KEY"), userClient),
 		),
 	)
-	orderService := service.NewOrderService(orderUsecase, validation.NewValidator(), log.Logger)
+	orderService := service.NewOrderService(orderUsecase, serviceutils.NewCustomValidator(), log.Logger)
 	orderpb.RegisterOrderServiceServer(grpcServer, orderService)
 
 	mux := runtime.NewServeMux(

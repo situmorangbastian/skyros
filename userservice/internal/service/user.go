@@ -13,19 +13,19 @@ import (
 
 	commonpb "github.com/situmorangbastian/skyros/proto/common"
 	userpb "github.com/situmorangbastian/skyros/proto/user"
+	"github.com/situmorangbastian/skyros/serviceutils"
 	"github.com/situmorangbastian/skyros/userservice/internal/models"
 	"github.com/situmorangbastian/skyros/userservice/internal/usecase"
-	"github.com/situmorangbastian/skyros/userservice/internal/validation"
 )
 
 type service struct {
 	userUsecase    usecase.UserUsecase
 	tokenSecretKey string
-	validators     validation.CustomValidator
+	validators     serviceutils.CustomValidator
 	logger         zerolog.Logger
 }
 
-func NewUserService(userUsecase usecase.UserUsecase, tokenSecretKey string, validators validation.CustomValidator, logger zerolog.Logger) userpb.UserServiceServer {
+func NewUserService(userUsecase usecase.UserUsecase, tokenSecretKey string, validators serviceutils.CustomValidator, logger zerolog.Logger) userpb.UserServiceServer {
 	return &service{
 		userUsecase:    userUsecase,
 		tokenSecretKey: tokenSecretKey,
@@ -82,13 +82,6 @@ func (s *service) UserLogin(ctx context.Context, request *userpb.UserLoginReques
 	log := zerolog.Ctx(ctx)
 	log.With().Str("func", "internal.service.user.UserLogin").Logger()
 	log.Info().Msg("request received")
-
-	if request.GetEmail() == "" {
-		return nil, status.Error(codes.InvalidArgument, "email is required")
-	}
-	if request.GetPassword() == "" {
-		return nil, status.Error(codes.InvalidArgument, "password is required")
-	}
 
 	loginRequest := models.UserLoginRequest{
 		Email:    request.GetEmail(),

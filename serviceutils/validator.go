@@ -1,4 +1,4 @@
-package validation
+package serviceutils
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ type CustomValidator struct {
 	validator *validator.Validate
 }
 
-func NewValidator() CustomValidator {
+func NewCustomValidator() CustomValidator {
 	return CustomValidator{
 		validator: validator.New(),
 	}
