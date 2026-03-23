@@ -30,7 +30,6 @@ import (
 	"github.com/situmorangbastian/skyros/userservice/internal/repository/postgresql"
 	"github.com/situmorangbastian/skyros/userservice/internal/service"
 	"github.com/situmorangbastian/skyros/userservice/internal/usecase"
-	"github.com/situmorangbastian/skyros/userservice/internal/validation"
 )
 
 func main() {
@@ -93,7 +92,7 @@ func main() {
 			serviceutils.TraceErrors(),
 		),
 	)
-	userService := service.NewUserService(userUsecase, cfg.GetString("SECRET_KEY"), validation.NewValidator(), log.Logger)
+	userService := service.NewUserService(userUsecase, cfg.GetString("SECRET_KEY"), serviceutils.NewCustomValidator(), log.Logger)
 	userpb.RegisterUserServiceServer(grpcServer, userService)
 
 	mux := runtime.NewServeMux(

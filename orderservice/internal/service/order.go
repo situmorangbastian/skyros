@@ -3,24 +3,24 @@ package service
 import (
 	"context"
 
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/rs/zerolog"
 	"github.com/situmorangbastian/skyros/orderservice/internal/models"
 	"github.com/situmorangbastian/skyros/orderservice/internal/usecase"
-	"github.com/situmorangbastian/skyros/orderservice/internal/validation"
 	orderpb "github.com/situmorangbastian/skyros/proto/order"
 	userpb "github.com/situmorangbastian/skyros/proto/user"
+	"github.com/situmorangbastian/skyros/serviceutils"
 )
 
 type service struct {
 	usecase   usecase.OrderUsecase
-	validator validation.CustomValidator
+	validator serviceutils.CustomValidator
 	logger    zerolog.Logger
 }
 
-func NewOrderService(usecase usecase.OrderUsecase, validator validation.CustomValidator, logger zerolog.Logger) orderpb.OrderServiceServer {
+func NewOrderService(usecase usecase.OrderUsecase, validator serviceutils.CustomValidator, logger zerolog.Logger) orderpb.OrderServiceServer {
 	return &service{
 		usecase:   usecase,
 		validator: validator,

@@ -28,7 +28,6 @@ import (
 	"github.com/situmorangbastian/skyros/productservice/internal/repository/postgresql"
 	"github.com/situmorangbastian/skyros/productservice/internal/service"
 	"github.com/situmorangbastian/skyros/productservice/internal/usecase"
-	"github.com/situmorangbastian/skyros/productservice/internal/validation"
 	productpb "github.com/situmorangbastian/skyros/proto/product"
 	userpb "github.com/situmorangbastian/skyros/proto/user"
 	"github.com/situmorangbastian/skyros/serviceutils"
@@ -117,7 +116,7 @@ func main() {
 		),
 	)
 
-	productService := service.NewProductService(productUsecase, validation.NewValidator())
+	productService := service.NewProductService(productUsecase, serviceutils.NewCustomValidator())
 	productpb.RegisterProductServiceServer(grpcServer, productService)
 
 	mux := runtime.NewServeMux(

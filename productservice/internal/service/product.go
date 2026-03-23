@@ -5,17 +5,17 @@ import (
 
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
 	"github.com/situmorangbastian/skyros/productservice/internal/usecase"
-	"github.com/situmorangbastian/skyros/productservice/internal/validation"
 	productpb "github.com/situmorangbastian/skyros/proto/product"
 	userpb "github.com/situmorangbastian/skyros/proto/user"
+	"github.com/situmorangbastian/skyros/serviceutils"
 )
 
 type handler struct {
 	productUsecase usecase.ProductUsecase
-	validators     validation.CustomValidator
+	validators     serviceutils.CustomValidator
 }
 
-func NewProductService(productUsecase usecase.ProductUsecase, validators validation.CustomValidator) productpb.ProductServiceServer {
+func NewProductService(productUsecase usecase.ProductUsecase, validators serviceutils.CustomValidator) productpb.ProductServiceServer {
 	return &handler{
 		productUsecase: productUsecase,
 		validators:     validators,
