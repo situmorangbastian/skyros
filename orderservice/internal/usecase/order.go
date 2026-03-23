@@ -42,7 +42,8 @@ func NewUsecase(
 }
 
 func (u *usecase) Store(ctx context.Context, order models.Order) (models.Order, error) {
-	log := u.logger.With().Str("func", "internal.usecase.user.Store").Logger()
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.usecase.user.Store").Logger()
 
 	user, err := auth.GetUserClaims(ctx)
 	if err != nil {
@@ -85,7 +86,8 @@ func (u *usecase) Store(ctx context.Context, order models.Order) (models.Order, 
 }
 
 func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
-	log := u.logger.With().Str("func", "internal.usecase.user.Get").Logger()
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.usecase.user.Get").Logger()
 
 	user, err := auth.GetUserClaims(ctx)
 	if err != nil {
@@ -149,7 +151,8 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
 }
 
 func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Order, error) {
-	log := u.logger.With().Str("func", "internal.usecase.user.Fetch").Logger()
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.usecase.user.Fetch").Logger()
 
 	user, err := auth.GetUserClaims(ctx)
 	if err != nil {
@@ -205,7 +208,8 @@ func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Ord
 }
 
 func (u *usecase) PatchStatus(ctx context.Context, ID string, statusOrder int) error {
-	log := u.logger.With().Str("func", "internal.usecase.user.PatchStatus").Logger()
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.usecase.user.PatchStatus").Logger()
 
 	user, err := auth.GetUserClaims(ctx)
 	if err != nil {
