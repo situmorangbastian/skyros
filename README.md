@@ -1,5 +1,10 @@
 # skyros
 
+![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white)
+![gRPC](https://img.shields.io/badge/gRPC-protobuf-4285F4?logo=google&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 A portfolio project demonstrating a **Go microservices** architecture with **gRPC** inter-service communication and an **API Gateway** exposing a unified REST interface to clients. Built to showcase backend engineering practices including service decomposition, JWT authentication, database-per-service pattern, and containerised local development
 
 ## 🧩 Key Features
