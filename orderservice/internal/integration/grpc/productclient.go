@@ -3,44 +3,41 @@ package grpc
 import (
 	"context"
 
-	"google.golang.org/grpc"
-
 	"github.com/situmorangbastian/skyros/orderservice/internal/integration"
 	"github.com/situmorangbastian/skyros/orderservice/internal/models"
 	productpb "github.com/situmorangbastian/skyros/proto/product"
+	userpb "github.com/situmorangbastian/skyros/proto/user"
 	"github.com/situmorangbastian/skyros/serviceutils/auth"
 )
 
 type productClient struct {
-	grpcClient *grpc.ClientConn
+	productSvcClient productpb.ProductServiceClient
 }
 
-func NewProductClient(grpcClient *grpc.ClientConn) integration.ProductClient {
+func NewProductClient(productSvcClient productpb.ProductServiceClient) integration.ProductClient {
 	return &productClient{
-		grpcClient: grpcClient,
+		productSvcClient: productSvcClient,
 	}
 }
 
 func (pc *productClient) FetchByIDs(ctx context.Context, ids []string) (map[string]models.Product, error) {
-	c := productpb.NewProductServiceClient(pc.grpcClient)
-
-	r, err := c.GetProducts(ctx, &productpb.GetProductsRequest{
+	resp, err := pc.productSvcClient.GetProducts(ctx, &productpb.GetProductsRequest{
 		Ids: ids,
 	})
 	if err != nil {
-		return map[string]models.Product{}, err
+		return nil, err
 	}
 
-	if r.GetResult() == nil {
-		return map[string]models.Product{}, nil
-	}
+	return toProductMap(resp.GetResult()), nil
+}
 
-	result := map[string]models.Product{}
-	for _, res := range r.GetResult() {
-		product := toProductModel(res)
+func toProductMap(products []*productpb.Product) map[string]models.Product {
+	result := make(map[string]models.Product, len(products))
+	for _, p := range products {
+		product := toProductModel(p)
 		result[product.ID] = product
 	}
-	return result, nil
+	return result
 }
 
 func toProductModel(p *productpb.Product) models.Product {
@@ -49,11 +46,18 @@ func toProductModel(p *productpb.Product) models.Product {
 		Name:        p.GetName(),
 		Description: p.GetDescription(),
 		Price:       p.GetPrice(),
-		Seller: auth.Claims{
-			ID:      p.GetSeller().Id,
-			Email:   p.GetSeller().Email,
-			Name:    p.GetSeller().Name,
-			Address: p.GetSeller().Address,
-		},
+		Seller:      toSellerClaims(p.GetSeller()),
+	}
+}
+
+func toSellerClaims(s *userpb.User) auth.Claims {
+	if s == nil {
+		return auth.Claims{}
+	}
+	return auth.Claims{
+		ID:      s.GetId(),
+		Email:   s.GetEmail(),
+		Name:    s.GetName(),
+		Address: s.GetAddress(),
 	}
 }
