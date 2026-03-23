@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/rs/zerolog"
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
 	"github.com/situmorangbastian/skyros/productservice/internal/usecase"
 	productpb "github.com/situmorangbastian/skyros/proto/product"
@@ -23,8 +24,13 @@ func NewProductService(productUsecase usecase.ProductUsecase, validators service
 }
 
 func (h *handler) GetProduct(ctx context.Context, req *productpb.GetProductRequest) (*productpb.Product, error) {
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.service.product.GetProduct").Logger()
+	log.Info().Msg("request received")
+
 	product, err := h.productUsecase.Get(ctx, req.GetId())
 	if err != nil {
+		log.Error().Err(err).Msg("failed get product")
 		return nil, err
 	}
 
@@ -44,9 +50,14 @@ func (h *handler) GetProduct(ctx context.Context, req *productpb.GetProductReque
 }
 
 func (h *handler) GetProducts(ctx context.Context, filter *productpb.GetProductsRequest) (*productpb.GetProductsResponse, error) {
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.service.product.GetProducts").Logger()
+	log.Info().Msg("request received")
+
 	if len(filter.GetIds()) != 0 {
 		products, err := h.productUsecase.FetchByIds(ctx, filter.GetIds())
 		if err != nil {
+			log.Error().Err(err).Msg("failed get products")
 			return nil, err
 		}
 
@@ -83,6 +94,7 @@ func (h *handler) GetProducts(ctx context.Context, filter *productpb.GetProducts
 		Search:   filter.GetSearch(),
 	})
 	if err != nil {
+		log.Error().Err(err).Msg("failed get products")
 		return nil, err
 	}
 
@@ -109,6 +121,10 @@ func (h *handler) GetProducts(ctx context.Context, filter *productpb.GetProducts
 }
 
 func (h *handler) StoreProduct(ctx context.Context, request *productpb.StoreProductRequest) (*productpb.Product, error) {
+	log := zerolog.Ctx(ctx)
+	log.With().Str("func", "internal.service.product.StoreProduct").Logger()
+	log.Info().Msg("request received")
+
 	productReq := models.Product{
 		Name:        request.GetName(),
 		Description: request.GetDescription(),
@@ -122,6 +138,7 @@ func (h *handler) StoreProduct(ctx context.Context, request *productpb.StoreProd
 
 	product, err := h.productUsecase.Store(ctx, productReq)
 	if err != nil {
+		log.Error().Err(err).Msg("failed store products")
 		return nil, err
 	}
 
