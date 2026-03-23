@@ -30,6 +30,7 @@ import (
 	"github.com/situmorangbastian/skyros/productservice/internal/usecase"
 	"github.com/situmorangbastian/skyros/productservice/internal/validation"
 	productpb "github.com/situmorangbastian/skyros/proto/product"
+	userpb "github.com/situmorangbastian/skyros/proto/user"
 	"github.com/situmorangbastian/skyros/serviceutils"
 	"github.com/situmorangbastian/skyros/serviceutils/auth"
 )
@@ -94,25 +95,25 @@ func main() {
 	}
 	log.Info().Msg("migrations applied successfully")
 
-	userSvcConn, err := grpc.NewClient(
+	userConn, err := grpc.NewClient(
 		cfg.GetString("USER_SERVICE_GRPC"),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(serviceutils.CorrelationClientInterceptor()),
 	)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to init user service client")
+		log.Fatal().Err(err).Msg("failed to connect user service client")
 	}
-
-	usrIntgClient := grpcIntg.NewUserIntegrationClient(userSvcConn)
+	userSvcClient := userpb.NewUserServiceClient(userConn)
+	userClient := grpcIntg.NewUserClient(userSvcClient)
 
 	productRepo := postgresql.NewProductRepository(dbpool)
-	productUsecase := usecase.NewProductUsecase(productRepo, usrIntgClient)
+	productUsecase := usecase.NewProductUsecase(productRepo, userClient)
 
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			serviceutils.CorrelationServerInterceptorWithLogging(),
 			serviceutils.TraceErrors(),
-			auth.AuthInterceptor(cfg.GetString("SECRET_KEY"), usrIntgClient),
+			auth.AuthInterceptor(cfg.GetString("SECRET_KEY"), userClient),
 		),
 	)
 
@@ -191,7 +192,7 @@ func main() {
 
 	grpcServer.GracefulStop()
 
-	if err := userSvcConn.Close(); err != nil {
+	if err := userConn.Close(); err != nil {
 		log.Error().Err(err).Msg("failed to close user service gRPC connection")
 	}
 
