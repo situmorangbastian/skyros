@@ -19,7 +19,7 @@ It is a portfolio project. It shows how I structure services, handle authenticat
 
 ## Architecture
 
-![Architecture](docs/assets/architecture.png)
+![Architecture](docs/assets/architecture-v2.png)
 
 | Service | Responsibility | Owns |
 | --- | --- | --- |
@@ -30,7 +30,7 @@ It is a portfolio project. It shows how I structure services, handle authenticat
 
 ### Request flow: placing an order
 
-![Request flow](docs/assets/request-flow.png)
+![Request flow](docs/assets/request-flow-v2.png)
 
 ### Design decisions
 
