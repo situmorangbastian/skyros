@@ -1,6 +1,6 @@
 # ── deps: download modules separately so this layer is cached
 #         as long as go.mod / go.sum don't change
-FROM golang:1.26.1-alpine AS deps
+FROM golang:1.27.3-alpine AS deps
 
 WORKDIR /build
 
