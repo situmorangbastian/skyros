@@ -62,6 +62,9 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Product, error) {
 
 	result, err := u.productRepo.Get(ctx, ID)
 	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return models.Product{}, err
+		}
 		log.Error().Err(err).Msg("failed get product")
 		return models.Product{}, errors.Wrap(err, "product.service.get: get from repository")
 	}

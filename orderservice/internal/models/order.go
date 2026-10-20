@@ -21,7 +21,7 @@ type Order struct {
 	Description        string         `json:"description"`
 	SourceAddress      string         `json:"source_address"`
 	DestinationAddress string         `json:"destination_address" validate:"required"`
-	Items              []OrderProduct `json:"items" validate:"required,min=1"`
+	Items              []OrderProduct `json:"items" validate:"required,min=1,dive"`
 	TotalPrice         int64          `json:"total_price"`
 	Status             int            `json:"status"`
 	CreatedAt          time.Time      `json:"created_at"`
@@ -64,7 +64,7 @@ func (o Order) MarshalJSON() ([]byte, error) {
 type OrderProduct struct {
 	Product   Product `json:"-" validate:"-"`
 	ProductID string  `json:"product_id" validate:"required"`
-	Quantity  int64   `json:"quantity" validate:"min=1"`
+	Quantity  int64   `json:"quantity" validate:"min=1,max=100000"`
 }
 
 func (op OrderProduct) MarshalJSON() ([]byte, error) {

@@ -8,11 +8,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/situmorangbastian/skyros/orderservice/internal/models"
 	"github.com/situmorangbastian/skyros/orderservice/internal/repository"
+	"github.com/situmorangbastian/skyros/serviceutils"
 )
 
 type orderRepository struct {
@@ -30,6 +30,7 @@ func (r *orderRepository) Store(ctx context.Context, order models.Order) (models
 	if err != nil {
 		return models.Order{}, err
 	}
+	defer func() { _ = tx.Rollback(ctx) }() // no-op after a successful commit
 
 	timeNow := time.Now().UTC()
 	order.ID = uuid.New().String()
@@ -122,14 +123,15 @@ func (r *orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]mo
 		"updated_at",
 	).From("orders").OrderBy("created_at DESC")
 
-	offset := (filter.Page - 1) * filter.PageSize
-	qBuilder = qBuilder.Limit(uint64(filter.PageSize))
-	if offset > 0 {
-		qBuilder.Offset(uint64(offset))
-	}
+	limit, offset := serviceutils.PageOffset(filter.Page, filter.PageSize)
+	qBuilder = qBuilder.Limit(limit).Offset(offset)
 
 	if filter.SellerID != "" {
 		qBuilder = qBuilder.Where(sq.Eq{"seller_id": filter.SellerID})
+	}
+
+	if filter.BuyerID != "" {
+		qBuilder = qBuilder.Where(sq.Eq{"buyer_id": filter.BuyerID})
 	}
 
 	if filter.OrderID != "" {
@@ -145,6 +147,7 @@ func (r *orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]mo
 	if err != nil {
 		return []models.Order{}, err
 	}
+	defer rows.Close()
 
 	orders := make([]models.Order, 0)
 	for rows.Next() {
@@ -167,13 +170,14 @@ func (r *orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]mo
 
 		orders = append(orders, order)
 	}
+	if err = rows.Err(); err != nil {
+		return []models.Order{}, err
+	}
+	rows.Close()
 
 	errGroup := errgroup.Group{}
+	errGroup.SetLimit(5)
 	for index, order := range orders {
-		index, order := index, order
-
-		order.Items = make([]models.OrderProduct, 0)
-
 		errGroup.Go(func() error {
 			psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 			query, args, err := psql.Select(
@@ -191,6 +195,7 @@ func (r *orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]mo
 			if err != nil {
 				return err
 			}
+			defer rows.Close()
 
 			orderProducts := make([]models.OrderProduct, 0)
 			for rows.Next() {
@@ -200,11 +205,13 @@ func (r *orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]mo
 					&orderProduct.Quantity,
 				)
 				if err != nil {
-					log.Error(err)
-					continue
+					return err
 				}
 
 				orderProducts = append(orderProducts, orderProduct)
+			}
+			if err := rows.Err(); err != nil {
+				return err
 			}
 
 			orders[index].Items = orderProducts
@@ -216,20 +223,18 @@ func (r *orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]mo
 		return []models.Order{}, err
 	}
 
-	if err = rows.Err(); err != nil {
-		return []models.Order{}, err
-	}
-
 	return orders, nil
 }
 
-func (r *orderRepository) PatchStatus(ctx context.Context, ID string, status int) error {
+// PatchStatus updates the status of an order owned by sellerID.
+func (r *orderRepository) PatchStatus(ctx context.Context, ID, sellerID string, status int) error {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	query, args, err := psql.Update("orders").
 		Set("status", status).
-		Set("updated_time", time.Now().UTC()).
+		Set("updated_at", time.Now().UTC()).
 		Where(sq.Eq{
-			"id": ID,
+			"id":        ID,
+			"seller_id": sellerID,
 		}).
 		ToSql()
 	if err != nil {

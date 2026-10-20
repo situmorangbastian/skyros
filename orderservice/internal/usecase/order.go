@@ -3,6 +3,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
@@ -54,7 +55,7 @@ func (u *usecase) Store(ctx context.Context, order models.Order) (models.Order, 
 		return models.Order{}, status.Error(codes.NotFound, "Not Found")
 	}
 
-	order.Buyer.ID = user.ID
+	order.Buyer = *user
 	order.TotalPrice = 0
 	productIds := []string{}
 	for _, item := range order.Items {
@@ -71,6 +72,9 @@ func (u *usecase) Store(ctx context.Context, order models.Order) (models.Order, 
 		order.Items[index].Product = products[order.Items[index].ProductID]
 		if order.Items[index].Product.Name == "" {
 			return models.Order{}, status.Error(codes.NotFound, "product not found")
+		}
+		if index > 0 && order.Items[index].Product.Seller.ID != order.Seller.ID {
+			return models.Order{}, status.Error(codes.InvalidArgument, "all items in an order must belong to the same seller")
 		}
 		order.Seller = order.Items[index].Product.Seller
 		order.TotalPrice += int64(order.Items[index].Product.Price) * order.Items[index].Quantity
@@ -220,8 +224,11 @@ func (u *usecase) PatchStatus(ctx context.Context, ID string, statusOrder int) e
 		return status.Error(codes.NotFound, "Not Found")
 	}
 
-	err = u.orderRepo.PatchStatus(ctx, ID, statusOrder)
+	err = u.orderRepo.PatchStatus(ctx, ID, user.ID, statusOrder)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return status.Error(codes.NotFound, "Not Found")
+		}
 		log.Error().Err(err).Msg("failed PatchStatus")
 		return status.Error(codes.Internal, "Internal Server Error")
 	}

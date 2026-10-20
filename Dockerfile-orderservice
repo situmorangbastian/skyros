@@ -26,6 +26,8 @@ FROM gcr.io/distroless/static:nonroot
 COPY --from=build /out/skyros-order-service                    /skyros-order-service
 COPY --from=build /build/orderservice/migrations               /migrations
 
+ENV MIGRATIONS_DIR=/migrations
+
 EXPOSE 4033
 
 USER nonroot:nonroot

@@ -118,7 +118,7 @@ func (s *service) RegisterUser(ctx context.Context, request *userpb.RegisterUser
 	switch request.GetUserType() {
 	case "buyer", "seller":
 	default:
-		return nil, status.Error(codes.NotFound, "Not Found")
+		return nil, status.Error(codes.InvalidArgument, "user type must be buyer or seller")
 	}
 
 	user := models.User{
