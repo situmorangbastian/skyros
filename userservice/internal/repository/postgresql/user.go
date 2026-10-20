@@ -3,11 +3,13 @@ package postgresql
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/situmorangbastian/skyros/userservice/internal/models"
@@ -46,6 +48,10 @@ func (r *userRepo) Register(ctx context.Context, user models.User) (models.User,
 
 	_, err = r.dbpool.Exec(ctx, query, args...)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" { // unique_violation
+			return models.User{}, repository.ErrAlreadyExists
+		}
 		return models.User{}, err
 	}
 	return user, nil
@@ -81,7 +87,7 @@ func (r *userRepo) GetUserByEmail(ctx context.Context, email string) (models.Use
 		&userData,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return models.User{}, repository.ErrNotFound
 		}
 		return models.User{}, err
@@ -103,7 +109,6 @@ func (r *userRepo) FetchUsersByIDs(ctx context.Context, ids []string) (map[strin
 	).
 		From("users").
 		Where(sq.Or{
-			sq.Eq{"email": ids},
 			sq.Eq{"id": ids},
 		}).ToSql()
 	if err != nil {
@@ -114,6 +119,7 @@ func (r *userRepo) FetchUsersByIDs(ctx context.Context, ids []string) (map[strin
 	if err != nil {
 		return map[string]models.User{}, err
 	}
+	defer rows.Close()
 
 	users := map[string]models.User{}
 	for rows.Next() {
@@ -133,6 +139,9 @@ func (r *userRepo) FetchUsersByIDs(ctx context.Context, ids []string) (map[strin
 			return map[string]models.User{}, err
 		}
 		users[user.ID] = user
+	}
+	if err := rows.Err(); err != nil {
+		return map[string]models.User{}, err
 	}
 	return users, nil
 }

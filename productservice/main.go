@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
 	"os"
@@ -47,7 +49,7 @@ func main() {
 	cfg.SetConfigFile(".env")
 
 	if err := cfg.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		if errors.Is(err, fs.ErrNotExist) {
 			log.Info().Msg(".env not found, using environment variables")
 		} else {
 			log.Fatal().Err(err).Msg("failed to read config file")
@@ -89,7 +91,7 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to ping database")
 	}
 
-	if err := runMigrations(cfg.GetString("DATABASE_URL")); err != nil {
+	if err := runMigrations(cfg.GetString("DATABASE_URL"), cfg.GetString("MIGRATIONS_DIR")); err != nil {
 		log.Fatal().Err(err).Msg("failed to run migrations")
 	}
 	log.Info().Msg("migrations applied successfully")
@@ -129,6 +131,7 @@ func main() {
 			},
 		}),
 		runtime.WithErrorHandler(serviceutils.NewRestErrorHandler()),
+		runtime.WithMetadata(serviceutils.GatewayMetadataAnnotator),
 	)
 
 	if err := productpb.RegisterProductServiceHandlerFromEndpoint(
@@ -199,8 +202,11 @@ func main() {
 	log.Info().Msg("servers exited")
 }
 
-func runMigrations(connStr string) error {
-	m, err := migrate.New("file://migrations", connStr)
+func runMigrations(connStr, dir string) error {
+	if dir == "" {
+		dir = "migrations"
+	}
+	m, err := migrate.New("file://"+dir, connStr)
 	if err != nil {
 		return err
 	}

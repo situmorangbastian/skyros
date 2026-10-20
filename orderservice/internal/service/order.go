@@ -80,8 +80,8 @@ func (s *service) CreateOrder(ctx context.Context, request *orderpb.CreateOrderR
 			Address: res.Seller.Address,
 		},
 		Buyer: &userpb.User{
-			Name:    res.Seller.Name,
-			Address: res.Seller.Address,
+			Name:    res.Buyer.Name,
+			Address: res.Buyer.Address,
 		},
 		Items: func() []*orderpb.OrderProduct {
 			items := []*orderpb.OrderProduct{}
@@ -127,8 +127,8 @@ func (s *service) GetOrder(ctx context.Context, request *orderpb.GetOrderRequest
 			Address: res.Seller.Address,
 		},
 		Buyer: &userpb.User{
-			Name:    res.Seller.Name,
-			Address: res.Seller.Address,
+			Name:    res.Buyer.Name,
+			Address: res.Buyer.Address,
 		},
 		Items: func() []*orderpb.OrderProduct {
 			items := []*orderpb.OrderProduct{}
@@ -185,8 +185,8 @@ func (s *service) GetOrders(ctx context.Context, request *orderpb.GetOrdersReque
 				Address: order.Seller.Address,
 			},
 			Buyer: &userpb.User{
-				Name:    order.Seller.Name,
-				Address: order.Seller.Address,
+				Name:    order.Buyer.Name,
+				Address: order.Buyer.Address,
 			},
 			Items: func() []*orderpb.OrderProduct {
 				items := []*orderpb.OrderProduct{}

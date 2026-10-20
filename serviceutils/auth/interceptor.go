@@ -13,7 +13,12 @@ import (
 
 type contextKey string
 
-const userClaimsKey contextKey = "userClaims"
+const (
+	userClaimsKey contextKey = "userClaims"
+
+	// must match serviceutils.GatewayMarkerKey (not imported to avoid a cycle)
+	gatewayMarkerKey = "x-skyros-gateway"
+)
 
 func AuthInterceptor(secretKey string, userClient UserClient) grpc.UnaryServerInterceptor {
 	return func(
@@ -85,6 +90,9 @@ func GetUserClaims(ctx context.Context) (*Claims, error) {
 	return &claims, nil
 }
 
+// isGRPCGatewayRequest reports whether the call was forwarded by a REST
+// gateway. grpcgateway-user-agent is only set when the client sent a
+// User-Agent header, so the explicit gateway marker is checked as well.
 func isGRPCGatewayRequest(md metadata.MD) bool {
-	return len(md.Get("grpcgateway-user-agent")) > 0
+	return len(md.Get(gatewayMarkerKey)) > 0 || len(md.Get("grpcgateway-user-agent")) > 0
 }

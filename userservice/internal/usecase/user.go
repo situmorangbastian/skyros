@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 
 	"github.com/rs/zerolog"
 	"golang.org/x/crypto/bcrypt"
@@ -75,6 +76,9 @@ func (u *userUsecase) Register(ctx context.Context, user models.User) (models.Us
 
 	result, err := u.userRepo.Register(ctx, user)
 	if err != nil {
+		if errors.Is(err, repository.ErrAlreadyExists) {
+			return models.User{}, status.Error(codes.AlreadyExists, "email already exist")
+		}
 		log.Error().Err(err).Msg("failed Register")
 		return models.User{}, status.Error(codes.Internal, "Internal Server Error")
 	}

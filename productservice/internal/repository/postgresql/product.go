@@ -2,21 +2,25 @@ package postgresql
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/situmorangbastian/skyros/productservice/internal/models"
 	"github.com/situmorangbastian/skyros/productservice/internal/repository"
+	"github.com/situmorangbastian/skyros/serviceutils"
 )
+
+// likeEscaper escapes LIKE wildcards so user input is matched literally.
+var likeEscaper = strings.NewReplacer("\\", "\\\\", "%", "\\%", "_", "\\_")
 
 type productRepository struct {
 	dbpool *pgxpool.Pool
@@ -55,7 +59,7 @@ func (r *productRepository) Get(ctx context.Context, ID string) (models.Product,
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	query, args, err := psql.Select("id", "name", "description", "price", "seller_id", "created_at", "updated_at").
 		From("products").
-		Where(sq.Eq{"id": ID}).ToSql()
+		Where(sq.Eq{"id": ID, "deleted_at": nil}).ToSql()
 	if err != nil {
 		return models.Product{}, err
 	}
@@ -72,7 +76,7 @@ func (r *productRepository) Get(ctx context.Context, ID string) (models.Product,
 		&product.UpdatedTime,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return models.Product{}, status.Error(codes.NotFound, "product not found")
 		}
 		return models.Product{}, err
@@ -88,16 +92,17 @@ func (r *productRepository) Fetch(ctx context.Context, filter models.ProductFilt
 		Where("deleted_at IS NULL").
 		OrderBy("created_at DESC")
 
-	offset := (filter.Page - 1) * filter.PageSize
-	qBuilder = qBuilder.Limit(uint64(filter.PageSize))
-	if offset > 0 {
-		qBuilder.Offset(uint64(offset))
-	}
+	limit, offset := serviceutils.PageOffset(filter.Page, filter.PageSize)
+	qBuilder = qBuilder.Limit(limit).Offset(offset)
 
 	if filter.Search != "" {
 		keywords := strings.Split(filter.Search, ",")
 		for _, keyword := range keywords {
-			qBuilder = qBuilder.Where(sq.Like{"name": fmt.Sprintf("%%%v%%", regexp.QuoteMeta(keyword))})
+			keyword = strings.TrimSpace(keyword)
+			if keyword == "" {
+				continue
+			}
+			qBuilder = qBuilder.Where(sq.ILike{"name": fmt.Sprintf("%%%s%%", likeEscaper.Replace(keyword))})
 		}
 	}
 
@@ -114,6 +119,7 @@ func (r *productRepository) Fetch(ctx context.Context, filter models.ProductFilt
 	if err != nil {
 		return []models.Product{}, err
 	}
+	defer rows.Close()
 
 	products := make([]models.Product, 0)
 	for rows.Next() {
@@ -133,6 +139,9 @@ func (r *productRepository) Fetch(ctx context.Context, filter models.ProductFilt
 
 		products = append(products, product)
 	}
+	if err := rows.Err(); err != nil {
+		return []models.Product{}, err
+	}
 
 	return products, nil
 }
@@ -141,7 +150,7 @@ func (r *productRepository) FetchByIds(ctx context.Context, ids []string) (map[s
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	qBuilder := psql.Select("id", "name", "description", "price", "seller_id", "created_at", "updated_at").
 		From("products").
-		Where(sq.Eq{"id": ids})
+		Where(sq.Eq{"id": ids, "deleted_at": nil})
 
 	query, args, err := qBuilder.ToSql()
 	if err != nil {
@@ -152,6 +161,7 @@ func (r *productRepository) FetchByIds(ctx context.Context, ids []string) (map[s
 	if err != nil {
 		return map[string]models.Product{}, err
 	}
+	defer rows.Close()
 
 	products := map[string]models.Product{}
 	for rows.Next() {
@@ -170,6 +180,9 @@ func (r *productRepository) FetchByIds(ctx context.Context, ids []string) (map[s
 		}
 
 		products[product.ID] = product
+	}
+	if err := rows.Err(); err != nil {
+		return map[string]models.Product{}, err
 	}
 
 	return products, nil

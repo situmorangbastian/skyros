@@ -4,7 +4,7 @@ info:
   description: Simple Ecommerce Service
   version: "1.0.0"
 paths:
-  /login:
+  /v1/users/login:
     post:
       tags:
         - User
@@ -47,7 +47,7 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: internal server error
-  /register/buyer:
+  /v1/users/register/buyer:
     post:
       tags:
         - User
@@ -82,7 +82,7 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: internal server error
-  /register/seller:
+  /v1/users/register/seller:
     post:
       tags:
         - User
@@ -118,7 +118,7 @@ paths:
               example:
                 error: internal server error
 
-  /product:
+  /v1/products:
     post:
       tags:
         - Product
@@ -203,7 +203,7 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: internal server error
-  /product/:id:
+  /v1/products/{id}:
     get:
       tags:
         - Product
@@ -233,7 +233,7 @@ paths:
               example:
                 error: internal server error
 
-  /order:
+  /v1/orders:
     post:
       security:
         - BearerAuth:
@@ -311,7 +311,7 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: internal server error
-  /order/:id:
+  /v1/orders/{order_id}:
     get:
       tags:
         - Order
@@ -326,38 +326,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OrderResponse"
-        "404":
-          description: Data Not Found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: order not found
-        "500":
-          description: Unexpected Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: internal server error
-    patch:
-      tags:
-        - Order
-      description: Patch Status Order
-      operationId: Patch Status Order
-      parameters:
-        - $ref: "#/components/parameters/Authorization"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PatchStatus"
-      responses:
-        "204":
-          description: Return No Content
         "404":
           description: Data Not Found
           content:

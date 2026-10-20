@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,6 +17,7 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	orderpb "github.com/situmorangbastian/skyros/proto/order"
 	productpb "github.com/situmorangbastian/skyros/proto/product"
@@ -34,7 +37,7 @@ func main() {
 	cfg.AutomaticEnv()
 	cfg.SetConfigFile(".env")
 	if err := cfg.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		if errors.Is(err, fs.ErrNotExist) {
 			log.Info().Msg(".env not found, using environment variables")
 		} else {
 			log.Fatal().Err(err).Msg("failed to read config file")
@@ -53,7 +56,12 @@ func main() {
 	defer cancel()
 
 	mux := runtime.NewServeMux(
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+			MarshalOptions:   protojson.MarshalOptions{UseProtoNames: true},
+			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: true},
+		}),
 		runtime.WithErrorHandler(serviceutils.NewRestErrorHandler()),
+		runtime.WithMetadata(serviceutils.GatewayMetadataAnnotator),
 	)
 
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}

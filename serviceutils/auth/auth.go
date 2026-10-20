@@ -36,3 +36,9 @@ func ToAuthClaims(u *userpb.User) Claims {
 		Type:    UserType(u.GetType()),
 	}
 }
+
+// WithClaimsForTest returns a context carrying claims, as AuthInterceptor
+// would. It exists so other packages' tests can exercise authenticated paths.
+func WithClaimsForTest(ctx context.Context, c Claims) context.Context {
+	return context.WithValue(ctx, userClaimsKey, c)
+}
