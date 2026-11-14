@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,8 +30,7 @@ func NewOrderService(usecase usecase.OrderUsecase, validator serviceutils.Custom
 }
 
 func (s *service) CreateOrder(ctx context.Context, request *orderpb.CreateOrderRequest) (*orderpb.Order, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.service.order.CreateOrder").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.service.order.CreateOrder").Logger()
 	log.Info().Msg("request received")
 
 	req := models.Order{
@@ -99,9 +99,13 @@ func (s *service) CreateOrder(ctx context.Context, request *orderpb.CreateOrderR
 }
 
 func (s *service) GetOrder(ctx context.Context, request *orderpb.GetOrderRequest) (*orderpb.Order, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.service.order.GetOrder").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.service.order.GetOrder").Logger()
 	log.Info().Msg("request received")
+
+	// ids are UUID columns; a malformed id would otherwise surface as a 500
+	if uuid.Validate(request.GetOrderId()) != nil {
+		return nil, status.Error(codes.NotFound, "Not Found")
+	}
 
 	res, err := s.usecase.Get(ctx, request.GetOrderId())
 	if err != nil {
@@ -146,8 +150,7 @@ func (s *service) GetOrder(ctx context.Context, request *orderpb.GetOrderRequest
 }
 
 func (s *service) GetOrders(ctx context.Context, request *orderpb.GetOrdersRequest) (*orderpb.GetOrdersResponse, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.service.order.GetOrders").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.service.order.GetOrders").Logger()
 	log.Info().Msg("request received")
 
 	limit := request.GetLimit()

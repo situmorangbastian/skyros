@@ -18,7 +18,7 @@ type Order struct {
 	ID                 string         `json:"id"`
 	Buyer              auth.Claims    `json:"buyer" validate:"-"`
 	Seller             auth.Claims    `json:"seller" validate:"-"`
-	Description        string         `json:"description"`
+	Description        string         `json:"description" validate:"max=255"`
 	SourceAddress      string         `json:"source_address"`
 	DestinationAddress string         `json:"destination_address" validate:"required"`
 	Items              []OrderProduct `json:"items" validate:"required,min=1,dive"`
@@ -63,7 +63,7 @@ func (o Order) MarshalJSON() ([]byte, error) {
 
 type OrderProduct struct {
 	Product   Product `json:"-" validate:"-"`
-	ProductID string  `json:"product_id" validate:"required"`
+	ProductID string  `json:"product_id" validate:"required,uuid"`
 	Quantity  int64   `json:"quantity" validate:"min=1,max=100000"`
 }
 

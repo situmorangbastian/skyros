@@ -1,6 +1,7 @@
 package serviceutils
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -21,7 +22,11 @@ func NewCustomValidator() CustomValidator {
 
 func (cv CustomValidator) Validate(data interface{}) error {
 	if err := cv.validator.Struct(data); err != nil {
-		for _, err := range err.(validator.ValidationErrors) {
+		var validationErrs validator.ValidationErrors
+		if !errors.As(err, &validationErrs) {
+			return status.Error(codes.InvalidArgument, "invalid request")
+		}
+		for _, err := range validationErrs {
 			switch err.ActualTag() {
 			case "email":
 				return status.Error(codes.InvalidArgument, "invalid email")

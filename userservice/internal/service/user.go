@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -35,8 +36,7 @@ func NewUserService(userUsecase usecase.UserUsecase, tokenSecretKey string, vali
 }
 
 func (s *service) GetUsers(ctx context.Context, filter *userpb.UserFilter) (*userpb.UsersResponse, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.service.user.GetUsers").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.service.user.GetUsers").Logger()
 	log.Info().Msg("request received")
 
 	response := &userpb.UsersResponse{
@@ -79,12 +79,11 @@ func (s *service) GetUsers(ctx context.Context, filter *userpb.UserFilter) (*use
 }
 
 func (s *service) UserLogin(ctx context.Context, request *userpb.UserLoginRequest) (*userpb.UserLoginResponse, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.service.user.UserLogin").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.service.user.UserLogin").Logger()
 	log.Info().Msg("request received")
 
 	loginRequest := models.UserLoginRequest{
-		Email:    request.GetEmail(),
+		Email:    normalizeEmail(request.GetEmail()),
 		Password: request.GetPassword(),
 	}
 
@@ -93,13 +92,13 @@ func (s *service) UserLogin(ctx context.Context, request *userpb.UserLoginReques
 		return nil, err
 	}
 
-	res, err := s.userUsecase.Login(ctx, request.Email, request.Password)
+	res, err := s.userUsecase.Login(ctx, loginRequest.Email, loginRequest.Password)
 	if err != nil {
 		log.Error().Err(err).Msg("failed Login")
 		return nil, err
 	}
 
-	accessToken, err := generateToken(res, s.tokenSecretKey, log)
+	accessToken, err := generateToken(res, s.tokenSecretKey, &log)
 	if err != nil {
 		log.Error().Err(err).Msg("failed generateToken")
 		return nil, err
@@ -111,8 +110,7 @@ func (s *service) UserLogin(ctx context.Context, request *userpb.UserLoginReques
 }
 
 func (s *service) RegisterUser(ctx context.Context, request *userpb.RegisterUserRequest) (*userpb.RegisterUserResponse, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.service.user.RegisterUser").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.service.user.RegisterUser").Logger()
 	log.Info().Msg("request received")
 
 	switch request.GetUserType() {
@@ -123,7 +121,7 @@ func (s *service) RegisterUser(ctx context.Context, request *userpb.RegisterUser
 
 	user := models.User{
 		Name:     request.GetName(),
-		Email:    request.GetEmail(),
+		Email:    normalizeEmail(request.GetEmail()),
 		Password: request.GetPassword(),
 		Data: models.UserData{
 			Address: request.GetAddress(),
@@ -142,7 +140,7 @@ func (s *service) RegisterUser(ctx context.Context, request *userpb.RegisterUser
 		return nil, err
 	}
 
-	accessToken, err := generateToken(res, s.tokenSecretKey, log)
+	accessToken, err := generateToken(res, s.tokenSecretKey, &log)
 	if err != nil {
 		log.Error().Err(err).Msg("failed generateToken")
 		return nil, err
@@ -151,6 +149,12 @@ func (s *service) RegisterUser(ctx context.Context, request *userpb.RegisterUser
 	return &userpb.RegisterUserResponse{
 		AccessToken: accessToken,
 	}, nil
+}
+
+// normalizeEmail makes email matching case-insensitive, so "A@x.com" and
+// "a@x.com" are the same account.
+func normalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
 }
 
 func generateToken(user models.User, secretKey string, log *zerolog.Logger) (string, error) {
