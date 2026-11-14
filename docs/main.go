@@ -35,14 +35,21 @@ func main() {
 <html>
   <head>
     <title>API Docs</title>
-    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body { margin: 0; padding: 0; }
+    </style>
   </head>
   <body>
-    <div id="redoc-container"></div>
+    <div id="app"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.76.0/dist/browser/standalone.js"></script>
     <script>
-      Redoc.init('/openapi.yaml', {
-        scrollYOffset: 50,
-      }, document.getElementById('redoc-container'));
+      Scalar.createApiReference('#app', {
+        url: '/openapi.yaml',
+        layout: 'modern',
+        defaultHttpClient: { targetKey: 'shell', clientKey: 'curl' },
+      });
     </script>
   </body>
 </html>`
