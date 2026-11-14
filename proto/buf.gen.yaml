@@ -10,6 +10,4 @@ plugins:
       - require_unimplemented_servers=false
   - name: grpc-gateway
     out: .
-    opt:
-      - paths=source_relative
-      - generate_unbound_methods=true  # Optional: if you want unbound methods
+    opt: paths=source_relative
