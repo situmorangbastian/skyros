@@ -33,8 +33,7 @@ func NewProductUsecase(productRepo repository.ProductRepository, usrClient auth.
 }
 
 func (u *usecase) Store(ctx context.Context, product models.Product) (models.Product, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.usecase.product.Store").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.usecase.product.Store").Logger()
 
 	user, err := auth.GetUserClaims(ctx)
 	if err != nil {
@@ -57,8 +56,7 @@ func (u *usecase) Store(ctx context.Context, product models.Product) (models.Pro
 }
 
 func (u *usecase) Get(ctx context.Context, ID string) (models.Product, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.usecase.product.Get").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.usecase.product.Get").Logger()
 
 	result, err := u.productRepo.Get(ctx, ID)
 	if err != nil {
@@ -80,8 +78,7 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Product, error) {
 }
 
 func (u *usecase) Fetch(ctx context.Context, filter models.ProductFilter) ([]models.Product, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.usecase.product.Fetch").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.usecase.product.Fetch").Logger()
 
 	user, err := auth.GetUserClaims(ctx)
 	if err == nil {
@@ -115,8 +112,7 @@ func (u *usecase) Fetch(ctx context.Context, filter models.ProductFilter) ([]mod
 }
 
 func (u *usecase) FetchByIds(ctx context.Context, ids []string) (map[string]models.Product, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.usecase.product.FetchByIds").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.usecase.product.FetchByIds").Logger()
 
 	result, err := u.productRepo.FetchByIds(ctx, ids)
 	if err != nil {

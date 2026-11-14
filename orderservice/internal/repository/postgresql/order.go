@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/situmorangbastian/skyros/orderservice/internal/models"
 	"github.com/situmorangbastian/skyros/orderservice/internal/repository"
@@ -175,52 +174,50 @@ func (r *orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]mo
 	}
 	rows.Close()
 
-	errGroup := errgroup.Group{}
-	errGroup.SetLimit(5)
-	for index, order := range orders {
-		errGroup.Go(func() error {
-			psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-			query, args, err := psql.Select(
-				"product_id",
-				"quantity",
-			).
-				From("orders_products").
-				Where(sq.Eq{"order_id": order.ID}).
-				OrderBy("created_at DESC").ToSql()
-			if err != nil {
-				return err
-			}
-
-			rows, err := r.dbpool.Query(ctx, query, args...)
-			if err != nil {
-				return err
-			}
-			defer rows.Close()
-
-			orderProducts := make([]models.OrderProduct, 0)
-			for rows.Next() {
-				orderProduct := models.OrderProduct{}
-				err = rows.Scan(
-					&orderProduct.ProductID,
-					&orderProduct.Quantity,
-				)
-				if err != nil {
-					return err
-				}
-
-				orderProducts = append(orderProducts, orderProduct)
-			}
-			if err := rows.Err(); err != nil {
-				return err
-			}
-
-			orders[index].Items = orderProducts
-			return nil
-		})
+	if len(orders) == 0 {
+		return orders, nil
 	}
 
-	if err := errGroup.Wait(); err != nil {
+	// Load the items of every order on this page in a single query.
+	orderIDs := make([]string, 0, len(orders))
+	for _, order := range orders {
+		orderIDs = append(orderIDs, order.ID)
+	}
+
+	query, args, err = psql.Select("order_id", "product_id", "quantity").
+		From("orders_products").
+		Where(sq.Eq{"order_id": orderIDs}).
+		OrderBy("created_at DESC").
+		ToSql()
+	if err != nil {
 		return []models.Order{}, err
+	}
+
+	itemRows, err := r.dbpool.Query(ctx, query, args...)
+	if err != nil {
+		return []models.Order{}, err
+	}
+	defer itemRows.Close()
+
+	itemsByOrder := make(map[string][]models.OrderProduct, len(orders))
+	for itemRows.Next() {
+		var orderID string
+		item := models.OrderProduct{}
+		if err := itemRows.Scan(&orderID, &item.ProductID, &item.Quantity); err != nil {
+			return []models.Order{}, err
+		}
+		itemsByOrder[orderID] = append(itemsByOrder[orderID], item)
+	}
+	if err := itemRows.Err(); err != nil {
+		return []models.Order{}, err
+	}
+
+	for index := range orders {
+		items := itemsByOrder[orders[index].ID]
+		if items == nil {
+			items = make([]models.OrderProduct, 0)
+		}
+		orders[index].Items = items
 	}
 
 	return orders, nil

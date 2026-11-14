@@ -13,6 +13,10 @@ import (
 	"github.com/situmorangbastian/skyros/userservice/internal/repository"
 )
 
+// errInvalidCredentials is returned for both an unknown email and a wrong
+// password, so the response does not reveal which accounts exist.
+var errInvalidCredentials = status.Error(codes.Unauthenticated, "invalid email or password")
+
 type UserUsecase interface {
 	Login(ctx context.Context, email, password string) (models.User, error)
 	Register(ctx context.Context, user models.User) (models.User, error)
@@ -32,13 +36,12 @@ func NewUserUsecase(userRepo repository.UserRepository, logger zerolog.Logger) U
 }
 
 func (u *userUsecase) Login(ctx context.Context, email, password string) (models.User, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.usecase.user.Login").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.usecase.user.Login").Logger()
 
 	user, err := u.userRepo.GetUserByEmail(ctx, email)
 	if err != nil {
-		if err == repository.ErrNotFound {
-			return models.User{}, status.Error(codes.NotFound, "user not found")
+		if errors.Is(err, repository.ErrNotFound) {
+			return models.User{}, errInvalidCredentials
 		}
 		log.Error().Err(err).Msg("failed GetUserByEmail")
 		return models.User{}, status.Error(codes.Internal, "Internal Server Error")
@@ -46,18 +49,17 @@ func (u *userUsecase) Login(ctx context.Context, email, password string) (models
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return models.User{}, status.Error(codes.NotFound, "user not found")
+		return models.User{}, errInvalidCredentials
 	}
 
 	return user, nil
 }
 
 func (u *userUsecase) Register(ctx context.Context, user models.User) (models.User, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.usecase.user.Register").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.usecase.user.Register").Logger()
 
 	currentUser, err := u.userRepo.GetUserByEmail(ctx, user.Email)
-	if err != nil && err != repository.ErrNotFound {
+	if err != nil && !errors.Is(err, repository.ErrNotFound) {
 		log.Error().Err(err).Msg("failed GetUserByEmail")
 		return models.User{}, status.Error(codes.Internal, "Internal Server Error")
 	}
@@ -87,8 +89,7 @@ func (u *userUsecase) Register(ctx context.Context, user models.User) (models.Us
 }
 
 func (u *userUsecase) FetchUsersByIDs(ctx context.Context, ids []string) (map[string]models.User, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.usecase.user.FetchUsersByIDs").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.usecase.user.FetchUsersByIDs").Logger()
 
 	users, err := u.userRepo.FetchUsersByIDs(ctx, ids)
 	if err != nil {

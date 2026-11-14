@@ -31,14 +31,14 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Request Body Invalid
-        "404":
-          description: Not found user
+        "401":
+          description: Unknown email or wrong password
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
               example:
-                error: not found user
+                error: invalid email or password
         "500":
           description: Unexpected Error
           content:

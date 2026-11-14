@@ -67,9 +67,9 @@ func (r *userRepo) GetUserByEmail(ctx context.Context, email string) (models.Use
 		"user_data",
 	).
 		From("users").
-		Where(sq.Or{
-			sq.Eq{"email": email},
-		}).ToSql()
+		// LOWER() also matches rows stored before emails were normalised.
+		Where(sq.Expr("LOWER(email) = LOWER(?)", email)).
+		ToSql()
 	if err != nil {
 		return models.User{}, err
 	}

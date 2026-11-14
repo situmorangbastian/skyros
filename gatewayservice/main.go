@@ -7,8 +7,6 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -26,6 +24,12 @@ import (
 )
 
 func main() {
+	os.Exit(run())
+}
+
+// run starts the gateway and returns the process exit code. It returns rather
+// than exiting so that deferred cleanup runs when the server fails at runtime.
+func run() int {
 	log.Logger = zerolog.New(os.Stdout).
 		With().
 		Timestamp().
@@ -79,27 +83,13 @@ func main() {
 	}
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", cfg.GetInt("PORT")),
-		Handler: mux,
+		Addr:              fmt.Sprintf(":%d", cfg.GetInt("PORT")),
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
-	go func() {
-		log.Info().Str("port", cfg.GetString("PORT")).Msg("gRPC-Gateway server starting")
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal().Err(err).Msg("failed to run gRPC-Gateway server")
-		}
-	}()
-
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	log.Info().Msg("shutting down server...")
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer shutdownCancel()
-
-	if err := server.Shutdown(shutdownCtx); err != nil {
-		log.Fatal().Err(err).Msg("server forced to shutdown")
+	if err := serviceutils.Serve(nil, "", server); err != nil {
+		return 1
 	}
-	log.Info().Msg("server exited")
+	return 0
 }

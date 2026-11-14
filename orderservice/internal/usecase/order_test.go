@@ -78,6 +78,23 @@ func TestStore_ComputesTotalAndSetsBuyer(t *testing.T) {
 	}
 }
 
+// Regression: source_address was never set, so every order was stored with an
+// empty pickup address.
+func TestStore_SetsSourceAddressFromSeller(t *testing.T) {
+	uc := newUsecase(&fakeRepo{}, fakeProducts{
+		"p1": {ID: "p1", Name: "A", Price: 1, Seller: auth.Claims{ID: "s1", Address: "Seller St 1"}},
+	})
+	ctx := ctxWithClaims(t, auth.Claims{ID: "b1", Type: auth.UserBuyerType})
+
+	got, err := uc.Store(ctx, models.Order{Items: []models.OrderProduct{{ProductID: "p1", Quantity: 1}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.SourceAddress != "Seller St 1" {
+		t.Errorf("SourceAddress = %q, want seller address", got.SourceAddress)
+	}
+}
+
 func TestStore_RejectsMixedSellers(t *testing.T) {
 	uc := newUsecase(&fakeRepo{}, fakeProducts{
 		"p1": {ID: "p1", Name: "A", Price: 1, Seller: auth.Claims{ID: "s1"}},

@@ -5,21 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"net"
 	"net/http"
 	"os"
-	"os/signal"
-	"sync"
-	"syscall"
 	"time"
 
-	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/jackc/pgx/v5/pgxpool"
-	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -39,6 +33,12 @@ import (
 )
 
 func main() {
+	os.Exit(run())
+}
+
+// run starts the service and returns the process exit code. It returns rather
+// than exiting so that deferred cleanup runs when a server fails at runtime.
+func run() int {
 	log.Logger = zerolog.New(os.Stdout).
 		With().
 		Timestamp().
@@ -97,6 +97,11 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect user service")
 	}
+	defer func() {
+		if err := userConn.Close(); err != nil {
+			log.Error().Err(err).Msg("failed to close user service gRPC connection")
+		}
+	}()
 	userSvcClient := userpb.NewUserServiceClient(userConn)
 
 	productConn, err := grpc.NewClient(
@@ -107,6 +112,11 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init product service client")
 	}
+	defer func() {
+		if err := productConn.Close(); err != nil {
+			log.Error().Err(err).Msg("failed to close product service gRPC connection")
+		}
+	}()
 	productSvcClient := productpb.NewProductServiceClient(productConn)
 
 	userClient := grpcClient.NewUserClient(userSvcClient)
@@ -146,61 +156,20 @@ func main() {
 	}
 
 	restServer := &http.Server{
-		Addr:    fmt.Sprintf(":%d", cfg.GetInt("GRPC_GATEWAY_SERVER_PORT")),
-		Handler: mux,
+		Addr:              fmt.Sprintf(":%d", cfg.GetInt("GRPC_GATEWAY_SERVER_PORT")),
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
-	wg := sync.WaitGroup{}
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		listen, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GetInt("GRPC_SERVER_PORT")))
-		if err != nil {
-			log.Fatal().Err(err).Msg("failed to listen on network")
-		}
-		log.Info().Str("port", cfg.GetString("GRPC_SERVER_PORT")).Msg("gRPC server starting")
-		if err := grpcServer.Serve(listen); err != nil {
-			log.Fatal().Err(err).Msg("failed to run gRPC server")
-		}
-	}()
-
+	var gateway *http.Server
 	if cfg.GetBool("ENABLE_GATEWAY_GRPC") {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			log.Info().Str("port", cfg.GetString("GRPC_GATEWAY_SERVER_PORT")).Msg("gRPC-Gateway server starting")
-			if err := restServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				log.Fatal().Err(err).Msg("failed to run gRPC-Gateway server")
-			}
-		}()
+		gateway = restServer
 	}
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	log.Info().Msg("shutting down servers...")
-
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer shutdownCancel()
-
-	if err := restServer.Shutdown(shutdownCtx); err != nil {
-		log.Error().Err(err).Msg("failed to shutdown gRPC-Gateway")
+	if err := serviceutils.Serve(grpcServer, fmt.Sprintf(":%d", cfg.GetInt("GRPC_SERVER_PORT")), gateway); err != nil {
+		return 1
 	}
-
-	grpcServer.GracefulStop()
-
-	if err := userConn.Close(); err != nil {
-		log.Error().Err(err).Msg("failed to close user service gRPC connection")
-	}
-
-	if err := productConn.Close(); err != nil {
-		log.Error().Err(err).Msg("failed to close product service gRPC connection")
-	}
-
-	wg.Wait()
-	log.Info().Msg("servers exited")
+	return 0
 }
 
 func runMigrations(connStr, dir string) error {

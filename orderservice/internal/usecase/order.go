@@ -43,8 +43,7 @@ func NewUsecase(
 }
 
 func (u *usecase) Store(ctx context.Context, order models.Order) (models.Order, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.usecase.user.Store").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.usecase.order.Store").Logger()
 
 	user, err := auth.GetUserClaims(ctx)
 	if err != nil {
@@ -77,6 +76,7 @@ func (u *usecase) Store(ctx context.Context, order models.Order) (models.Order, 
 			return models.Order{}, status.Error(codes.InvalidArgument, "all items in an order must belong to the same seller")
 		}
 		order.Seller = order.Items[index].Product.Seller
+		order.SourceAddress = order.Seller.Address
 		order.TotalPrice += int64(order.Items[index].Product.Price) * order.Items[index].Quantity
 	}
 
@@ -90,8 +90,7 @@ func (u *usecase) Store(ctx context.Context, order models.Order) (models.Order, 
 }
 
 func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.usecase.user.Get").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.usecase.order.Get").Logger()
 
 	user, err := auth.GetUserClaims(ctx)
 	if err != nil {
@@ -155,8 +154,7 @@ func (u *usecase) Get(ctx context.Context, ID string) (models.Order, error) {
 }
 
 func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Order, error) {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.usecase.user.Fetch").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.usecase.order.Fetch").Logger()
 
 	user, err := auth.GetUserClaims(ctx)
 	if err != nil {
@@ -212,8 +210,7 @@ func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Ord
 }
 
 func (u *usecase) PatchStatus(ctx context.Context, ID string, statusOrder int) error {
-	log := zerolog.Ctx(ctx)
-	log.With().Str("func", "internal.usecase.user.PatchStatus").Logger()
+	log := zerolog.Ctx(ctx).With().Str("func", "internal.usecase.order.PatchStatus").Logger()
 
 	user, err := auth.GetUserClaims(ctx)
 	if err != nil {
