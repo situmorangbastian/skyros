@@ -157,7 +157,7 @@ These are deliberate scope cuts, noted so they aren't mistaken for oversights:
 
 - Gateway-to-service and service-to-service gRPC use plaintext. A real deployment would add mTLS, or a service mesh.
 - JWTs are HS256 with a shared secret, are valid for one hour, and have no refresh or revocation.
-- Orders have no cancel or update endpoint. Order status exists in the model and the repository, but no API changes it yet.
+- Orders have no cancel or update endpoint. Order status exists in the model, but nothing changes it yet.
 - A product's price is read when the order is placed. There is no stock tracking, payment, or saga for cross-service failures.
 - The only automated tests are unit tests. There are no database-backed integration tests yet.
 

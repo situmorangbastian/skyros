@@ -14,5 +14,4 @@ var (
 type OrderRepository interface {
 	Store(ctx context.Context, order models.Order) (models.Order, error)
 	Fetch(ctx context.Context, filter models.Filter) ([]models.Order, error)
-	PatchStatus(ctx context.Context, ID, sellerID string, status int) error
 }

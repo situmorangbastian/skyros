@@ -13,9 +13,8 @@ import (
 )
 
 type fakeRepo struct {
-	stored       models.Order
-	lastFilter   models.Filter
-	patchedOwner string
+	stored     models.Order
+	lastFilter models.Filter
 }
 
 func (f *fakeRepo) Store(_ context.Context, o models.Order) (models.Order, error) {
@@ -25,10 +24,6 @@ func (f *fakeRepo) Store(_ context.Context, o models.Order) (models.Order, error
 func (f *fakeRepo) Fetch(_ context.Context, filter models.Filter) ([]models.Order, error) {
 	f.lastFilter = filter
 	return nil, nil
-}
-func (f *fakeRepo) PatchStatus(_ context.Context, _, sellerID string, _ int) error {
-	f.patchedOwner = sellerID
-	return nil
 }
 
 type fakeProducts map[string]models.Product
@@ -135,16 +130,5 @@ func TestFetch_ScopesToCaller(t *testing.T) {
 	}
 	if repo.lastFilter.SellerID != "s1" {
 		t.Errorf("seller filter = %+v", repo.lastFilter)
-	}
-}
-
-func TestPatchStatus_PassesCallerAsOwner(t *testing.T) {
-	repo := &fakeRepo{}
-	uc := newUsecase(repo, fakeProducts{})
-	if err := uc.PatchStatus(ctxWithClaims(t, auth.Claims{ID: "s1", Type: auth.UserSellerType}), "o1", 1); err != nil {
-		t.Fatal(err)
-	}
-	if repo.patchedOwner != "s1" {
-		t.Errorf("owner = %q, want s1", repo.patchedOwner)
 	}
 }
