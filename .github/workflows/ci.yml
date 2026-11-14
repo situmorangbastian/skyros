@@ -6,30 +6,125 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+# A newer push to the same branch or PR cancels the run in progress.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  GOVULNCHECK_VERSION: v1.9.0
 
 jobs:
-  ci:
-    name: Build & Lint
+  # Decides which jobs need to run. Jobs gated on it are *skipped* (which
+  # counts as passing for required status checks) when a change only touches
+  # docs, README, LICENSE, images and the like.
+  changes:
+    name: Detect changes
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      go: ${{ steps.filter.outputs.go }}
+      docker: ${{ steps.filter.outputs.docker }}
     steps:
-      - uses: actions/checkout@v6
-      - name: Set up Go
-        uses: actions/setup-go@v6
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
+        id: filter
         with:
-          go-version: '1.27'
+          filters: |
+            go: &go
+              - '**/*.go'
+              - 'go.mod'
+              - 'go.sum'
+              - 'proto/**'
+              - '**/migrations/**'
+              - '.golangci.y*ml'
+              - '.github/workflows/ci.yml'
+            docker:
+              - *go
+              - 'Dockerfile-*'
+              - '.dockerignore'
+
+  test:
+    name: Vet & Test
+    needs: changes
+    if: needs.changes.outputs.go == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
           cache: true
       - name: Verify dependencies
         run: go mod download && go mod verify
+      - name: Check go.mod is tidy
+        run: go mod tidy -diff
       - name: Vet
         run: go vet ./...
       - name: Test
-        run: go test -race ./...
-      - name: Vulnerability scan
-        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
-      - name: Lint
-        uses: golangci/golangci-lint-action@v9
+        run: go test -race -coverprofile=coverage.out ./...
+      - name: Coverage summary
+        run: go tool cover -func=coverage.out | tail -n 1 >> "$GITHUB_STEP_SUMMARY"
+
+  lint:
+    name: Lint
+    needs: changes
+    if: needs.changes.outputs.go == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false # golangci-lint-action manages its own cache
+      - uses: golangci/golangci-lint-action@v9
         with:
           version: v2.15
+
+  vulncheck:
+    name: Vulnerability scan
+    needs: changes
+    if: needs.changes.outputs.go == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION} ./...
+
+  docker:
+    name: Docker build (${{ matrix.service }})
+    needs: changes
+    if: needs.changes.outputs.docker == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [gatewayservice, userservice, productservice, orderservice]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile-${{ matrix.service }}
+          push: false
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
