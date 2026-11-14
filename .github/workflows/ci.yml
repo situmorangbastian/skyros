@@ -128,3 +128,25 @@ jobs:
           push: false
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  # Single, stable check for the "CI Verification" ruleset on main, which
+  # requires a status named "Build & Lint". Passes when every job above either
+  # succeeded or was skipped (docs-only change); fails on failure/cancellation.
+  ci:
+    name: Build & Lint
+    if: always()
+    needs: [changes, test, lint, vulncheck, docker]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check job results
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "job results: $RESULTS"
+          for result in $RESULTS; do
+            case "$result" in
+              success|skipped) ;;
+              *) echo "::error::a CI job finished with '$result'"; exit 1 ;;
+            esac
+          done
