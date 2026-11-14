@@ -222,30 +222,3 @@ func (r *orderRepository) Fetch(ctx context.Context, filter models.Filter) ([]mo
 
 	return orders, nil
 }
-
-// PatchStatus updates the status of an order owned by sellerID.
-func (r *orderRepository) PatchStatus(ctx context.Context, ID, sellerID string, status int) error {
-	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	query, args, err := psql.Update("orders").
-		Set("status", status).
-		Set("updated_at", time.Now().UTC()).
-		Where(sq.Eq{
-			"id":        ID,
-			"seller_id": sellerID,
-		}).
-		ToSql()
-	if err != nil {
-		return err
-	}
-
-	result, err := r.dbpool.Exec(ctx, query, args...)
-	if err != nil {
-		return err
-	}
-
-	if result.RowsAffected() == 0 {
-		return repository.ErrNotFound
-	}
-
-	return nil
-}

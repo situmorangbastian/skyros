@@ -3,7 +3,6 @@ package usecase
 
 import (
 	"context"
-	"errors"
 
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
@@ -19,7 +18,6 @@ type OrderUsecase interface {
 	Store(ctx context.Context, order models.Order) (models.Order, error)
 	Get(ctx context.Context, ID string) (models.Order, error)
 	Fetch(ctx context.Context, filter models.Filter) ([]models.Order, error)
-	PatchStatus(ctx context.Context, ID string, status int) error
 }
 
 type usecase struct {
@@ -207,28 +205,4 @@ func (u *usecase) Fetch(ctx context.Context, filter models.Filter) ([]models.Ord
 	}
 
 	return result, nil
-}
-
-func (u *usecase) PatchStatus(ctx context.Context, ID string, statusOrder int) error {
-	log := zerolog.Ctx(ctx).With().Str("func", "internal.usecase.order.PatchStatus").Logger()
-
-	user, err := auth.GetUserClaims(ctx)
-	if err != nil {
-		return err
-	}
-
-	if user.Type != auth.UserSellerType {
-		return status.Error(codes.NotFound, "Not Found")
-	}
-
-	err = u.orderRepo.PatchStatus(ctx, ID, user.ID, statusOrder)
-	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			return status.Error(codes.NotFound, "Not Found")
-		}
-		log.Error().Err(err).Msg("failed PatchStatus")
-		return status.Error(codes.Internal, "Internal Server Error")
-	}
-
-	return nil
 }

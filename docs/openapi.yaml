@@ -542,13 +542,6 @@ components:
           description: Quantity of Product
           type: string
           example: 30
-    PatchStatus:
-      type: object
-      properties:
-        status:
-          description: Status of Order
-          type: string
-          example: accept
     Error:
       type: object
       properties:
